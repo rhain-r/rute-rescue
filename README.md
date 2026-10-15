@@ -2,15 +2,19 @@
 
 A flood-preparedness and safer-route app for Metro Manila, built as a native Android app in Java and XML.
 
-### [▶ Try the clickable demo](https://rhain-r.github.io/rute-rescue/)
-
-<p>
-  <img src="docs/demo/screens/home.jpg" width="200" alt="Resident home screen">
-  <img src="docs/demo/screens/route-results.jpg" width="200" alt="Ranked route alternatives">
-  <img src="docs/demo/screens/lgu-map.jpg" width="200" alt="LGU hazard map">
-</p>
-
 > RutaRescue supports decisions; it never calls a route "safe", and in an emergency you should call 911.
+
+## Screens
+
+Real screens from the Android emulator, using made-up demo data.
+
+| Home | Ranked routes | Why this route |
+|:---:|:---:|:---:|
+| <img src="docs/demo/screens/home.jpg" width="220" alt="Resident home screen"> | <img src="docs/demo/screens/route-results.jpg" width="220" alt="Ranked route alternatives"> | <img src="docs/demo/screens/route-compare.jpg" width="220" alt="Route explanation"> |
+| **My Record** | **LGU reviews** | **LGU flood map** |
+| <img src="docs/demo/screens/record-approved.jpg" width="220" alt="Family record with Ligtas Priority"> | <img src="docs/demo/screens/lgu-reviews.jpg" width="220" alt="LGU Ligtas reviews"> | <img src="docs/demo/screens/lgu-map.jpg" width="220" alt="LGU flood-risk map"> |
+
+All 18 captured screens are in [`docs/demo/screens`](docs/demo/screens).
 
 ---
 
@@ -37,13 +41,34 @@ A flood-preparedness and safer-route app for Metro Manila, built as a native And
 
 ---
 
-## How a route is assessed
+## How the code works
 
-1. **Sample:** Each route is cut into 10 m pieces.
-2. **Check:** Each piece passes five rules: closures, tunnels, bridges, unverified structures, then surface flood hazard.
-3. **Rank:** Open routes come first, then the lowest hazard, the shortest flooded distance, the fewest unverified structures, and the travel time.
-4. **Explain:** Each route card states its reasons in plain language.
-5. **Detour:** If every route crosses a closure, the app asks TomTom for a detour around it.
+### Startup
+
+- `RutaRescueApp` creates one `AppContainer`, which builds every repository, service and route provider in one place.
+
+### Sign-in and roles
+
+- `AuthService` signs the user in with Firebase Auth.
+- `SessionManager` loads the user's profile and role from Firestore.
+- `MainShellActivity` shows the resident tabs or the LGU tabs based on that role.
+
+### Family record
+
+- `FamilyRecord` and `FamilyMember` check every value through `RecordValidator` before it is stored.
+- `FamilyService` saves the record to Firestore and mirrors it to `family_records.txt` (`FamilyTextFileStore`).
+- `SystemStateStore` updates `system.dat` with the last record number.
+
+### Finding a safer route
+
+1. `SafeRouteFragment` calls `RouteService.findRoutes()` on a background thread.
+2. Online, `FallbackRouteProvider` asks TomTom first and falls back to OpenStreetMap (OSRM).
+3. Offline, `CachedRouteProvider` reuses routes saved by `RouteCacheStore`.
+4. `RouteSampler` cuts each route into 10 m samples.
+5. `RiskEngine` runs five `RiskRule`s on each sample: `ClosureRule`, `TunnelRule`, `BridgeRule`, `UnknownStructureRule`, then `SurfaceRule`.
+6. `RouteRanker` puts open routes first, then the lowest hazard, the shortest flooded distance, the fewest unverified structures and the shortest time.
+7. `RouteExplainer` writes the plain-language reasons shown on each route card.
+8. If every route crosses a closure, `ClosureAvoidance` asks TomTom for detours through `AvoidingRouteProvider`.
 
 | Example | Result |
 |---|---|
@@ -51,6 +76,22 @@ A flood-preparedness and safer-route app for Metro Manila, built as a native And
 | Unverified bridge over a HIGH flood zone | AMBER |
 | Bridge closed by the LGU | UNAVAILABLE |
 | Bridge confirmed open by the LGU | GREEN |
+
+### Flood data
+
+- `AssetHazardRepository` checks each bundled flood grid against its SHA-256 hash in `manifest.json` before loading it.
+- `HazardGrid` answers "how flooded is this point?" for the chosen 5-, 25- or 100-year scenario.
+
+### Ligtas Priority
+
+- `LigtasService.submit()` stores the application with its synthetic proof image.
+- `LigtasService.decide()` saves the LGU decision and its `AuditEvent` together in one Firestore batch.
+
+### Offline and sync
+
+- Firestore's offline cache keeps the latest records, centers and advisories on the phone.
+- `ConnectivityMonitor` shows the offline banner when the connection drops.
+- `SyncWorker` refreshes advisories and centers about once an hour through WorkManager.
 
 ---
 
@@ -90,6 +131,7 @@ app/src/main/res/layout/   XML views
 | Part | Tool |
 |---|---|
 | App | Java, XML layouts, Material Components |
+| Built and run with | Android Studio and the included Gradle wrapper |
 | Accounts and database | Firebase Auth, Firestore and Storage |
 | Map | MapLibre with OpenStreetMap tiles |
 | Routing | TomTom with live traffic, with OpenStreetMap (OSRM) as a free fallback |
@@ -120,7 +162,6 @@ app/src/main/res/layout/   XML views
 ## Offline behaviour
 
 - Flood maps and bridge data ship inside the app, so they work without signal.
-- Recent records, centers and advisories stay cached on the phone.
 - Each list shows whether its data is Live, Cached, Stale or Prepared.
 - Changes made offline upload once the phone reconnects.
 
