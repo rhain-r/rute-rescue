@@ -37,3 +37,27 @@ Actions: **CREATE** = new file, **MODIFY** = partly edited.
 | `app/src/test/java/com/rutarescue/persistence/HotlineReaderTest.java` | CREATE | Reads the 9 bundled hotlines in order. |
 
 Result: 149 app unit tests pass (131 before, 18 new), and the debug app builds.
+
+## 4. Follow-up the same day: capacity for residents, a crash fix and the new logo
+
+| File path | Action | Purpose |
+|---|---|---|
+| `app/src/main/java/com/rutarescue/model/center/CenterCapacity.java` | MODIFY | Adds `summary()` ("212 of 300 people · 71%") and `shortSummary()` ("212/300 people") for residents. |
+| `app/src/main/java/com/rutarescue/ui/resident/centers/CenterDetailActivity.java` | MODIFY | New Capacity card with the gauge and who posted the count, or a plain note when none is posted. |
+| `app/src/main/res/layout/activity_center_detail.xml` | MODIFY | Capacity section between the address card and Accessibility. |
+| `app/src/main/java/com/rutarescue/ui/common/ViewBinders.java` | MODIFY | Center rows show the posted headcount. |
+| `app/src/main/java/com/rutarescue/repository/firestore/FieldValues.java` | CREATE | Reads a Firestore value of the wrong type (e.g. a number saved as text) without throwing. |
+| `app/src/main/java/com/rutarescue/repository/firestore/FirestoreMappers.java` | MODIFY | Every field helper uses `FieldValues`; a hand-typed `createdAt` text crashed sign-in before. |
+| `app/src/main/java/com/rutarescue/ui/lgu/data/LguDataFragment.java` | MODIFY | The empty list tells LGU staff to tap Upload, publish, then tap a center for its capacity. |
+| `app/src/main/res/drawable-nodpi/ic_logo_mark.png` | CREATE | New shield logo (cut out of the team's logo picture) for the header and sign-in screen. |
+| `app/src/main/res/drawable-nodpi/ic_launcher_foreground.png` | CREATE | New app-icon foreground, sized to the adaptive-icon safe zone. |
+| `app/src/main/res/drawable/ic_logo_mark.xml`, `ic_launcher_foreground.xml` | DELETE | The old logo drawings. |
+| `app/src/main/res/mipmap-anydpi/ic_launcher.xml`, `ic_launcher_round.xml` | MODIFY | White icon background behind the navy shield. |
+| `app/src/main/res/values/strings.xml` | MODIFY | Capacity card and LGU empty-list text. |
+| `app/src/test/java/com/rutarescue/model/CenterCapacityTextTest.java` | CREATE | The resident headcount text. |
+| `app/src/test/java/com/rutarescue/repository/FieldValuesTest.java` | CREATE | Wrong-type values fall back instead of crashing. |
+| `docs/media/recording-ads.mp4`, `recording-ads.gif`, `logo.png` | CREATE | The 20 s ad (no flood layer in any frame), its README GIF and the logo. |
+| `docs/demo/screens/*.jpg` (6 new files) | CREATE | README screens with the new logo and no flood layer. |
+| `README.md` | MODIFY | Logo, ad, new screens, centers, capacity, hotlines and the test count. |
+
+Result: 156 app unit tests pass, and the debug app builds.

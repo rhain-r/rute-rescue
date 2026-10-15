@@ -11,6 +11,8 @@ import com.google.android.material.chip.ChipGroup;
 import com.rutarescue.R;
 import com.rutarescue.exception.ValidationException;
 import com.rutarescue.model.center.AccessibilityFeature;
+import com.rutarescue.model.center.CapacityChange;
+import com.rutarescue.model.center.CenterCapacity;
 import com.rutarescue.model.center.EvacuationCenter;
 import com.rutarescue.model.common.DataFreshness;
 import com.rutarescue.model.place.SavedPlace;
@@ -18,11 +20,12 @@ import com.rutarescue.model.user.UserProfile;
 import com.rutarescue.service.CenterService;
 import com.rutarescue.ui.common.Badges;
 import com.rutarescue.ui.common.BaseActivity;
+import com.rutarescue.ui.common.CapacityGaugeView;
 import com.rutarescue.ui.common.UiCallback;
 import com.rutarescue.ui.shell.MainShellActivity;
 import com.rutarescue.util.Formats;
 
-/** Center details: status, accessibility, verification source + timestamp, route button. */
+/** Center details: status, posted headcount, accessibility, verification source + timestamp, route button. */
 public class CenterDetailActivity extends BaseActivity {
 
     private static final String EXTRA_ID = "center_id";
@@ -70,6 +73,7 @@ public class CenterDetailActivity extends BaseActivity {
             features.addView(chip);
         }
         findViewById(R.id.detail_no_features).setVisibility(center.getFeatures().isEmpty() ? View.VISIBLE : View.GONE);
+        bindCapacity();
 
         if (CenterService.isBundled(center)) {
             // Bundled PLM SSC list: always shown, but nobody has confirmed it yet.
@@ -88,6 +92,31 @@ public class CenterDetailActivity extends BaseActivity {
         long updated = center.getAuditInfo() == null ? 0 : center.getAuditInfo().getUpdatedAt();
         Badges.freshness(findViewById(R.id.detail_freshness), DataFreshness.CACHED, updated, "");
         ((TextView) findViewById(R.id.detail_freshness)).setText("LGU record updated " + Formats.relative(updated, System.currentTimeMillis()));
+    }
+
+    /** The headcount the LGU posted, with who posted it and when; a plain note when there is none. */
+    private void bindCapacity() {
+        CenterCapacity capacity = center.getCapacity();
+        TextView count = findViewById(R.id.detail_capacity_count);
+        count.setText(capacity.summary());
+        count.setTextAppearance(capacity.isSet() ? R.style.TextAppearance_RR_Title : R.style.TextAppearance_RR_Label);
+        CapacityGaugeView gauge = findViewById(R.id.detail_capacity_gauge);
+        gauge.setVisibility(capacity.isSet() ? View.VISIBLE : View.GONE);
+        gauge.setLevel(capacity.getFraction(), capacity.getLevel());
+
+        String note;
+        CapacityChange change = center.getLastCapacityChange();
+        if (capacity.isSet() && change != null) {
+            note = getString(R.string.capacity_posted_by, change.getActorName(),
+                    Formats.relative(change.getChangedAt(), System.currentTimeMillis()));
+        } else if (capacity.isSet()) {
+            note = getString(R.string.capacity_posted);
+        } else if (CenterService.isBundled(center)) {
+            note = getString(R.string.capacity_none_bundled);
+        } else {
+            note = getString(R.string.capacity_none);
+        }
+        ((TextView) findViewById(R.id.detail_capacity_note)).setText(note);
     }
 
     private void save() {

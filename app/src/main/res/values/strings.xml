@@ -62,6 +62,12 @@
     <string name="no_advisory_body">Prepared Project NOAH flood scenarios are available offline. Check routes before you travel.</string>
     <string name="no_center_yet">No evacuation center to show yet.</string>
     <string name="bundled_center_note">From the PLM SSC evacuation-center list (Facebook, 24 Jul 2024). Not yet confirmed by your LGU, and the map pin is approximate. Look for: %1$s.</string>
+    <string name="lgu_no_centers">No centers yet. Tap Upload above and publish the PLM SSC list (or use Manage to add one). Then tap a center here to set its capacity.</string>
+    <string name="capacity_title">Capacity</string>
+    <string name="capacity_posted_by">Posted by %1$s, %2$s. LGU staff enter this count; it is not live.</string>
+    <string name="capacity_posted">Posted by the LGU. LGU staff enter this count; it is not live.</string>
+    <string name="capacity_none_bundled">Your LGU posts the headcount here once it confirms this center.</string>
+    <string name="capacity_none">Your LGU has not posted a headcount for this center yet.</string>
     <string name="hotlines_title">Emergency hotlines</string>
     <string name="hotlines_source">From the PLM SSC post, 24 Jul 2024. Tap a line to open your phone\'s dialer.</string>
     <string name="show_less">Show less</string>

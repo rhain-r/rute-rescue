@@ -93,6 +93,17 @@ public final class CenterCapacity {
         return CenterStatus.OPEN;
     }
 
+    /** For residents: "113 of 120 people · 94%", or "Headcount not posted yet". */
+    public String summary() {
+        if (!isSet()) return "Headcount not posted yet";
+        return currentOccupancy + " of " + totalPersons + " people · " + getPercent() + "%";
+    }
+
+    /** For center rows: "113/120 people", or empty when nothing was posted. */
+    public String shortSummary() {
+        return isSet() ? currentOccupancy + "/" + totalPersons + " people" : "";
+    }
+
     public int getTotalPersons() { return totalPersons; }
     public int getCurrentOccupancy() { return currentOccupancy; }
 }

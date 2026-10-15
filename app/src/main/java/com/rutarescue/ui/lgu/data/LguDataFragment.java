@@ -147,7 +147,7 @@ public class LguDataFragment extends BaseFragment {
         }
         if (data.getData().isEmpty()) {
             TextView empty = new TextView(requireContext());
-            empty.setText("No centers yet. Use Manage to add a center or import the legacy list.");
+            empty.setText(R.string.lgu_no_centers);
             empty.setTextAppearance(R.style.TextAppearance_RR_Caption);
             list.addView(empty);
         }

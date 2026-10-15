@@ -55,6 +55,33 @@
                 android:textAppearance="@style/TextAppearance.RR.Caption" />
         </LinearLayout>
 
+        <!-- Capacity: the headcount LGU staff posted (same gauge as the LGU capacity screen) -->
+        <TextView
+            style="@style/RR.SectionHeader"
+            android:text="@string/capacity_title" />
+
+        <LinearLayout style="@style/RR.CardColumn">
+
+            <TextView
+                android:id="@+id/detail_capacity_count"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.RR.Title" />
+
+            <com.rutarescue.ui.common.CapacityGaugeView
+                android:id="@+id/detail_capacity_gauge"
+                android:layout_width="match_parent"
+                android:layout_height="20dp"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/detail_capacity_note"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textAppearance="@style/TextAppearance.RR.Caption" />
+        </LinearLayout>
+
         <TextView
             style="@style/RR.SectionHeader"
             android:text="@string/accessibility" />

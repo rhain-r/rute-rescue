@@ -33,6 +33,8 @@ public final class ViewBinders {
             meta.append(Formats.distance(CenterService.distance(center, origin))).append(" • ");
         }
         meta.append(center.getStatus().getLabel());
+        String headcount = center.getCapacity().shortSummary();
+        if (!headcount.isEmpty()) meta.append(" • ").append(headcount);
         if (CenterService.isBundled(center)) {
             meta.append(" • PLM SSC list, not yet confirmed by LGU");
         } else if (center.getVerification().isVerified()) {

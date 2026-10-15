@@ -1,20 +1,26 @@
+<p align="center"><img src="docs/media/logo.png" width="180" alt="RutaRescue logo"></p>
+
 # RutaRescue
 
 A flood-preparedness and safer-route app for Metro Manila, built as a native Android app in Java and XML.
 
 > RutaRescue supports decisions; it never calls a route "safe", and in an emergency you should call 911.
 
+## Ad (20 s)
+
+![RutaRescue ad (plays automatically)](docs/media/recording-ads.gif)
+
+The full-quality version is [`docs/media/recording-ads.mp4`](docs/media/recording-ads.mp4).
+
 ## Screens
 
 Real screens from the Android emulator, using made-up demo data.
 
-| Home | Ranked routes | Why this route |
+| Home | Evacuation centers | Ranked routes |
 |:---:|:---:|:---:|
-| <img src="docs/demo/screens/home.jpg" width="220" alt="Resident home screen"> | <img src="docs/demo/screens/route-results.jpg" width="220" alt="Ranked route alternatives"> | <img src="docs/demo/screens/route-compare.jpg" width="220" alt="Route explanation"> |
-| **My Record** | **LGU reviews** | **LGU flood map** |
-| <img src="docs/demo/screens/record-approved.jpg" width="220" alt="Family record with Ligtas Priority"> | <img src="docs/demo/screens/lgu-reviews.jpg" width="220" alt="LGU Ligtas reviews"> | <img src="docs/demo/screens/lgu-map.jpg" width="220" alt="LGU flood-risk map"> |
-
-All 18 captured screens are in [`docs/demo/screens`](docs/demo/screens).
+| <img src="docs/demo/screens/home-hotlines.jpg" width="220" alt="Home with the nearest center and emergency hotlines"> | <img src="docs/demo/screens/centers-list.jpg" width="220" alt="Evacuation centers with headcounts"> | <img src="docs/demo/screens/route-cards.jpg" width="220" alt="Three routes ranked by flood risk"> |
+| **Center capacity (resident)** | **Center capacity (LGU)** | **My Record** |
+| <img src="docs/demo/screens/center-capacity.jpg" width="220" alt="Resident view of a center's headcount"> | <img src="docs/demo/screens/lgu-capacity.jpg" width="220" alt="LGU headcount screen"> | <img src="docs/demo/screens/record-ligtas.jpg" width="220" alt="Family record with a Ligtas Priority application"> |
 
 ---
 
@@ -28,7 +34,9 @@ All 18 captured screens are in [`docs/demo/screens`](docs/demo/screens).
 
 - Keep a family evacuation record that works offline.
 - Compare up to three routes against the 5-, 25- and 100-year flood scenarios.
-- Find evacuation centers that the LGU has verified.
+- See nearby evacuation centers every day, even before the LGU has confirmed them.
+- Check each center's latest headcount posted by the LGU.
+- Call emergency hotlines straight from Home.
 - Apply for Ligtas Priority assistance and show its status as a QR code.
 
 ## What LGU staff can do
@@ -38,6 +46,7 @@ All 18 captured screens are in [`docs/demo/screens`](docs/demo/screens).
 - Report road closures on the map.
 - Confirm whether bridges and tunnels are open.
 - Import and verify evacuation-center data.
+- Post each center's capacity and headcount.
 
 ---
 
@@ -82,6 +91,13 @@ All 18 captured screens are in [`docs/demo/screens`](docs/demo/screens).
 - `AssetHazardRepository` checks each bundled flood grid against its SHA-256 hash in `manifest.json` before loading it.
 - `HazardGrid` answers "how flooded is this point?" for the chosen 5-, 25- or 100-year scenario.
 
+### Evacuation centers and hotlines
+
+- `BundledCenterReader` loads the 91 PLM SSC centers that ship with the app.
+- `CenterService.withBundled()` adds them to the LGU's published centers, and an LGU center with the same name and city replaces its bundled copy.
+- `CenterCapacity` refuses a headcount above 120% of capacity and gives residents a line like "212 of 300 people · 71%".
+- `HotlineReader` loads the nine emergency hotlines, and `Hotline.dialDigits()` turns a printed number into what the phone dials.
+
 ### Ligtas Priority
 
 - `LigtasService.submit()` stores the application with its synthetic proof image.
@@ -92,6 +108,7 @@ All 18 captured screens are in [`docs/demo/screens`](docs/demo/screens).
 - Firestore's offline cache keeps the latest records, centers and advisories on the phone.
 - `ConnectivityMonitor` shows the offline banner when the connection drops.
 - `SyncWorker` refreshes advisories and centers about once an hour through WorkManager.
+- `FieldValues` reads every Firestore field leniently, so a value typed by hand in the console never crashes the app.
 
 ---
 
@@ -138,7 +155,7 @@ app/src/main/res/layout/   XML views
 | Place search | OpenStreetMap Nominatim |
 | Flood data | UP NOAH 5-, 25- and 100-year flood maps |
 | Design | Built to match the team's Figma file exactly |
-| Tests | 85 unit tests and 10 database security-rule tests |
+| Tests | 156 unit tests and 11 database security-rule tests |
 
 ## Bundled data
 
@@ -146,7 +163,8 @@ app/src/main/res/layout/   XML views
 |---|---|
 | `flood_data/` | Flood overlays and hazard grids for each scenario, checked by SHA-256 before use. |
 | `structures/` | 5,023 bridges and 240 tunnels from OpenStreetMap, unverified until an LGU confirms them. |
-| `seed/` | 90 evacuation centers from the old app, unverified until an LGU publishes them. |
+| `seed/` | 91 PLM SSC evacuation centers (Jul 2024) shown every day, plus 90 from the old app, all unverified until an LGU confirms them. |
+| `seed/hotlines_plmssc_2024.json` | Nine emergency hotlines from the same PLM SSC post, with its mixed-up labels corrected. |
 
 ---
 
@@ -170,6 +188,7 @@ app/src/main/res/layout/   XML views
 - Flood maps are modelled scenarios, not live water levels.
 - OpenStreetMap bridge and tunnel data may be incomplete.
 - Evacuation-center capacity is only as fresh as the LGU's last update.
+- Bundled center pins are approximate until an LGU verifies each center.
 - The first route search needs an internet connection.
 
 ## Data credits

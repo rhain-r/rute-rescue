@@ -48,35 +48,31 @@ final class FirestoreMappers {
     }
 
     // ---------------------------------------------------------------- small helpers
+    // doc.get() + FieldValues instead of getLong()/getString(): those throw when a field has
+    // the wrong type (e.g. a number typed as text in the console), which crashed the app.
 
     static String str(DocumentSnapshot doc, String key) {
-        String value = doc.getString(key);
-        return value == null ? "" : value;
+        return FieldValues.asText(doc.get(key));
     }
 
     static long num(DocumentSnapshot doc, String key) {
-        Long value = doc.getLong(key);
-        return value == null ? 0L : value;
+        return FieldValues.asLong(doc.get(key));
     }
 
     static double dbl(DocumentSnapshot doc, String key) {
-        Double value = doc.getDouble(key);
-        return value == null ? 0.0 : value;
+        return FieldValues.asDouble(doc.get(key));
     }
 
     static boolean bool(DocumentSnapshot doc, String key) {
-        Boolean value = doc.getBoolean(key);
-        return value != null && value;
+        return FieldValues.asBool(doc.get(key));
     }
 
     static String mapStr(Map<?, ?> map, String key) {
-        Object value = map.get(key);
-        return value == null ? "" : value.toString();
+        return FieldValues.asText(map.get(key));
     }
 
     static long mapNum(Map<?, ?> map, String key) {
-        Object value = map.get(key);
-        return value instanceof Number ? ((Number) value).longValue() : 0L;
+        return FieldValues.asLong(map.get(key));
     }
 
     static boolean mapBool(Map<?, ?> map, String key) {
