@@ -33,7 +33,9 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.rutarescue"
+        // Matches the Android app registered in the team's Firebase project "rutarescue".
+        // The Java packages (namespace) stay com.rutarescue.
+        applicationId = "com.oop.rutarescue"
         minSdk = 26
         targetSdk = 37
         versionCode = 1

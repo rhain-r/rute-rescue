@@ -72,13 +72,13 @@ if errorlevel 1 (
 
 rem ---- 5. Open the Emulator Suite page and the app ----------------------
 echo [5/5] Opening the Firebase Emulator Suite and RutaRescue...
-"%ADB%" shell pm list packages com.rutarescue | findstr "com.rutarescue" >nul
+"%ADB%" shell pm list packages com.oop.rutarescue | findstr "com.oop.rutarescue" >nul
 if errorlevel 1 (
     echo       RutaRescue is not installed on this emulator yet - installing it...
     call gradlew.bat :app:installDebug --console=plain -q
 )
 start "" "%SUITE%"
-"%ADB%" shell monkey -p com.rutarescue -c android.intent.category.LAUNCHER 1 >nul 2>&1
+"%ADB%" shell monkey -p com.oop.rutarescue -c android.intent.category.LAUNCHER 1 >nul 2>&1
 
 echo.
 echo Ready!
