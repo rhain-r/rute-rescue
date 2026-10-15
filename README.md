@@ -11,11 +11,9 @@ A flood-preparedness and safer-route app for Metro Manila, built as a native And
 - Open this folder in Android Studio and press **Run**; the app connects to the team's Firebase project, so you can sign in or create a resident account.
 - Live traffic needs a TomTom key in `local.properties` (`TOMTOM_API_KEY=...`); without one, routes use free OpenStreetMap routing.
 
-## Ad (20 s)
+## Ad
 
 ![RutaRescue ad (plays automatically)](docs/media/recording-ads.gif)
-
-The full-quality version is [`docs/media/recording-ads.mp4`](docs/media/recording-ads.mp4).
 
 ## Screens
 
