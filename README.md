@@ -17,11 +17,10 @@ LGU personnel can:
 
 > RutaRescue supports decisions. It does **not** guarantee a safe route, predict exact flooding, or replace emergency services. The best route is labelled **"Safer among available alternatives"**, never "safe". In an emergency, call 911.
 
-### Explainer ad (16 s)
+### Ad
 
 ![RutaRescue explainer ad (plays automatically)](docs/media/recording-ads.gif)
 
-⬇ **[Download the full-quality MP4 (5.5 MB)](RutaRescue-explainer-video/recording-ads.mp4?raw=true)**
 
 ---
 
