@@ -1,6 +1,8 @@
 package com.rutarescue.service;
 
 import com.rutarescue.exception.ValidationException;
+import com.rutarescue.model.center.AccessibilityFeature;
+import com.rutarescue.model.center.CenterCapacity;
 import com.rutarescue.model.center.CenterStatus;
 import com.rutarescue.model.center.EvacuationCenter;
 import com.rutarescue.model.common.AuditEvent;
@@ -9,6 +11,7 @@ import com.rutarescue.model.common.SourcedData;
 import com.rutarescue.model.user.LguProfile;
 import com.rutarescue.repository.Callback;
 import com.rutarescue.repository.CenterRepository;
+import com.rutarescue.repository.CenterSnapshot;
 import com.rutarescue.repository.ListenerHandle;
 import com.rutarescue.util.GeoMath;
 
@@ -16,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Evacuation center use cases: resident search/filter (DOCX section 4 "Centers") and LGU
@@ -44,6 +48,30 @@ public final class CenterService {
         repository.get(id, callback);
     }
 
+    /** Follows one center for the capacity screen (with the "Pending sync" flag). */
+    public ListenerHandle listen(String id, Callback<CenterSnapshot> callback) {
+        return repository.listen(id, callback);
+    }
+
+    /**
+     * Saves the capacity screen: headcount, status and facilities, with an audit event that
+     * says what changed (e.g. "Headcount 207 → 212 · barangay field check").
+     */
+    public void updateCapacity(LguProfile lgu, EvacuationCenter center, CenterCapacity capacity, CenterStatus status,
+                               Set<AccessibilityFeature> features, String source, Callback<Void> callback) {
+        if (!lgu.canManage(center.getCity())) {
+            callback.onError(new IllegalStateException("You can only manage centers in " + lgu.getJurisdiction() + "."));
+            return;
+        }
+        int before = center.getCapacity().getCurrentOccupancy();
+        center.updateCapacity(capacity, status, features, lgu.getUid(), lgu.getDisplayName(), source,
+                System.currentTimeMillis());
+        String reason = "Headcount " + before + " → " + capacity.getCurrentOccupancy() + " of "
+                + capacity.getTotalPersons() + " · " + center.getStatus().getLabel()
+                + (source == null || source.isBlank() ? "" : " · " + source.strip());
+        save(lgu, center, "UPDATE_CAPACITY", reason, callback);
+    }
+
     /** Search + filter chips + distance sort (pure Java, also works on cached data offline). */
     public static List<EvacuationCenter> filter(List<EvacuationCenter> all, String query, boolean nearbyOnly,
                                                 boolean openOnly, boolean accessibleOnly, GeoPoint origin) {
@@ -55,7 +83,7 @@ public final class CenterService {
                         + center.getCity().getDisplayName()).toLowerCase(Locale.ROOT);
                 if (!haystack.contains(needle)) continue;
             }
-            if (openOnly && center.getStatus() != CenterStatus.OPEN) continue;
+            if (openOnly && !center.getStatus().isAcceptingEvacuees()) continue;
             if (accessibleOnly && !center.hasAccessibilityFeature()) continue;
             if (nearbyOnly && origin != null && distance(center, origin) > NEARBY_METERS) continue;
             result.add(center);
@@ -76,7 +104,8 @@ public final class CenterService {
         EvacuationCenter best = null;
         double bestDistance = Double.MAX_VALUE;
         for (EvacuationCenter center : centers) {
-            if (center.getStatus() == CenterStatus.CLOSED) continue;
+            CenterStatus status = center.getStatus();
+            if (status == CenterStatus.CLOSED || status == CenterStatus.FULL || status == CenterStatus.UNAVAILABLE) continue;
             double d = origin == null ? 0 : distance(center, origin);
             if (d < bestDistance) {
                 best = center;

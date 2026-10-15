@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Save bar on the capacity screen: glass with a 1 dp top divider (like the bottom navigation) -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item><shape><solid android:color="@color/rr_divider" /></shape></item>
+    <item android:top="1dp"><shape><solid android:color="@color/rr_glass" /></shape></item>
+</layer-list>

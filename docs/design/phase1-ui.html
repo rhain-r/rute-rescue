@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RutaRescue Phase 1 UI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  /* Figma variables, copied from app/src/main/res/values/colors.xml */
+  :root {
+    --navy: #152B3F; --brand-600: #24547F; --cyan: #12B5D0; --cyan-icon: #08A9D1;
+    --teal: #0E9F8A; --teal-soft: #E2F7FB; --bg: #F7F7F5; --surface: #FFFFFF;
+    --glass: rgba(255, 255, 255, .93); --surface-2: #F1F3F4;
+    --text: #162235; --text-2: #667085; --text-3: #98A2B3; --icon-muted: #94A3B8; --divider: #E8EAED;
+    --orange: #D89025; --orange-soft: #FFF4DF; --red: #DF5B59; --red-soft: #FCECEA;
+    --green: #21956F; --green-soft: #E6F4EE; --violet: #7C5CC4; --violet-soft: #EFEAFB;
+    --hz-low: #F5C842; --hz-med: #F08C2E; --hz-high: #E0483E;
+    --route-other: #9AA6B2;
+    --sh-sm: 0 6px 18px rgba(21, 43, 63, .08);
+    --sh-float: 0 12px 30px rgba(21, 43, 63, .10);
+    --sh-nav: 0 -8px 24px rgba(21, 43, 63, .12);
+    --canvas: #E9EBEE;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--canvas); color: var(--text); font-family: Karla, system-ui, sans-serif; }
+  .page { max-width: 1320px; margin: 0 auto; padding: 32px 24px 64px; }
+  .page > header h1 { font: 700 26px/32px Montserrat, sans-serif; margin: 0 0 6px; }
+  .page > header p { margin: 0 0 4px; color: var(--text-2); font-size: 15px; }
+  section.flow { margin-top: 48px; }
+  section.flow > h2 { font: 700 20px/26px Montserrat, sans-serif; margin: 0 0 4px; }
+  section.flow > p.lead { margin: 0 0 20px; color: var(--text-2); }
+  .row { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; }
+  .frame-wrap { display: grid; gap: 8px; }
+  .frame-name { font: 500 12px/16px Karla, sans-serif; color: #6B7280; }
+  .notes { flex: 1 1 280px; max-width: 380px; background: #fff; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .notes h3 { font: 600 14px/20px Montserrat, sans-serif; margin: 0 0 8px; }
+  .notes ul { margin: 0 0 14px; padding-left: 18px; font-size: 14px; line-height: 20px; color: #344054; }
+  .notes li { margin-bottom: 6px; }
+  .notes code { font-size: 12.5px; background: var(--surface-2); padding: 1px 5px; border-radius: 5px; }
+
+  /* ---------- Phone frame (390 x 844, Figma mobile frame) ---------- */
+  .phone { position: relative; width: 390px; height: 844px; border-radius: 36px; overflow: hidden;
+           background: linear-gradient(180deg, #FBFAF7 0%, #F7F7F5 42%, #EEF9FB 76%, #F3EEFF 100%);
+           box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 20px 40px rgba(21,43,63,.14); }
+  .map { position: absolute; inset: 0; }
+  .map svg { display: block; }
+  .status { position: absolute; top: 0; left: 0; right: 0; height: 44px; padding: 0 22px; display: flex; align-items: center;
+            justify-content: space-between; font: 600 14px Karla, sans-serif; color: var(--text); z-index: 5; }
+  .status .sys { display: flex; gap: 6px; align-items: center; }
+  .home-ind { position: absolute; bottom: 8px; left: 50%; width: 120px; height: 4px; margin-left: -60px; border-radius: 4px; background: var(--text); opacity: .85; z-index: 9; }
+  .ico { width: 20px; height: 20px; flex: none; }
+  .ico.sm { width: 16px; height: 16px; }
+  .ico.lg { width: 24px; height: 24px; }
+
+  /* Type styles (Figma Mobile/*) */
+  .t-display { font: 700 28px/34px Montserrat, sans-serif; letter-spacing: -.01em; }
+  .t-title { font: 700 20px/26px Montserrat, sans-serif; }
+  .t-section { font: 600 16px/22px Montserrat, sans-serif; }
+  .t-body { font: 400 14px/20px Karla, sans-serif; }
+  .t-label { font: 600 13px/18px Karla, sans-serif; }
+  .t-caption { font: 400 12px/16px Karla, sans-serif; color: var(--text-2); }
+  .t-micro { font: 500 10px/14px Karla, sans-serif; }
+  .t-eyebrow { font: 600 10px/14px Karla, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--text-2); }
+  .muted { color: var(--text-2); }
+
+  /* Map chrome */
+  .map-top { position: absolute; top: 50px; left: 16px; right: 16px; display: flex; gap: 8px; align-items: center; z-index: 4; }
+  .round-btn { width: 44px; height: 44px; border-radius: 22px; background: var(--glass); border: 1px solid var(--divider);
+               display: grid; place-items: center; color: var(--text); box-shadow: var(--sh-sm); flex: none; }
+  .search { flex: 1; height: 44px; border-radius: 22px; background: var(--glass); border: 1px solid var(--divider); box-shadow: var(--sh-sm);
+            display: flex; align-items: center; gap: 8px; padding: 0 14px; font: 500 14px Karla, sans-serif; color: var(--text);
+            white-space: nowrap; overflow: hidden; }
+  .search span { overflow: hidden; text-overflow: ellipsis; }
+  .pills { position: absolute; top: 104px; left: 16px; right: 16px; display: flex; gap: 6px; z-index: 4; align-items: center; }
+  .pill { height: 32px; padding: 0 12px; border-radius: 16px; display: inline-flex; align-items: center; gap: 6px;
+          font: 600 12px Karla, sans-serif; background: var(--glass); border: 1px solid var(--divider); color: var(--text); box-shadow: var(--sh-sm); }
+  .pill.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .pill.tag { margin-left: auto; color: var(--text-2); }
+  .pill .dot { width: 8px; height: 8px; border-radius: 4px; background: var(--hz-med); }
+  .map-btns { position: absolute; right: 16px; display: grid; gap: 10px; z-index: 4; }
+
+  /* Sheets (Figma bg_sheet: glass, 30 dp radius, #E8EAED stroke) */
+  .scrim { position: absolute; inset: 0; background: rgba(21, 43, 63, .24); z-index: 6; }
+  .sheet { position: absolute; left: 8px; right: 8px; bottom: 8px; background: var(--glass); border: 1px solid var(--divider);
+           border-radius: 30px; box-shadow: var(--sh-float); padding: 10px 16px 16px; z-index: 7; backdrop-filter: blur(12px); }
+  .sheet.modal { left: 0; right: 0; bottom: 0; border-radius: 30px 30px 0 0; padding-bottom: 28px; background: #fff; }
+  .handle { width: 40px; height: 4px; border-radius: 2px; background: #D0D5DD; margin: 0 auto 10px; }
+  .sheet-head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .sheet-head .grow { flex: 1; }
+  .close { width: 40px; height: 40px; border-radius: 20px; background: var(--surface-2); display: grid; place-items: center; color: var(--text); }
+  .group-title { display: flex; align-items: center; justify-content: space-between; margin: 14px 0 8px; }
+  .chip { height: 22px; padding: 0 8px; border-radius: 11px; display: inline-flex; align-items: center; gap: 4px; font: 600 10px/14px Karla, sans-serif; letter-spacing: .04em; text-transform: uppercase; }
+  .chip.green { background: var(--green-soft); color: var(--green); }
+  .chip.orange { background: var(--orange-soft); color: var(--orange); }
+  .chip.red { background: var(--red-soft); color: var(--red); }
+  .chip.grey { background: var(--surface-2); color: var(--text-2); }
+  .chip.teal { background: var(--teal-soft); color: #0B7F96; }
+  .chip.violet { background: var(--violet-soft); color: var(--violet); }
+
+  /* Map layers sheet */
+  .bases { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .base { display: grid; gap: 6px; justify-items: center; font: 600 12px Karla, sans-serif; }
+  .base .thumb { position: relative; width: 100%; height: 70px; border-radius: 16px; overflow: hidden; border: 1px solid var(--divider); }
+  .base.on .thumb { outline: 2px solid var(--navy); outline-offset: 2px; }
+  .base .check { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 10px; background: var(--navy); color: #fff; display: grid; place-items: center; }
+  .toggle-list { background: #fff; border: 1px solid var(--divider); border-radius: 20px; }
+  .trow { display: flex; align-items: center; gap: 12px; padding: 9px 14px; min-height: 52px; }
+  .trow + .trow { border-top: 1px solid var(--divider); }
+  .trow .txt { flex: 1; display: grid; }
+  .swatch { width: 32px; height: 32px; border-radius: 10px; flex: none; display: grid; place-items: center; }
+  .switch { width: 40px; height: 24px; border-radius: 12px; background: #D0D5DD; position: relative; flex: none; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 9px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+  .switch.on { background: var(--brand-600); }
+  .switch.on::after { left: 19px; }
+  .legend { display: flex; gap: 14px; align-items: center; margin-top: 12px; font: 500 11px Karla, sans-serif; color: var(--text-2); }
+  .legend i { display: inline-block; width: 14px; height: 8px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
+  .btn-row { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-top: 16px; }
+  .btn { height: 50px; border-radius: 25px; display: flex; align-items: center; justify-content: center; gap: 8px; font: 600 15px Karla, sans-serif; }
+  .btn.primary { background: var(--navy); color: #fff; }
+  .btn.outline { background: #fff; color: var(--text); border: 1px solid var(--divider); }
+  .btn.warn { background: #fff; color: var(--red); border: 1.5px solid var(--red); }
+
+  /* Route cards */
+  .rcards { display: grid; gap: 8px; margin-top: 10px; }
+  .rcard { display: grid; grid-template-columns: 22px 1fr auto; gap: 4px 10px; align-items: center; padding: 10px 12px;
+           border-radius: 18px; background: #fff; border: 1px solid var(--divider); }
+  .rcard.sel { border: 2px solid var(--cyan); background: #F4FCFE; padding: 9px 11px; }
+  .rcard.sel.direct { border-color: var(--red); background: #FFF8F7; }
+  .radio { width: 18px; height: 18px; border-radius: 9px; border: 2px solid #C5CCD6; }
+  .rcard.sel .radio { border: 5px solid var(--cyan); }
+  .rcard.sel.direct .radio { border-color: var(--red); }
+  .rcard .name { display: flex; gap: 6px; align-items: center; font: 600 15px/20px Montserrat, sans-serif; }
+  .rcard .stats { font: 700 15px Karla, sans-serif; text-align: right; }
+  .rcard .why { grid-column: 2 / 4; display: flex; gap: 6px; align-items: center; font: 400 12.5px/16px Karla, sans-serif; color: var(--text-2); }
+  .line-key { width: 18px; height: 4px; border-radius: 2px; display: inline-block; }
+
+  .drawer { margin-top: 10px; border-radius: 18px; background: #fff; border: 1px solid var(--divider); overflow: hidden; }
+  .drawer-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; font: 600 13px Karla, sans-serif; }
+  .drawer-head .grow { flex: 1; }
+  .warn-row { display: flex; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--divider); align-items: flex-start; }
+  .warn-ico { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+  .warn-row .t-label { display: block; }
+
+  /* Guidance */
+  .guide { position: absolute; top: 50px; left: 12px; right: 12px; background: var(--navy); color: #fff; border-radius: 24px; padding: 14px 16px;
+           display: flex; gap: 14px; align-items: center; box-shadow: var(--sh-float); z-index: 4; }
+  .guide .turn { width: 48px; height: 48px; border-radius: 16px; background: rgba(255,255,255,.12); display: grid; place-items: center; flex: none; }
+  .toast { position: absolute; bottom: 124px; left: 50%; transform: translateX(-50%); white-space: nowrap; background: var(--glass); border: 1px solid var(--divider);
+           border-radius: 20px; padding: 8px 14px; display: flex; gap: 8px; align-items: center; font: 600 13px Karla, sans-serif; box-shadow: var(--sh-float); z-index: 4; }
+
+  /* LGU center manager */
+  .toolbar { position: absolute; top: 44px; left: 0; right: 0; height: 64px; display: flex; align-items: center; gap: 12px; padding: 0 16px; z-index: 4; }
+  .toolbar .round-btn { background: #fff; }
+  .scroll { position: absolute; top: 108px; left: 0; right: 0; bottom: 92px; overflow: hidden; padding: 0 16px; display: grid; gap: 12px; align-content: start; }
+  .card { background: var(--glass); border: 1px solid var(--divider); border-radius: 24px; padding: 14px; box-shadow: var(--sh-sm); }
+  .gauge { height: 12px; border-radius: 6px; background: var(--surface-2); position: relative; margin: 12px 0 6px; overflow: visible; }
+  .gauge .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; }
+  .gauge .tick { position: absolute; top: -3px; width: 2px; height: 18px; background: #fff; border-radius: 1px; box-shadow: 0 0 0 1px var(--divider); }
+  .gauge-scale { position: relative; height: 14px; font: 500 10px Karla, sans-serif; color: var(--text-3); }
+  .gauge-scale span { position: absolute; top: 0; transform: translateX(-50%); }
+  .gauge-scale span:first-child { transform: none; }
+  .gauge-scale span:last-child { transform: translateX(-100%); }
+  .phone.tall { height: 1010px; }
+  .steppers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .step { height: 44px; border-radius: 14px; display: grid; place-items: center; font: 700 15px Karla, sans-serif; border: 1px solid var(--divider); background: #fff; color: var(--text); }
+  .step.plus { background: var(--teal-soft); border-color: #C3EEF6; color: #0B6E82; }
+  .exact { display: flex; gap: 8px; margin-top: 10px; align-items: stretch; }
+  .field { flex: 1; height: 48px; border-radius: 14px; border: 1px solid #D0D5DD; background: #fff; padding: 6px 12px; display: grid; align-content: center; }
+  .field.err { border: 1.5px solid var(--red); }
+  .field .lbl { font: 500 10px/12px Karla, sans-serif; color: var(--text-2); }
+  .field .val { font: 700 16px/20px Karla, sans-serif; }
+  .set-btn { width: 72px; border-radius: 14px; background: var(--navy); color: #fff; display: grid; place-items: center; font: 600 14px Karla, sans-serif; }
+  .seg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .seg span { height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid var(--divider); background: #fff; display: inline-flex; align-items: center; gap: 5px; font: 600 12px Karla, sans-serif; }
+  .seg span.on { background: var(--brand-600); border-color: var(--brand-600); color: #fff; }
+  .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .checks span { display: flex; align-items: center; gap: 8px; font: 500 13px Karla, sans-serif; }
+  .box { width: 20px; height: 20px; border-radius: 6px; border: 2px solid #C5CCD6; display: grid; place-items: center; color: #fff; flex: none; }
+  .box.on { background: var(--brand-600); border-color: var(--brand-600); }
+  .audit { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 16px; background: var(--surface-2); }
+  .pending { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 16px; background: var(--orange-soft); color: #8A5A10; }
+  .savebar { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px 28px; background: var(--glass); border-top: 1px solid var(--divider); box-shadow: var(--sh-nav); z-index: 5; display: flex; gap: 10px; }
+  .savebar .btn { flex: 1; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+<symbol id="i-layers_two" viewBox="0 0 20 20"><path d="M10 1.66663L17.5 5.83329L10 9.99996L2.5 5.83329L10 1.66663Z" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 10L10 14.1667L17.5 10" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="M18,6L6,18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6,6l12,12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-check_circle" viewBox="0 0 18 18"><path d="M9 15.75C12.7279 15.75 15.75 12.7279 15.75 9C15.75 5.27208 12.7279 2.25 9 2.25C5.27208 2.25 2.25 5.27208 2.25 9C2.25 12.7279 5.27208 15.75 9 15.75Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.375 8.99999L8.025 10.65L11.625 6.89999" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-map" viewBox="0 0 22 22"><path d="M2.75 5.5L8.25 2.75L13.75 5.5L19.25 2.75V16.5L13.75 19.25L8.25 16.5L2.75 19.25V5.5Z" fill="none" stroke="currentColor" stroke-width="1.83333" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.25 2.75V16.5" fill="none" stroke="currentColor" stroke-width="1.83333" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.75 5.5V19.25" fill="none" stroke="currentColor" stroke-width="1.83333" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-warning" viewBox="0 0 18 18"><path d="M9 2.25L1.5 15.75H16.5L9 2.25Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 6.75V10.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 13.5H9.0075" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><path d="M12,2a10,10 0,1 0,0 20a10,10 0,1 0,0 -20z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12,6v6l4,2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-navigation" viewBox="0 0 24 24"><path d="M3,11l19,-9 -9,19 -2,-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-back" viewBox="0 0 20 20"><path d="M12.5 15L7.5 10L12.5 5" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-add" viewBox="0 0 24 24"><path d="M12,5v14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5,12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-center" viewBox="0 0 24 24"><path d="M3 21H21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 21V8L12 4L19 8V21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 13H15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 10V16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-bridge" viewBox="0 0 24 24"><path d="M2,10h20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4,10v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20,10v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4,15c3,-4 13,-4 16,0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9,10v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15,10v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-car" viewBox="0 0 24 24"><path d="M5,17H3v-5l2,-5h14l2,5v5h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7,15a2,2 0,1 0,0 4a2,2 0,1 0,0 -4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17,15a2,2 0,1 0,0 4a2,2 0,1 0,0 -4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9,17h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3,12h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-walk" viewBox="0 0 24 24"><path d="M13,2.5a1.8,1.8 0,1 0,0 3.6a1.8,1.8 0,1 0,0 -3.6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10,22l2,-7 3,3v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7,11l3,-3 3,1.5 2,3h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12,15l-1.5,-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-motorcycle" viewBox="0 0 24 24"><path d="M5,14a3,3 0,1 0,0 6a3,3 0,1 0,0 -6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M19,14a3,3 0,1 0,0 6a3,3 0,1 0,0 -6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5,17l4,-6h5l3,6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14,11l-2,-4h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16,8h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-shield_check" viewBox="0 0 22 22"><path d="M18.3334 11.9166C18.3334 16.5 15.1251 18.7916 11.0001 20.1666C6.87508 18.7916 3.66675 16.5 3.66675 11.9166V4.58331L11.0001 1.83331L18.3334 4.58331V11.9166Z" fill="none" stroke="currentColor" stroke-width="1.83333" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.25 11L10.0833 12.8334L13.75 9.16669" fill="none" stroke="currentColor" stroke-width="1.83333" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-offline" viewBox="0 0 24 24"><path d="M2,2l20,20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5,16.5a5,5 0,0 1,7 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2,8.8a15,15 0,0 1,4.2 -2.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.7,5.1A15,15 0,0 1,22 8.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5,12.9a10,10 0,0 1,5.2 -2.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.8,11.4A10,10 0,0 1,19 12.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12,20h0.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-route" viewBox="0 0 18 18"><path d="M4.5 16.5C5.74264 16.5 6.75 15.4926 6.75 14.25C6.75 13.0074 5.74264 12 4.5 12C3.25736 12 2.25 13.0074 2.25 14.25C2.25 15.4926 3.25736 16.5 4.5 16.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.5 6C14.7426 6 15.75 4.99264 15.75 3.75C15.75 2.50736 14.7426 1.5 13.5 1.5C12.2574 1.5 11.25 2.50736 11.25 3.75C11.25 4.99264 12.2574 6 13.5 6Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.375 13.125L11.625 4.875" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-info" viewBox="0 0 20 20"><path d="M10 17.5C14.1421 17.5 17.5 14.1421 17.5 10C17.5 5.85786 14.1421 2.5 10 2.5C5.85786 2.5 2.5 5.85786 2.5 10C2.5 14.1421 5.85786 17.5 10 17.5Z" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 6.66666H10.0083" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.16663 10H9.99996V13.3333H10.8333" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-my_location" viewBox="0 0 20 20"><path d="M10 1.66666V4.16666" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 15.8333V18.3333" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.66663 10H4.16663" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.8334 10H18.3334" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 14.1667C12.3012 14.1667 14.1667 12.3012 14.1667 10C14.1667 7.69882 12.3012 5.83334 10 5.83334C7.69885 5.83334 5.83337 7.69882 5.83337 10C5.83337 12.3012 7.69885 14.1667 10 14.1667Z" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-family" viewBox="0 0 24 24"><path d="M19,21v-2a4,4 0,0 0,-4 -4H9a4,4 0,0 0,-4 4v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12,3a4,4 0,1 0,0 8a4,4 0,1 0,0 -8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-chevron_right" viewBox="0 0 20 20"><path d="M7.5 15L12.5 10L7.5 5" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M17,3l4,4L8,20H4v-4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-status_check" viewBox="0 0 15 15"><path d="M7.5 13.125C10.6066 13.125 13.125 10.6066 13.125 7.5C13.125 4.3934 10.6066 1.875 7.5 1.875C4.3934 1.875 1.875 4.3934 1.875 7.5C1.875 10.6066 4.3934 13.125 7.5 13.125Z" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.3125 7.5L6.6875 8.875L9.6875 5.75" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-road_network" viewBox="0 0 20 20"><path d="M3.33325 15.8333L14.9999 4.16663" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.16667 17.5C5.08714 17.5 5.83333 16.7538 5.83333 15.8333C5.83333 14.9128 5.08714 14.1666 4.16667 14.1666C3.24619 14.1666 2.5 14.9128 2.5 15.8333C2.5 16.7538 3.24619 17.5 4.16667 17.5Z" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.8334 5.83333C16.7539 5.83333 17.5001 5.08714 17.5001 4.16667C17.5001 3.24619 16.7539 2.5 15.8334 2.5C14.9129 2.5 14.1667 3.24619 14.1667 4.16667C14.1667 5.08714 14.9129 5.83333 15.8334 5.83333Z" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-prepared_data" viewBox="0 0 16 16"><path d="M8 1.33333V3.99999" fill="none" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 12V14.6667" fill="none" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.26672 3.26666L5.13339 5.13333" fill="none" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.8667 10.8667L12.7334 12.7333" fill="none" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.00004 10.6667C9.4728 10.6667 10.6667 9.47275 10.6667 7.99999C10.6667 6.52724 9.4728 5.33333 8.00004 5.33333C6.52728 5.33333 5.33337 6.52724 5.33337 7.99999C5.33337 9.47275 6.52728 10.6667 8.00004 10.6667Z" fill="none" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-settings" viewBox="0 0 20 20"><path d="M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61929 7.5 7.5 8.61929 7.5 10C7.5 11.3807 8.61929 12.5 10 12.5Z" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.1667 12.5C16.0436 12.7583 16.0016 13.0478 16.0462 13.3304C16.0909 13.613 16.22 13.8755 16.4167 14.0833L16.5 14.1667L14.1667 16.5L14.0834 16.4167C13.8756 16.22 13.6131 16.0908 13.3305 16.0462C13.0478 16.0016 12.7583 16.0436 12.5 16.1667C12.245 16.2818 12.0297 16.4698 11.8814 16.7071C11.7331 16.9444 11.6584 17.2203 11.6667 17.5V17.6667H8.33337V17.5C8.34168 17.2203 8.26697 16.9444 8.11866 16.7071C7.97036 16.4698 7.7551 16.2818 7.50004 16.1667C7.24175 16.0436 6.95224 16.0016 6.66962 16.0462C6.38699 16.0908 6.12451 16.22 5.91671 16.4167L5.83337 16.5L3.50004 14.1667L3.58337 14.0833C3.78006 13.8755 3.90922 13.613 3.95385 13.3304C3.99847 13.0478 3.95647 12.7583 3.83337 12.5C3.71828 12.2449 3.53022 12.0297 3.29293 11.8814C3.05564 11.7331 2.77974 11.6584 2.50004 11.6667H2.33337V8.33333H2.50004C2.77974 8.34164 3.05564 8.26692 3.29293 8.11862C3.53022 7.97031 3.71828 7.75505 3.83337 7.49999C3.95647 7.2417 3.99847 6.95219 3.95385 6.66957C3.90922 6.38695 3.78006 6.12446 3.58337 5.91666L3.50004 5.83333L5.83337 3.49999L5.91671 3.58333C6.12451 3.78002 6.38699 3.90918 6.66962 3.9538C6.95224 3.99842 7.24175 3.95642 7.50004 3.83333C7.7551 3.71823 7.97036 3.53017 8.11866 3.29288C8.26697 3.05559 8.34168 2.7797 8.33337 2.49999V2.33333H11.6667V2.49999C11.6584 2.7797 11.7331 3.05559 11.8814 3.29288C12.0297 3.53017 12.245 3.71823 12.5 3.83333C12.7583 3.95642 13.0478 3.99842 13.3305 3.9538C13.6131 3.90918 13.8756 3.78002 14.0834 3.58333L14.1667 3.49999L16.5 5.83333L16.4167 5.91666C16.22 6.12446 16.0909 6.38695 16.0462 6.66957C16.0016 6.95219 16.0436 7.2417 16.1667 7.49999C16.2818 7.75505 16.4699 7.97031 16.7072 8.11862C16.9444 8.26692 17.2203 8.34164 17.5 8.33333H17.6667V11.6667H17.5C17.2203 11.6584 16.9444 11.7331 16.7072 11.8814C16.4699 12.0297 16.2818 12.2449 16.1667 12.5Z" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-pin" viewBox="0 0 22 22"><path d="M18.3334 9.16665C18.3334 13.75 11 19.25 11 19.25C11 19.25 3.66669 13.75 3.66669 9.16665C3.66669 7.22173 4.4393 5.35646 5.81457 3.9812C7.18984 2.60593 9.0551 1.83331 11 1.83331C12.9449 1.83331 14.8102 2.60593 16.1855 3.9812C17.5607 5.35646 18.3334 7.22173 18.3334 9.16665Z" fill="none" stroke="currentColor" stroke-width="1.83333" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 11.4583C12.2656 11.4583 13.2916 10.4323 13.2916 9.16667C13.2916 7.90101 12.2656 6.875 11 6.875C9.73433 6.875 8.70831 7.90101 8.70831 9.16667C8.70831 10.4323 9.73433 11.4583 11 11.4583Z" fill="none" stroke="currentColor" stroke-width="1.83333" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 15 3 17H21C21 15 18 15 18 8Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.7 21C13.5206 21.2894 13.2703 21.5283 12.9728 21.6939C12.6753 21.8595 12.3405 21.9464 12 21.9464C11.6595 21.9464 11.3246 21.8595 11.0271 21.6939C10.7296 21.5283 10.4794 21.2894 10.3 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-arrow_right" viewBox="0 0 20 20"><path d="M4.16663 10H15.8333" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.8334 5L15.8334 10L10.8334 15" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-more" viewBox="0 0 20 20"><path d="M9.99996 5.00004C10.4602 5.00004 10.8333 4.62694 10.8333 4.16671C10.8333 3.70647 10.4602 3.33337 9.99996 3.33337C9.53972 3.33337 9.16663 3.70647 9.16663 4.16671C9.16663 4.62694 9.53972 5.00004 9.99996 5.00004Z" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.99996 10.8333C10.4602 10.8333 10.8333 10.4602 10.8333 9.99996C10.8333 9.53972 10.4602 9.16663 9.99996 9.16663C9.53972 9.16663 9.16663 9.53972 9.16663 9.99996C9.16663 10.4602 9.53972 10.8333 9.99996 10.8333Z" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.99996 16.6667C10.4602 16.6667 10.8333 16.2936 10.8333 15.8333C10.8333 15.3731 10.4602 15 9.99996 15C9.53972 15 9.16663 15.3731 9.16663 15.8333C9.16663 16.2936 9.53972 16.6667 9.99996 16.6667Z" fill="none" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <!-- Shared map canvas: MapStyles canvas #EEF1F6, OSM-like streets, NOAH 5-year zones -->
+  <symbol id="map-base" viewBox="0 0 390 844">
+    <rect width="390" height="844" fill="#EEF1F6"/>
+    <g fill="#E3E7EE">
+      <rect x="18" y="168" width="58" height="40" rx="4"/><rect x="200" y="160" width="70" height="44" rx="4"/>
+      <rect x="292" y="210" width="80" height="56" rx="4"/><rect x="24" y="300" width="60" height="70" rx="4"/>
+      <rect x="250" y="400" width="96" height="60" rx="4"/><rect x="40" y="430" width="80" height="48" rx="4"/>
+      <rect x="140" y="470" width="70" height="40" rx="4"/><rect x="300" y="690" width="70" height="60" rx="4"/>
+      <rect x="30" y="700" width="90" height="60" rx="4"/><rect x="150" y="740" width="100" height="50" rx="4"/>
+    </g>
+    <g fill="#DCEFD9"><rect x="296" y="300" width="70" height="52" rx="10"/><ellipse cx="70" cy="560" rx="40" ry="24"/></g>
+    <!-- water -->
+    <path d="M-20 640 C 60 600, 130 650, 200 612 S 330 560, 410 584" stroke="#CDE6F2" stroke-width="28" fill="none"/>
+    <path d="M128 -10 C 136 110, 108 200, 140 300 S 176 470, 168 626" stroke="#CDE6F2" stroke-width="7" fill="none"/>
+    <!-- NOAH 5-year hazard zones -->
+    <path d="M150 238 C 190 222, 232 248, 236 286 C 240 326, 202 344, 168 336 C 134 328, 120 270, 150 238Z" fill="#E0483E" opacity=".32"/>
+    <path d="M120 222 C 170 196, 262 214, 268 280 C 274 350, 214 372, 160 362 C 104 352, 84 262, 120 222Z" fill="#F08C2E" opacity=".20"/>
+    <path d="M-10 590 C 80 560, 170 600, 230 570 S 340 532, 400 540 L 400 640 C 300 630, 200 668, 100 676 S 10 660, -10 670Z" fill="#F08C2E" opacity=".22"/>
+    <path d="M300 120 C 330 110, 370 130, 372 160 C 374 190, 330 196, 306 180 C 286 166, 284 128, 300 120Z" fill="#F5C842" opacity=".35"/>
+    <path d="M20 380 C 50 366, 96 380, 98 404 C 100 428, 56 438, 32 426 C 10 414, 2 390, 20 380Z" fill="#F5C842" opacity=".35"/>
+    <!-- minor streets -->
+    <g stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round">
+      <path d="M0 150 L390 136"/><path d="M0 230 L390 210"/><path d="M0 360 L390 342"/><path d="M0 420 L390 398"/>
+      <path d="M0 520 L390 500"/><path d="M0 720 L390 700"/><path d="M0 790 L390 776"/>
+      <path d="M40 0 L56 844"/><path d="M190 0 L200 560"/><path d="M276 0 L262 560"/><path d="M350 0 L344 844"/>
+      <path d="M110 640 L120 844"/><path d="M240 640 L250 844"/>
+    </g>
+    <!-- major streets -->
+    <g fill="none" stroke-linecap="round">
+      <path d="M-10 300 L400 282" stroke="#D5DBE4" stroke-width="10"/><path d="M-10 300 L400 282" stroke="#FFFFFF" stroke-width="7"/>
+      <path d="M330 452 L244 318 L210 150 L204 -10" stroke="#D5DBE4" stroke-width="10"/><path d="M330 452 L244 318 L210 150 L204 -10" stroke="#FFFFFF" stroke-width="7"/>
+      <path d="M400 96 L262 196 L180 252" stroke="#D5DBE4" stroke-width="9"/><path d="M400 96 L262 196 L180 252" stroke="#FFFFFF" stroke-width="6"/>
+      <path d="M86 -10 L96 300 L108 600" stroke="#D5DBE4" stroke-width="9"/><path d="M86 -10 L96 300 L108 600" stroke="#FFFFFF" stroke-width="6"/>
+      <path d="M200 560 L212 690 L230 844" stroke="#D5DBE4" stroke-width="10"/><path d="M200 560 L212 690 L230 844" stroke="#FFFFFF" stroke-width="7"/>
+    </g>
+    <g font-family="Karla, sans-serif" font-size="9" fill="#7A8796" font-weight="600">
+      <text x="300" y="276" transform="rotate(-2.5 300 276)">Recto Ave</text>
+      <text x="246" y="372" transform="rotate(57 246 372)">Quezon Blvd</text>
+      <text x="300" y="132" transform="rotate(-36 300 132)">España Blvd</text>
+      <text x="100" y="472" transform="rotate(87 100 472)">Rizal Ave</text>
+      <text x="290" y="586" fill="#6E9BB4">Pasig River</text>
+    </g>
+    <g font-family="Montserrat, sans-serif" font-size="10" font-weight="600" fill="#8B97A6" letter-spacing=".08em">
+      <text x="22" y="262">TONDO</text><text x="300" y="186">SAMPALOC</text><text x="270" y="384">QUIAPO</text><text x="150" y="560">BINONDO</text>
+    </g>
+    <!-- evacuation centers (teal) -->
+    <g fill="#0E9F8A" stroke="#fff" stroke-width="2.5">
+      <circle cx="62" cy="182" r="7"/><circle cx="232" cy="196" r="7"/><circle cx="330" cy="236" r="7"/>
+      <circle cx="60" cy="448" r="7"/><circle cx="300" cy="430" r="7"/><circle cx="168" cy="492" r="7"/>
+    </g>
+  </symbol>
+  <symbol id="thumb-standard" viewBox="0 0 100 70"><rect width="100" height="70" fill="#EEF1F6"/><path d="M0 40 L100 30" stroke="#fff" stroke-width="6"/><path d="M30 0 L44 70" stroke="#fff" stroke-width="5"/><path d="M70 0 L64 70" stroke="#fff" stroke-width="3"/><path d="M0 58 C30 50 60 62 100 54" stroke="#CDE6F2" stroke-width="8" fill="none"/><rect x="74" y="8" width="18" height="14" rx="3" fill="#DCEFD9"/></symbol>
+  <symbol id="thumb-topo" viewBox="0 0 100 70"><rect width="100" height="70" fill="#F3F0E6"/><g fill="none" stroke="#C9B98F" stroke-width="1.2"><path d="M-5 60 C20 40 40 50 60 30 S90 20 105 26"/><path d="M-5 50 C20 30 40 40 60 20 S90 10 105 16"/><path d="M-5 40 C18 22 40 30 58 12 S88 2 105 6"/><path d="M-5 70 C20 52 44 60 64 42 S92 34 105 38"/></g><path d="M0 64 C30 58 60 66 100 60" stroke="#A9D3E8" stroke-width="5" fill="none"/></symbol>
+  <symbol id="thumb-sat" viewBox="0 0 100 70"><rect width="100" height="70" fill="#3E5144"/><rect x="6" y="6" width="26" height="18" fill="#56685A"/><rect x="40" y="10" width="30" height="20" fill="#6B6F66"/><rect x="62" y="36" width="30" height="22" fill="#4C5F50"/><rect x="10" y="34" width="34" height="16" fill="#7A7D73"/><path d="M0 60 C30 54 60 64 100 56" stroke="#2D4A5A" stroke-width="8" fill="none"/><path d="M0 30 L100 26" stroke="#9A9C94" stroke-width="2"/></symbol>
+</svg>
+
+<div class="page">
+  <header>
+    <h1>RutaRescue: Phase 1 UI for approval</h1>
+    <p>New screens drawn with the Figma file's own colours, type styles, components and icons, so code can match them one to one.</p>
+    <p>No Android code has been written yet; these frames are for your sign-off.</p>
+  </header>
+
+  <!-- ================= 1. MAP LAYERS ================= -->
+  <section class="flow">
+    <h2>1. Map layers</h2>
+    <p class="lead">Residents choose the base map and switch each overlay on or off.</p>
+    <div class="row">
+      <div class="frame-wrap">
+        <div class="frame-name">Client / Safe Route / Map layers</div>
+        <div class="phone">
+          <div class="map"><svg width="390" height="844"><use href="#map-base"/></svg></div>
+          <div class="status">9:00 <span class="sys"><svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="#162235"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="#162235"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="#162235"/><rect x="13.5" y="0" width="3" height="11" rx="1" fill="#162235"/></svg><svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 2.2c2.2 0 4.2.9 5.7 2.3l1.1-1.1C12.5 1.6 10.1.6 7.5.6S2.5 1.6.7 3.4l1.1 1.1C3.3 3.1 5.3 2.2 7.5 2.2zm0 3.2c1.3 0 2.5.5 3.4 1.4l1.1-1.1C10.8 4.5 9.2 3.8 7.5 3.8S4.2 4.5 3 5.7l1.1 1.1c.9-.9 2.1-1.4 3.4-1.4zm0 3.2c-.5 0-1 .2-1.3.5l1.3 1.3 1.3-1.3c-.3-.3-.8-.5-1.3-.5z" fill="#162235"/></svg><svg width="25" height="12" viewBox="0 0 25 12"><rect x=".5" y=".5" width="21" height="11" rx="3" fill="none" stroke="#162235" opacity=".4"/><rect x="2" y="2" width="18" height="8" rx="2" fill="#162235"/><rect x="22.5" y="4" width="1.6" height="4" rx=".8" fill="#162235" opacity=".4"/></svg></span></div>
+          <div class="map-top">
+            <div class="round-btn"><svg class="ico"><use href="#i-back"/></svg></div>
+            <div class="search"><svg class="ico sm" style="color:var(--icon-muted)"><use href="#i-pin"/></svg><span>Search destination</span></div>
+            <div class="round-btn"><svg class="ico"><use href="#i-settings"/></svg></div>
+          </div>
+          <div class="scrim"></div>
+          <div class="sheet modal">
+            <div class="handle"></div>
+            <div class="sheet-head">
+              <div class="grow"><div class="t-title">Map layers</div><div class="t-caption">Changes show on the map right away.</div></div>
+              <div class="close"><svg class="ico"><use href="#i-close"/></svg></div>
+            </div>
+
+            <div class="group-title"><span class="t-eyebrow">Base map</span></div>
+            <div class="bases">
+              <div class="base on"><div class="thumb"><svg width="100%" height="70" preserveAspectRatio="xMidYMid slice"><use href="#thumb-standard"/></svg><span class="check"><svg class="ico sm"><use href="#i-status_check"/></svg></span></div>Standard</div>
+              <div class="base"><div class="thumb"><svg width="100%" height="70" preserveAspectRatio="xMidYMid slice"><use href="#thumb-topo"/></svg></div>Topographic</div>
+              <div class="base"><div class="thumb"><svg width="100%" height="70" preserveAspectRatio="xMidYMid slice"><use href="#thumb-sat"/></svg></div>Satellite</div>
+            </div>
+
+            <div class="group-title"><span class="t-eyebrow">Flood risk · Project NOAH</span><span class="chip grey"><svg class="ico sm" style="width:12px;height:12px"><use href="#i-prepared_data"/></svg>Prepared, not live</span></div>
+            <div class="toggle-list">
+              <div class="trow"><span class="swatch" style="background:#FDF1D8"><svg class="ico" style="color:var(--hz-med)"><use href="#i-layers_two"/></svg></span><span class="txt"><span class="t-label">5-year flood</span><span class="t-caption">20% chance in any year</span></span><span class="switch on"></span></div>
+              <div class="trow"><span class="swatch" style="background:#FDE7D6"><svg class="ico" style="color:#E06A2B"><use href="#i-layers_two"/></svg></span><span class="txt"><span class="t-label">25-year flood</span><span class="t-caption">4% chance in any year</span></span><span class="switch"></span></div>
+              <div class="trow"><span class="swatch" style="background:#FBE1DF"><svg class="ico" style="color:var(--hz-high)"><use href="#i-layers_two"/></svg></span><span class="txt"><span class="t-label">100-year flood</span><span class="t-caption">1% chance in any year</span></span><span class="switch"></span></div>
+            </div>
+            <div class="legend"><span><i style="background:var(--hz-low)"></i>Low</span><span><i style="background:var(--hz-med)"></i>Medium</span><span><i style="background:var(--hz-high)"></i>High (over 1.5 m)</span></div>
+
+            <div class="group-title"><span class="t-eyebrow">On the map</span></div>
+            <div class="toggle-list">
+              <div class="trow"><span class="swatch" style="background:var(--teal-soft)"><svg class="ico" style="color:var(--teal)"><use href="#i-center"/></svg></span><span class="txt"><span class="t-label">Evacuation centers</span><span class="t-caption">LGU-verified only</span></span><span class="switch on"></span></div>
+              <div class="trow"><span class="swatch" style="background:var(--violet-soft)"><svg class="ico" style="color:var(--violet)"><use href="#i-bridge"/></svg></span><span class="txt"><span class="t-label">Bridges and tunnels</span><span class="t-caption">Purple means not yet verified</span></span><span class="switch on"></span></div>
+              <div class="trow"><span class="swatch" style="background:#FCECEA"><svg class="ico" style="color:var(--red)"><use href="#i-car"/></svg></span><span class="txt"><span class="t-label">Traffic <span class="chip green" style="margin-left:4px">Live</span></span><span class="t-caption">From TomTom; cached copy when offline</span></span><span class="switch"></span></div>
+            </div>
+
+            <div class="btn-row">
+              <div class="btn outline">Reset</div>
+              <div class="btn primary">Done</div>
+            </div>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+      <div class="notes">
+        <h3>How it works</h3>
+        <ul>
+          <li>The Layers button on Safe Route and on the LGU Hazard Map opens this sheet.</li>
+          <li>Base map is one choice: Standard (OpenStreetMap), Topographic (OpenTopoMap) or Satellite.</li>
+          <li>Each NOAH flood horizon has its own switch, so 5-, 25- and 100-year extents can be compared.</li>
+          <li>Each overlay switch shows or hides that layer only.</li>
+          <li>Traffic shows "Live" from TomTom, or "Cached" with its age when offline.</li>
+          <li>Changes apply at once; Done closes the sheet and Reset restores the defaults.</li>
+          <li>Choices are remembered on the phone.</li>
+        </ul>
+        <h3>Figma to code</h3>
+        <ul>
+          <li>Sheet: <code>bg_sheet</code> top corners 30 dp, white, over a 24% navy scrim.</li>
+          <li>Rows: 56 dp, Label 13 sp + Caption 12 sp, dividers <code>#E8EAED</code>.</li>
+          <li>Switch on: <code>rr_navy_light</code> #24547F.</li>
+          <li>Icons: existing <code>ic_layers_two</code>, <code>ic_center</code>, <code>ic_bridge</code>, <code>ic_car</code>.</li>
+          <li>Satellite needs an imagery provider with free terms; this is flagged before coding.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 2. THREE ROUTES ================= -->
+  <section class="flow">
+    <h2>2. Three routes and the warning drawer</h2>
+    <p class="lead">The app offers up to three routes and lists the hazards of the chosen one before the trip starts.</p>
+    <div class="row">
+      <div class="frame-wrap">
+        <div class="frame-name">Client / Safe Route / Routes (default)</div>
+        <div class="phone">
+          <div class="map"><svg width="390" height="844" viewBox="0 0 390 844">
+            <use href="#map-base"/>
+            <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M322 380 L250 322 L180 262 L120 222 L70 186" stroke="#fff" stroke-width="9" opacity=".8"/>
+              <path d="M322 380 L250 322 L180 262 L120 222 L70 186" stroke="var(--route-other)" stroke-width="5" opacity=".7"/>
+              <path d="M322 380 L268 340 L214 300 L150 262 L100 218 L70 186" stroke="#fff" stroke-width="9" opacity=".8"/>
+              <path d="M322 380 L268 340 L214 300 L150 262 L100 218 L70 186" stroke="var(--brand-600)" stroke-width="5" opacity=".6"/>
+              <path d="M322 380 L300 336 L300 258 L236 226 L160 206 L104 196 L70 186" stroke="#fff" stroke-width="11"/>
+              <path d="M322 380 L300 336 L300 258 L236 226 L160 206 L104 196 L70 186" stroke="var(--cyan)" stroke-width="7"/>
+            </g>
+            <circle cx="322" cy="380" r="16" fill="#152B3F" opacity=".12"/><circle cx="322" cy="380" r="8" fill="#152B3F" stroke="#fff" stroke-width="3"/>
+            <path d="M70 160 c-10 0 -17 7 -17 16 c0 12 17 28 17 28 s17 -16 17 -28 c0 -9 -7 -16 -17 -16z" fill="#0E9F8A" stroke="#fff" stroke-width="2.5"/><circle cx="70" cy="176" r="5" fill="#fff"/>
+            <g font-family="Karla, sans-serif" font-size="11" font-weight="700">
+              <rect x="312" y="282" width="52" height="22" rx="11" fill="#152B3F"/><text x="338" y="297" fill="#fff" text-anchor="middle">41 min</text>
+              <rect x="176" y="300" width="52" height="22" rx="11" fill="#fff" stroke="#E8EAED"/><text x="202" y="315" fill="#162235" text-anchor="middle">33 min</text>
+              <rect x="138" y="232" width="52" height="22" rx="11" fill="#fff" stroke="#E8EAED"/><text x="164" y="247" fill="#162235" text-anchor="middle">28 min</text>
+            </g>
+          </svg></div>
+          <div class="status">9:00 <span class="sys"><svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="#162235"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="#162235"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="#162235"/><rect x="13.5" y="0" width="3" height="11" rx="1" fill="#162235"/></svg><svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 2.2c2.2 0 4.2.9 5.7 2.3l1.1-1.1C12.5 1.6 10.1.6 7.5.6S2.5 1.6.7 3.4l1.1 1.1C3.3 3.1 5.3 2.2 7.5 2.2zm0 3.2c1.3 0 2.5.5 3.4 1.4l1.1-1.1C10.8 4.5 9.2 3.8 7.5 3.8S4.2 4.5 3 5.7l1.1 1.1c.9-.9 2.1-1.4 3.4-1.4zm0 3.2c-.5 0-1 .2-1.3.5l1.3 1.3 1.3-1.3c-.3-.3-.8-.5-1.3-.5z" fill="#162235"/></svg><svg width="25" height="12" viewBox="0 0 25 12"><rect x=".5" y=".5" width="21" height="11" rx="3" fill="none" stroke="#162235" opacity=".4"/><rect x="2" y="2" width="18" height="8" rx="2" fill="#162235"/><rect x="22.5" y="4" width="1.6" height="4" rx=".8" fill="#162235" opacity=".4"/></svg></span></div>
+          <div class="map-top">
+            <div class="round-btn"><svg class="ico"><use href="#i-back"/></svg></div>
+            <div class="search"><svg class="ico sm" style="color:var(--teal)"><use href="#i-pin"/></svg><span>Almario Elementary School</span></div>
+            <div class="round-btn"><svg class="ico"><use href="#i-layers_two"/></svg></div>
+          </div>
+          <div class="pills">
+            <span class="pill on"><svg class="ico sm"><use href="#i-walk"/></svg>Walk</span>
+            <span class="pill"><svg class="ico sm"><use href="#i-motorcycle"/></svg></span>
+            <span class="pill"><svg class="ico sm"><use href="#i-car"/></svg></span>
+            <span class="pill tag"><span class="dot"></span>5-year flood</span>
+          </div>
+          <div class="sheet" style="bottom: 20px">
+            <div class="handle"></div>
+            <div class="sheet-head"><div class="grow"><div class="t-section">3 routes to Almario Elementary School</div><div class="t-caption">Walking · checked against the NOAH 5-year flood map</div></div></div>
+            <div class="rcards">
+              <div class="rcard sel"><span class="radio"></span><span class="name">Lowest risk <span class="chip teal">Recommended</span></span><span class="stats">41 min</span>
+                <span class="why"><span class="line-key" style="background:var(--cyan)"></span>3.4 km · avoids every high-hazard street</span></div>
+              <div class="rcard"><span class="radio"></span><span class="name">Balanced <span class="chip orange">Medium</span></span><span class="stats">33 min</span>
+                <span class="why"><span class="line-key" style="background:var(--brand-600)"></span>3.0 km · 120 m in medium hazard</span></div>
+              <div class="rcard"><span class="radio"></span><span class="name">Most direct <span class="chip red">High</span></span><span class="stats">28 min</span>
+                <span class="why"><span class="line-key" style="background:var(--route-other)"></span>2.6 km · 350 m in high hazard</span></div>
+            </div>
+            <div class="drawer">
+              <div class="drawer-head"><svg class="ico sm" style="color:var(--orange)"><use href="#i-warning"/></svg><span class="grow">1 warning · slow traffic near España Blvd</span><svg class="ico sm muted" style="transform:rotate(90deg)"><use href="#i-chevron_right"/></svg></div>
+            </div>
+            <div class="btn primary" style="margin-top:12px"><svg class="ico"><use href="#i-navigation"/></svg>Start guidance</div>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="frame-name">Client / Safe Route / Routes (Most direct picked)</div>
+        <div class="phone">
+          <div class="map"><svg width="390" height="844" viewBox="0 0 390 844">
+            <use href="#map-base"/>
+            <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M322 380 L300 336 L300 258 L236 226 L160 206 L104 196 L70 186" stroke="var(--cyan)" stroke-width="5" opacity=".55"/>
+              <path d="M322 380 L268 340 L214 300 L150 262 L100 218 L70 186" stroke="var(--brand-600)" stroke-width="5" opacity=".45"/>
+              <path d="M322 380 L250 322 L180 262 L120 222 L70 186" stroke="#fff" stroke-width="11"/>
+              <path d="M322 380 L250 322 L180 262 L120 222 L70 186" stroke="#5E6B7A" stroke-width="7"/>
+              <path d="M226 302 L180 262 L150 242" stroke="var(--hz-high)" stroke-width="7"/>
+            </g>
+            <circle cx="322" cy="380" r="16" fill="#152B3F" opacity=".12"/><circle cx="322" cy="380" r="8" fill="#152B3F" stroke="#fff" stroke-width="3"/>
+            <path d="M70 160 c-10 0 -17 7 -17 16 c0 12 17 28 17 28 s17 -16 17 -28 c0 -9 -7 -16 -17 -16z" fill="#0E9F8A" stroke="#fff" stroke-width="2.5"/><circle cx="70" cy="176" r="5" fill="#fff"/>
+            <g><circle cx="158" cy="247" r="11" fill="#fff" stroke="#E0483E" stroke-width="2"/><path d="M158 240 v8 M158 252 v.5" stroke="#E0483E" stroke-width="2.4" stroke-linecap="round"/></g>
+          </svg></div>
+          <div class="status">9:00 <span class="sys"><svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="#162235"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="#162235"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="#162235"/><rect x="13.5" y="0" width="3" height="11" rx="1" fill="#162235"/></svg><svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 2.2c2.2 0 4.2.9 5.7 2.3l1.1-1.1C12.5 1.6 10.1.6 7.5.6S2.5 1.6.7 3.4l1.1 1.1C3.3 3.1 5.3 2.2 7.5 2.2zm0 3.2c1.3 0 2.5.5 3.4 1.4l1.1-1.1C10.8 4.5 9.2 3.8 7.5 3.8S4.2 4.5 3 5.7l1.1 1.1c.9-.9 2.1-1.4 3.4-1.4zm0 3.2c-.5 0-1 .2-1.3.5l1.3 1.3 1.3-1.3c-.3-.3-.8-.5-1.3-.5z" fill="#162235"/></svg><svg width="25" height="12" viewBox="0 0 25 12"><rect x=".5" y=".5" width="21" height="11" rx="3" fill="none" stroke="#162235" opacity=".4"/><rect x="2" y="2" width="18" height="8" rx="2" fill="#162235"/><rect x="22.5" y="4" width="1.6" height="4" rx=".8" fill="#162235" opacity=".4"/></svg></span></div>
+          <div class="map-top">
+            <div class="round-btn"><svg class="ico"><use href="#i-back"/></svg></div>
+            <div class="search"><svg class="ico sm" style="color:var(--teal)"><use href="#i-pin"/></svg><span>Almario Elementary School</span></div>
+            <div class="round-btn"><svg class="ico"><use href="#i-layers_two"/></svg></div>
+          </div>
+          <div class="pills">
+            <span class="pill on"><svg class="ico sm"><use href="#i-walk"/></svg>Walk</span>
+            <span class="pill"><svg class="ico sm"><use href="#i-motorcycle"/></svg></span>
+            <span class="pill"><svg class="ico sm"><use href="#i-car"/></svg></span>
+            <span class="pill tag"><span class="dot"></span>5-year flood</span>
+          </div>
+          <div class="sheet" style="bottom: 20px">
+            <div class="handle"></div>
+            <div class="sheet-head"><div class="grow"><div class="t-section">3 routes to Almario Elementary School</div><div class="t-caption">Walking · checked against the NOAH 5-year flood map</div></div></div>
+            <div class="rcards">
+              <div class="rcard"><span class="radio"></span><span class="name">Lowest risk <span class="chip teal">Recommended</span></span><span class="stats">41 min</span></div>
+              <div class="rcard"><span class="radio"></span><span class="name">Balanced <span class="chip orange">Medium</span></span><span class="stats">33 min</span></div>
+              <div class="rcard sel direct"><span class="radio"></span><span class="name">Most direct <span class="chip red">High</span></span><span class="stats">28 min</span>
+                <span class="why"><span class="line-key" style="background:#5E6B7A"></span>2.6 km · fastest, but crosses a flood zone</span></div>
+            </div>
+            <div class="drawer">
+              <div class="drawer-head"><svg class="ico sm" style="color:var(--red)"><use href="#i-warning"/></svg><span class="grow">3 warnings on this route</span><svg class="ico sm muted" style="transform:rotate(-90deg)"><use href="#i-chevron_right"/></svg></div>
+              <div class="warn-row"><span class="warn-ico" style="background:var(--red-soft);color:var(--red)"><svg class="ico sm"><use href="#i-warning"/></svg></span><span><span class="t-label">High flood hazard on Recto Ave</span><span class="t-caption">350 m in NOAH high hazard (over 1.5 m deep)</span></span></div>
+              <div class="warn-row"><span class="warn-ico" style="background:var(--violet-soft);color:var(--violet)"><svg class="ico sm"><use href="#i-bridge"/></svg></span><span><span class="t-label">Unverified bridge</span><span class="t-caption">Estero bridge near Rizal Ave · the LGU has not confirmed it</span></span></div>
+              <div class="warn-row"><span class="warn-ico" style="background:var(--orange-soft);color:var(--orange)"><svg class="ico sm"><use href="#i-car"/></svg></span><span><span class="t-label">Heavy traffic near Quezon Blvd</span><span class="t-caption">About 9 minutes of delay · live</span></span></div>
+            </div>
+            <div class="btn warn" style="margin-top:12px"><svg class="ico"><use href="#i-warning"/></svg>Start anyway</div>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+
+      <div class="notes">
+        <h3>How it works</h3>
+        <ul>
+          <li>The three routes are Lowest risk (recommended), Balanced and Most direct.</li>
+          <li>"Safest" is renamed "Lowest risk" because the app must never call a route safe.</li>
+          <li>Each card shows the time, a risk chip and one plain reason.</li>
+          <li>Tapping a card brings its line to the front; the others fade.</li>
+          <li>The drawer lists the chosen route's flood, bridge and traffic warnings.</li>
+          <li>A route with a high-hazard warning turns the button into "Start anyway".</li>
+          <li>The bottom navigation hides while routes are compared, so the map stays visible.</li>
+        </ul>
+        <h3>Figma to code</h3>
+        <ul>
+          <li>Cards reuse the 24 dp card look at 18 dp radius; the chosen card gets a 2 dp cyan border.</li>
+          <li>Risk chips reuse <code>Badges</code> tones: teal, orange, red.</li>
+          <li>Route lines: cyan #12B5D0, brand #24547F and grey #9AA6B2, with hazard segments in #E0483E.</li>
+          <li>Button: navy pill, 50 dp; "Start anyway" is the outline red variant.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3. GUIDANCE ================= -->
+  <section class="flow">
+    <h2>3. Guidance with quiet rerouting</h2>
+    <p class="lead">During the trip the screen shows only the next turn, and better paths are swapped in quietly.</p>
+    <div class="row">
+      <div class="frame-wrap">
+        <div class="frame-name">Client / Safe Route / Guidance (route updated)</div>
+        <div class="phone">
+          <div class="map"><svg width="390" height="844" viewBox="0 0 390 844">
+            <use href="#map-base"/>
+            <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M300 300 L300 258 L236 226 L160 206 L104 196 L70 186" stroke="#fff" stroke-width="11"/>
+              <path d="M300 300 L300 258 L236 226 L160 206 L104 196 L70 186" stroke="var(--cyan)" stroke-width="7"/>
+              <path d="M300 420 L300 300" stroke="#B9C3CF" stroke-width="6" stroke-dasharray="2 9"/>
+            </g>
+            <circle cx="300" cy="320" r="20" fill="#12B5D0" opacity=".18"/>
+            <path d="M300 306 l10 24 l-10 -6 l-10 6z" fill="#152B3F" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
+            <path d="M70 160 c-10 0 -17 7 -17 16 c0 12 17 28 17 28 s17 -16 17 -28 c0 -9 -7 -16 -17 -16z" fill="#0E9F8A" stroke="#fff" stroke-width="2.5"/><circle cx="70" cy="176" r="5" fill="#fff"/>
+          </svg></div>
+          <div class="status">9:00 <span class="sys"><svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="#162235"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="#162235"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="#162235"/><rect x="13.5" y="0" width="3" height="11" rx="1" fill="#162235"/></svg><svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 2.2c2.2 0 4.2.9 5.7 2.3l1.1-1.1C12.5 1.6 10.1.6 7.5.6S2.5 1.6.7 3.4l1.1 1.1C3.3 3.1 5.3 2.2 7.5 2.2zm0 3.2c1.3 0 2.5.5 3.4 1.4l1.1-1.1C10.8 4.5 9.2 3.8 7.5 3.8S4.2 4.5 3 5.7l1.1 1.1c.9-.9 2.1-1.4 3.4-1.4zm0 3.2c-.5 0-1 .2-1.3.5l1.3 1.3 1.3-1.3c-.3-.3-.8-.5-1.3-.5z" fill="#162235"/></svg><svg width="25" height="12" viewBox="0 0 25 12"><rect x=".5" y=".5" width="21" height="11" rx="3" fill="none" stroke="#162235" opacity=".4"/><rect x="2" y="2" width="18" height="8" rx="2" fill="#162235"/><rect x="22.5" y="4" width="1.6" height="4" rx=".8" fill="#162235" opacity=".4"/></svg></span></div>
+          <div class="guide">
+            <div class="turn"><svg class="ico lg" style="transform:rotate(180deg)"><use href="#i-arrow_right"/></svg></div>
+            <div style="flex:1"><div class="t-micro" style="opacity:.7; letter-spacing:.08em">IN 120 M</div><div class="t-section" style="color:#fff">Turn left onto Lerma St</div></div>
+          </div>
+          <div class="toast"><svg class="ico sm" style="color:var(--green)"><use href="#i-check_circle"/></svg>Switched to a path with less traffic</div>
+          <div class="map-btns" style="top: 470px"><div class="round-btn"><svg class="ico"><use href="#i-my_location"/></svg></div></div>
+          <div class="sheet" style="bottom: 20px">
+            <div class="handle"></div>
+            <div style="display:flex; align-items:center; gap:12px">
+              <div style="flex:1"><div class="t-title">36 min</div><div class="t-caption">3.1 km left · Lowest risk route · arrive 9:38</div></div>
+              <div class="btn outline" style="width:96px">End</div>
+            </div>
+          </div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+      <div class="notes">
+        <h3>How it works</h3>
+        <ul>
+          <li>Guidance shows the next turn, time and distance left, and an End button.</li>
+          <li>The risk engine re-checks the remaining route in the background as traffic and closures change.</li>
+          <li>A lower-risk or faster path replaces the line without asking anything while moving.</li>
+          <li>A small toast says what changed and fades after 4 seconds.</li>
+          <li>Voice guidance stays out of scope, as today.</li>
+        </ul>
+        <h3>Figma to code</h3>
+        <ul>
+          <li>Turn card: navy surface, 24 dp radius, Micro + Section text in white.</li>
+          <li>Toast: glass pill with <code>ic_check_circle</code> in green.</li>
+          <li>Bottom card: the existing floating sheet in its compact state.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 4. CENTER CAPACITY ================= -->
+  <section class="flow">
+    <h2>4. Center capacity manager (LGU staff)</h2>
+    <p class="lead">Staff update headcount, status and facilities for one evacuation center.</p>
+    <div class="row">
+      <div class="frame-wrap">
+        <div class="frame-name">LGU / Data &amp; Centers / Center capacity (full scroll)</div>
+        <div class="phone tall">
+          <div class="status">9:00 <span class="sys"><svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="#162235"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="#162235"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="#162235"/><rect x="13.5" y="0" width="3" height="11" rx="1" fill="#162235"/></svg><svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 2.2c2.2 0 4.2.9 5.7 2.3l1.1-1.1C12.5 1.6 10.1.6 7.5.6S2.5 1.6.7 3.4l1.1 1.1C3.3 3.1 5.3 2.2 7.5 2.2zm0 3.2c1.3 0 2.5.5 3.4 1.4l1.1-1.1C10.8 4.5 9.2 3.8 7.5 3.8S4.2 4.5 3 5.7l1.1 1.1c.9-.9 2.1-1.4 3.4-1.4zm0 3.2c-.5 0-1 .2-1.3.5l1.3 1.3 1.3-1.3c-.3-.3-.8-.5-1.3-.5z" fill="#162235"/></svg><svg width="25" height="12" viewBox="0 0 25 12"><rect x=".5" y=".5" width="21" height="11" rx="3" fill="none" stroke="#162235" opacity=".4"/><rect x="2" y="2" width="18" height="8" rx="2" fill="#162235"/><rect x="22.5" y="4" width="1.6" height="4" rx=".8" fill="#162235" opacity=".4"/></svg></span></div>
+          <div class="toolbar"><div class="round-btn"><svg class="ico"><use href="#i-back"/></svg></div><div class="t-title" style="flex:1">Center capacity</div><div class="round-btn"><svg class="ico"><use href="#i-more"/></svg></div></div>
+          <div class="scroll">
+            <div class="card">
+              <div class="t-section">Almario Elementary School</div>
+              <div class="t-caption" style="margin-top:2px">Barangay 20 · Tondo, Manila</div>
+              <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap"><span class="chip green"><svg class="ico sm" style="width:12px;height:12px"><use href="#i-status_check"/></svg>Location verified</span><span class="chip grey">Landmark: beside Brgy. 20 hall</span></div>
+            </div>
+            <div class="card">
+              <div style="display:flex; justify-content:space-between; align-items:center"><span class="t-eyebrow">Current headcount</span><span class="chip orange">Near capacity</span></div>
+              <div style="display:flex; align-items:baseline; gap:6px; margin-top:6px"><span class="t-display">212</span><span class="t-body muted">of 300 people · 71%</span></div>
+              <div class="gauge"><span class="fill" style="width:71%; background:#E9B23C"></span><span class="tick" style="left:70%"></span><span class="tick" style="left:90%"></span></div>
+              <div class="gauge-scale"><span style="left:0">0</span><span style="left:70%">70%</span><span style="left:90%">90%</span></div>
+              <div class="steppers">
+                <span class="step">−10</span><span class="step">−5</span><span class="step">−1</span>
+                <span class="step plus">+1</span><span class="step plus">+5</span><span class="step plus">+10</span>
+              </div>
+              <div class="exact"><div class="field"><span class="lbl">Exact headcount</span><span class="val">212</span></div><span class="set-btn">Set</span></div>
+              <div class="t-caption" style="margin-top:6px">The limit is 360 people (120% of capacity).</div>
+            </div>
+            <div class="card">
+              <span class="t-eyebrow">Status</span>
+              <div class="seg"><span>Open</span><span class="on"><svg class="ico sm" style="width:12px;height:12px"><use href="#i-status_check"/></svg>Near capacity</span><span>Full</span><span>Closed</span><span>Unavailable</span></div>
+              <div class="t-caption" style="margin-top:6px">Suggested from the headcount; you can change it.</div>
+            </div>
+            <div class="card">
+              <span class="t-eyebrow">Facilities</span>
+              <div class="checks">
+                <span><span class="box on"><svg class="ico sm" style="width:12px;height:12px"><use href="#i-status_check"/></svg></span>PWD accessible</span>
+                <span><span class="box on"><svg class="ico sm" style="width:12px;height:12px"><use href="#i-status_check"/></svg></span>Senior friendly</span>
+                <span><span class="box"></span>Isolation room</span>
+                <span><span class="box on"><svg class="ico sm" style="width:12px;height:12px"><use href="#i-status_check"/></svg></span>Lactation station</span>
+              </div>
+            </div>
+            <div class="audit"><svg class="ico sm muted" style="margin-top:2px"><use href="#i-clock"/></svg><span class="t-caption" style="color:var(--text)"><b>+5 by Manila DRRM Demo</b> at 9:42 AM · source: barangay field check</span></div>
+          </div>
+          <div class="savebar"><div class="btn primary">Save changes</div></div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="frame-name">LGU / Center capacity (offline, over limit)</div>
+        <div class="phone tall">
+          <div class="status">9:00 <span class="sys"><svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="#162235"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="#162235"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="#162235"/><rect x="13.5" y="0" width="3" height="11" rx="1" fill="#162235"/></svg><svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 2.2c2.2 0 4.2.9 5.7 2.3l1.1-1.1C12.5 1.6 10.1.6 7.5.6S2.5 1.6.7 3.4l1.1 1.1C3.3 3.1 5.3 2.2 7.5 2.2zm0 3.2c1.3 0 2.5.5 3.4 1.4l1.1-1.1C10.8 4.5 9.2 3.8 7.5 3.8S4.2 4.5 3 5.7l1.1 1.1c.9-.9 2.1-1.4 3.4-1.4zm0 3.2c-.5 0-1 .2-1.3.5l1.3 1.3 1.3-1.3c-.3-.3-.8-.5-1.3-.5z" fill="#162235"/></svg><svg width="25" height="12" viewBox="0 0 25 12"><rect x=".5" y=".5" width="21" height="11" rx="3" fill="none" stroke="#162235" opacity=".4"/><rect x="2" y="2" width="18" height="8" rx="2" fill="#162235"/><rect x="22.5" y="4" width="1.6" height="4" rx=".8" fill="#162235" opacity=".4"/></svg></span></div>
+          <div class="toolbar"><div class="round-btn"><svg class="ico"><use href="#i-back"/></svg></div><div class="t-title" style="flex:1">Center capacity</div><div class="round-btn"><svg class="ico"><use href="#i-more"/></svg></div></div>
+          <div class="scroll">
+            <div class="pending"><svg class="ico sm"><use href="#i-offline"/></svg><span class="t-label">Pending sync · 3 changes saved on this phone</span></div>
+            <div class="card">
+              <div class="t-section">Barangay 105 Covered Court</div>
+              <div class="t-caption" style="margin-top:2px">Barangay 105 · Tondo, Manila</div>
+              <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap"><span class="chip orange">Location not verified</span><span class="chip grey">Landmark: near Brgy. 105 hall</span></div>
+            </div>
+            <div class="card">
+              <div style="display:flex; justify-content:space-between; align-items:center"><span class="t-eyebrow">Current headcount</span><span class="chip red">Full</span></div>
+              <div style="display:flex; align-items:baseline; gap:6px; margin-top:6px"><span class="t-display" style="color:var(--red)">113</span><span class="t-body muted">of 120 people · 94%</span></div>
+              <div class="gauge"><span class="fill" style="width:94%; background:var(--hz-high)"></span><span class="tick" style="left:70%"></span><span class="tick" style="left:90%"></span></div>
+              <div class="gauge-scale"><span style="left:0">0</span><span style="left:70%">70%</span><span style="left:90%">90%</span></div>
+              <div class="steppers">
+                <span class="step">−10</span><span class="step">−5</span><span class="step">−1</span>
+                <span class="step plus">+1</span><span class="step plus">+5</span><span class="step plus">+10</span>
+              </div>
+              <div class="exact"><div class="field err"><span class="lbl" style="color:var(--red)">Exact headcount</span><span class="val">150</span></div><span class="set-btn" style="opacity:.4">Set</span></div>
+              <div class="t-caption" style="margin-top:6px; color:var(--red)">150 is above the limit of 144 people (120% of capacity).</div>
+            </div>
+            <div class="card">
+              <span class="t-eyebrow">Status</span>
+              <div class="seg"><span>Open</span><span>Near capacity</span><span class="on"><svg class="ico sm" style="width:12px;height:12px"><use href="#i-status_check"/></svg>Full</span><span>Closed</span><span>Unavailable</span></div>
+              <div class="t-caption" style="margin-top:6px">You changed this from the suggested "Near capacity".</div>
+            </div>
+            <div class="audit"><svg class="ico sm muted" style="margin-top:2px"><use href="#i-clock"/></svg><span class="t-caption" style="color:var(--text)"><b>+10 by Manila DRRM Demo</b> at 10:05 AM · waiting to upload</span></div>
+          </div>
+          <div class="savebar"><div class="btn primary">Save on this phone</div></div>
+          <div class="home-ind"></div>
+        </div>
+      </div>
+
+      <div class="notes">
+        <h3>How it works</h3>
+        <ul>
+          <li>It opens from LGU Data → a center row → Manage capacity.</li>
+          <li>The gauge is green under 70%, amber from 70% to 90%, and red above 90%.</li>
+          <li>Quick buttons change the headcount by 1, 5 or 10, and the field sets an exact number.</li>
+          <li>Counts above 120% of capacity are blocked with a red message.</li>
+          <li>Status is suggested from the headcount (Near capacity from 70%, Full at 100%), and staff can override it.</li>
+          <li>Each save writes an audit record, and the grey line shows the last change.</li>
+          <li>Offline saves queue on the phone and show "Pending sync" until they upload.</li>
+          <li>Unverified locations show their landmark so residents can still find them.</li>
+        </ul>
+        <h3>Figma to code</h3>
+        <ul>
+          <li>Screen uses <code>view_toolbar</code> and the glass 24 dp cards from Data &amp; Centers.</li>
+          <li>Headcount uses Display 28 sp; status chips reuse <code>Badges</code>.</li>
+          <li>Status pills reuse the list filter chip style (brand #24547F when selected).</li>
+          <li>Save bar matches the bottom navigation surface (glass, top shadow).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

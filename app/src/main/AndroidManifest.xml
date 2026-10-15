@@ -59,6 +59,9 @@
             android:name=".ui.lgu.data.CenterEditorActivity"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:name=".ui.lgu.data.CenterCapacityActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".ui.lgu.data.DatasetImportActivity"
             android:windowSoftInputMode="adjustResize" />
         <activity android:name=".ui.about.AboutActivity" />

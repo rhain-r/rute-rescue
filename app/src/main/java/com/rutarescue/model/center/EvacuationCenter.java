@@ -16,7 +16,8 @@ import java.util.Set;
  *
  * Inheritance: it is an auditable record (AuditableEntity).
  * Polymorphism: it is also Locatable, so it can be passed to the Safe Route screen.
- * Capacity is intentionally NOT modelled: there is no legitimate live source for it.
+ * Capacity: only the headcount LGU staff enter on the capacity screen (Phase 2). The app never
+ * presents it as live; every screen shows who entered it and when.
  */
 public class EvacuationCenter extends AuditableEntity implements Locatable {
 
@@ -29,6 +30,11 @@ public class EvacuationCenter extends AuditableEntity implements Locatable {
     private VerificationInfo verification;
     private boolean published;
     private String notes;
+    private String barangay = "";
+    private String landmark = "";
+    private boolean locationVerified;
+    private CenterCapacity capacity = CenterCapacity.notSet();
+    private CapacityChange lastCapacityChange;
 
     public EvacuationCenter(String id, String name, String address, MetroManilaCity city, GeoPoint location,
                             CenterStatus status, Set<AccessibilityFeature> features,
@@ -83,6 +89,34 @@ public class EvacuationCenter extends AuditableEntity implements Locatable {
         markUpdated(actorUid, now);
     }
 
+    /**
+     * Saves the capacity screen in one step: headcount, status, facilities and the change line
+     * ("+5 by Manila DRRM Demo"). The CenterCapacity object was already validated (120% limit).
+     */
+    public void updateCapacity(CenterCapacity newCapacity, CenterStatus newStatus, Set<AccessibilityFeature> newFeatures,
+                               String actorUid, String actorName, String source, long now) {
+        lastCapacityChange = new CapacityChange(capacity.getCurrentOccupancy(), newCapacity.getCurrentOccupancy(),
+                actorName, now, source);
+        capacity = newCapacity;
+        status = newStatus == null ? newCapacity.suggestedStatus() : newStatus;
+        features.clear();
+        if (newFeatures != null) features.addAll(newFeatures);
+        markUpdated(actorUid, now);
+    }
+
+    /** Barangay, a landmark residents can look for, and whether the pin was checked on site. */
+    public void setLocationDetails(String newBarangay, String newLandmark, boolean verifiedOnSite) {
+        barangay = newBarangay == null ? "" : newBarangay.strip();
+        landmark = newLandmark == null ? "" : newLandmark.strip();
+        locationVerified = verifiedOnSite;
+    }
+
+    /** Used by the repository when it reads a stored center (no audit change). */
+    public void restoreCapacity(CenterCapacity storedCapacity, CapacityChange storedChange) {
+        capacity = storedCapacity == null ? CenterCapacity.notSet() : storedCapacity;
+        lastCapacityChange = storedChange;
+    }
+
     /** Residents only see published centers, and only verified centers can be published. */
     public void setPublished(boolean shouldPublish, String actorUid, long now) {
         if (shouldPublish && !verification.isVerified()) {
@@ -116,4 +150,10 @@ public class EvacuationCenter extends AuditableEntity implements Locatable {
     public VerificationInfo getVerification() { return verification; }
     public boolean isPublished() { return published; }
     public String getNotes() { return notes; }
+    public String getBarangay() { return barangay; }
+    public String getLandmark() { return landmark; }
+    public boolean isLocationVerified() { return locationVerified; }
+    public CenterCapacity getCapacity() { return capacity; }
+    /** The last headcount change, or null if nobody has entered one yet. */
+    public CapacityChange getLastCapacityChange() { return lastCapacityChange; }
 }

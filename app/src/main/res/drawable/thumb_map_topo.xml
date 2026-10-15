@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Map layers sheet: "Topographic" base map thumbnail (contour lines) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp" android:height="70dp" android:viewportWidth="100" android:viewportHeight="70">
+    <path android:fillColor="#F3F0E6" android:pathData="M0,0h100v70h-100z" />
+    <path android:strokeColor="#C9B98F" android:strokeWidth="1.2" android:pathData="M-5,60C20,40 40,50 60,30S90,20 105,26" />
+    <path android:strokeColor="#C9B98F" android:strokeWidth="1.2" android:pathData="M-5,50C20,30 40,40 60,20S90,10 105,16" />
+    <path android:strokeColor="#C9B98F" android:strokeWidth="1.2" android:pathData="M-5,40C18,22 40,30 58,12S88,2 105,6" />
+    <path android:strokeColor="#C9B98F" android:strokeWidth="1.2" android:pathData="M-5,70C20,52 44,60 64,42S92,34 105,38" />
+    <path android:strokeColor="#A9D3E8" android:strokeWidth="5" android:pathData="M0,64C30,58 60,66 100,60" />
+</vector>

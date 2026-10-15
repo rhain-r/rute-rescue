@@ -37,6 +37,7 @@ import com.rutarescue.repository.firestore.FirestoreUserRepository;
 import com.rutarescue.repository.local.AssetHazardRepository;
 import com.rutarescue.repository.local.AssetStructureRepository;
 import com.rutarescue.service.AdvisoryMarks;
+import com.rutarescue.service.MapLayerPreferences;
 import com.rutarescue.service.AdvisoryService;
 import com.rutarescue.service.AuthService;
 import com.rutarescue.service.CenterService;
@@ -69,6 +70,8 @@ public final class AppContainer {
     public final boolean hasTomTomKey;
     /** The resident's own "Helpful" / "Save update" marks on advisories (device only). */
     public final AdvisoryMarks advisoryMarks;
+    /** Map layers sheet choices, remembered on this phone. */
+    public final MapLayerPreferences mapLayers;
 
     private final boolean firebaseReady;
     private final RouteCacheStore routeCache;
@@ -91,6 +94,7 @@ public final class AppContainer {
         hazards = new AssetHazardRepository(app.getAssets());
         structures = new AssetStructureRepository(app.getAssets());
         advisoryMarks = new AdvisoryMarks(app);
+        mapLayers = new MapLayerPreferences(app);
         hasTomTomKey = !BuildConfig.TOMTOM_API_KEY.isEmpty();
 
         // google-services.json is private configuration; without it Firebase is not initialised.

@@ -47,6 +47,16 @@ service cloud.firestore {
         && getAfter(path).data.recordId == recordId;
     }
 
+    // Center headcount entered by LGU staff: 0 or more, and at most 120% of the capacity
+    // (5 x occupancy <= 6 x capacity keeps the check in whole numbers). Older centers without
+    // the fields are still valid.
+    function validOccupancy(data) {
+      return !('occupancy' in data)
+        || (data.occupancy is int && data.occupancy >= 0
+            && (data.occupancy == 0
+                || (data.capacity is int && data.capacity > 0 && data.occupancy * 5 <= data.capacity * 6)));
+    }
+
     // ------------------------------------------------------------------ people
 
     match /users/{uid} {
@@ -87,6 +97,7 @@ service cloud.firestore {
       allow create, update: if isLguFor(request.resource.data.city)
         && (resource == null || resource.data.city == request.resource.data.city)
         && !(request.resource.data.published == true && request.resource.data.verified != true)
+        && validOccupancy(request.resource.data)
         && audited(request.resource.data.lastAuditId, centerId);
       allow delete: if false;
     }

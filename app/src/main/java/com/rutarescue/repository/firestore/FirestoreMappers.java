@@ -6,6 +6,8 @@ import com.rutarescue.exception.ValidationException;
 import com.rutarescue.model.advisory.Advisory;
 import com.rutarescue.model.advisory.AlertLevel;
 import com.rutarescue.model.center.AccessibilityFeature;
+import com.rutarescue.model.center.CapacityChange;
+import com.rutarescue.model.center.CenterCapacity;
 import com.rutarescue.model.center.CenterStatus;
 import com.rutarescue.model.center.EvacuationCenter;
 import com.rutarescue.model.center.VerificationInfo;
@@ -204,6 +206,19 @@ final class FirestoreMappers {
         map.put("verifiedAt", center.getVerification().getVerifiedAt());
         map.put("published", center.isPublished());
         map.put("notes", center.getNotes());
+        // Phase 2: location details and the LGU-entered headcount (checked by firestore.rules).
+        map.put("barangay", center.getBarangay());
+        map.put("landmark", center.getLandmark());
+        map.put("locationVerified", center.isLocationVerified());
+        map.put("capacity", center.getCapacity().getTotalPersons());
+        map.put("occupancy", center.getCapacity().getCurrentOccupancy());
+        CapacityChange change = center.getLastCapacityChange();
+        if (change != null) {
+            map.put("occupancyFrom", change.getFromCount());
+            map.put("occupancyBy", change.getActorName());
+            map.put("occupancyAt", change.getChangedAt());
+            map.put("occupancySource", change.getSource());
+        }
         map.put("lastAuditId", lastAuditId);
         putAudit(map, center);
         return map;
@@ -225,6 +240,17 @@ final class FirestoreMappers {
                 MetroManilaCity.fromCode(str(doc, "city")), new GeoPoint(dbl(doc, "lat"), dbl(doc, "lon")),
                 CenterStatus.fromName(str(doc, "status")), features, verification, bool(doc, "published"),
                 str(doc, "notes"));
+        center.setLocationDetails(str(doc, "barangay"), str(doc, "landmark"), bool(doc, "locationVerified"));
+        int occupancy = (int) num(doc, "occupancy");
+        CenterCapacity capacity;
+        try {
+            capacity = new CenterCapacity((int) num(doc, "capacity"), occupancy);
+        } catch (ValidationException damaged) {
+            capacity = CenterCapacity.notSet(); // a bad stored count never hides the center
+        }
+        CapacityChange change = doc.contains("occupancyAt") ? new CapacityChange((int) num(doc, "occupancyFrom"),
+                occupancy, str(doc, "occupancyBy"), num(doc, "occupancyAt"), str(doc, "occupancySource")) : null;
+        center.restoreCapacity(capacity, change);
         restoreAudit(center, doc);
         return center;
     }

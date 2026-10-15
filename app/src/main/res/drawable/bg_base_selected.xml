@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chosen base-map thumbnail: 2 dp navy outline, 2 dp away from the 16 dp tile -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@android:color/transparent" />
+    <corners android:radius="18dp" />
+    <stroke android:width="2dp" android:color="@color/rr_navy" />
+</shape>

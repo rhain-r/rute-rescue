@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 1 route card ("Lowest risk", "Balanced", "Most direct"): white card, 18 dp corners,
+    1 dp #E8EAED border; the chosen card gets a 2 dp cyan border (red for a route with a serious
+    warning). Radio, route name in Montserrat SemiBold 15 sp, a risk chip, the time on the right,
+    and (chosen card only) the route colour key with one plain reason.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/option_card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/bg_route_option"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="@drawable/ripple_card"
+    android:orientation="vertical"
+    android:paddingStart="12dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="12dp"
+    android:paddingBottom="10dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <View
+            android:id="@+id/option_radio"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:background="@drawable/bg_radio_off" />
+
+        <TextView
+            android:id="@+id/option_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:fontFamily="@font/montserrat_semibold"
+            android:textColor="@color/rr_text"
+            android:textSize="15sp"
+            tools:text="Lowest risk" />
+
+        <TextView
+            android:id="@+id/option_chip"
+            style="@style/RR.SoftChip"
+            android:layout_marginStart="6dp"
+            tools:text="Recommended" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/option_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/karla_bold"
+            android:textColor="@color/rr_text"
+            android:textSize="15sp"
+            tools:text="41 min" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/option_reason_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <View
+            android:id="@+id/option_key"
+            android:layout_width="18dp"
+            android:layout_height="4dp"
+            android:background="@drawable/bg_line_key" />
+
+        <TextView
+            android:id="@+id/option_reason"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:textAppearance="@style/TextAppearance.RR.Caption"
+            android:textColor="@color/rr_text_secondary"
+            android:textSize="12.5sp"
+            tools:text="3.4 km · avoids every high-hazard street" />
+    </LinearLayout>
+</LinearLayout>

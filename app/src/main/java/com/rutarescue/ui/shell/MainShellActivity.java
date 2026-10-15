@@ -50,6 +50,8 @@ public class MainShellActivity extends BaseActivity implements ConnectivityMonit
     private View offlineBanner;
     private boolean lgu;
     private int currentTab = -1;
+    private boolean keyboardOpen;
+    private boolean navHiddenByScreen;
 
     /** Intent that opens the Safe Route tab with a destination (used by detail screens). */
     public static Intent routeIntent(Context context, Locatable destination) {
@@ -103,14 +105,28 @@ public class MainShellActivity extends BaseActivity implements ConnectivityMonit
         ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
-            boolean keyboardOpen = ime.bottom > bars.bottom;
+            keyboardOpen = ime.bottom > bars.bottom;
             view.setPadding(bars.left, bars.top, bars.right, keyboardOpen ? ime.bottom : 0);
             content.setPadding(0, 0, 0, keyboardOpen ? 0 : bars.bottom);
             bar.setPadding(bar.getPaddingLeft(), bar.getPaddingTop(), bar.getPaddingRight(),
                     navBottomPadding + bars.bottom);
-            bar.setVisibility(keyboardOpen ? View.GONE : View.VISIBLE);
+            updateNavVisibility();
             return WindowInsetsCompat.CONSUMED;
         });
+    }
+
+    /**
+     * Phase 1: the Safe Route tab hides the navigation bar while routes are compared and during
+     * guidance, so the map stays visible. Leaving the tab shows it again.
+     */
+    public void setBottomNavHidden(boolean hidden) {
+        navHiddenByScreen = hidden;
+        updateNavVisibility();
+    }
+
+    private void updateNavVisibility() {
+        View bar = findViewById(R.id.bottom_nav);
+        bar.setVisibility(keyboardOpen || navHiddenByScreen ? View.GONE : View.VISIBLE);
     }
 
     @Override
@@ -155,6 +171,7 @@ public class MainShellActivity extends BaseActivity implements ConnectivityMonit
     /** Shows one tab and hides the others, keeping their state (and map views) alive. */
     public void selectTab(int index) {
         if (index == currentTab) return;
+        setBottomNavHidden(false); // a tab that wants it hidden asks again in onTabShown()
         FragmentManager manager = getSupportFragmentManager();
         FragmentTransaction transaction = manager.beginTransaction();
         for (int i = 0; i < tabs.length; i++) {

@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Styles for the Phase 2 screens, taken from the approved Phase 1 frames
+    (docs/design/phase1-ui.html): map layers sheet, three route cards and warning drawer,
+    guidance turn card, and the LGU center capacity screen. Same Figma tokens as the rest.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- "Start anyway": white pill, red text, 1.5 dp red outline (route with a serious warning) -->
+    <style name="Widget.RR.Button.Warning" parent="Widget.RR.Button.Primary">
+        <item name="backgroundTint">@color/rr_surface</item>
+        <item name="android:textColor">@color/rr_red</item>
+        <item name="iconTint">@color/rr_red</item>
+        <item name="strokeColor">@color/rr_red</item>
+        <item name="strokeWidth">1.5dp</item>
+        <item name="elevation">0dp</item>
+        <item name="android:elevation">0dp</item>
+    </style>
+
+    <!-- "Reset", "End": white pill with the #E8EAED outline and navy text -->
+    <style name="Widget.RR.Button.Outline" parent="Widget.RR.Button.Primary">
+        <item name="backgroundTint">@color/rr_surface</item>
+        <item name="android:textColor">@color/rr_text</item>
+        <item name="iconTint">@color/rr_text</item>
+        <item name="strokeColor">@color/rr_divider</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="elevation">0dp</item>
+        <item name="android:elevation">0dp</item>
+    </style>
+
+    <!-- Capacity status pills: list filter chip (brand #24547F when chosen) with a white check -->
+    <style name="Widget.RR.Chip.Status" parent="Widget.RR.Chip">
+        <item name="checkedIconVisible">true</item>
+        <item name="checkedIcon">@drawable/ic_status_check</item>
+        <item name="checkedIconTint">@color/white</item>
+        <item name="checkedIconSize">14dp</item>
+        <item name="iconStartPadding">10dp</item>
+    </style>
+
+    <!-- 22 dp soft chip: "Recommended", "Prepared, not live", "Location verified" -->
+    <style name="RR.SoftChip">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">22dp</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:drawablePadding">4dp</item>
+        <item name="android:background">@drawable/bg_chip_soft</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Micro</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.04</item>
+        <item name="android:fontFamily">@font/karla_semibold</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <!-- Group label above sheet sections: "BASE MAP", "FLOOD RISK · PROJECT NOAH" -->
+    <style name="RR.GroupLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Micro</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.1</item>
+        <item name="android:fontFamily">@font/karla_semibold</item>
+        <item name="android:textColor">@color/rr_text_secondary</item>
+    </style>
+
+    <!-- One switch row in the map layers sheet (52 dp) -->
+    <style name="RR.LayerRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:paddingTop">9dp</item>
+        <item name="android:paddingBottom">9dp</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+    </style>
+
+    <!-- 32 dp layer swatch with its icon -->
+    <style name="RR.LayerSwatch">
+        <item name="android:layout_width">32dp</item>
+        <item name="android:layout_height">32dp</item>
+        <item name="android:padding">6dp</item>
+        <item name="android:background">@drawable/bg_icon_square</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
+    <!-- Map layer switch: brand #24547F when on -->
+    <style name="Widget.RR.Switch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
+        <item name="trackTint">@color/switch_track</item>
+        <item name="thumbTint">@color/white</item>
+        <item name="trackDecorationTint">@android:color/transparent</item>
+        <item name="android:minHeight">32dp</item>
+        <item name="android:minWidth">48dp</item>
+    </style>
+
+    <!-- Headcount quick buttons: 44 dp, 14 dp corners -->
+    <style name="RR.Step">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">44dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/bg_step</item>
+        <item name="android:foreground">@drawable/ripple_card</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Label</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">@font/karla_bold</item>
+        <item name="android:textColor">@color/rr_text</item>
+    </style>
+
+    <style name="RR.Step.Plus">
+        <item name="android:background">@drawable/bg_step_plus</item>
+        <item name="android:textColor">@color/rr_step_plus_text</item>
+    </style>
+
+    <!-- Facility checkboxes on the capacity screen -->
+    <style name="Widget.RR.CheckBox" parent="Widget.Material3.CompoundButton.CheckBox">
+        <item name="buttonTint">@color/checkbox_tint</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Body</item>
+        <item name="android:fontFamily">@font/karla_medium</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:minHeight">36dp</item>
+    </style>
+
+    <!-- Base map thumbnails: 16 dp corners -->
+    <style name="ShapeAppearance.RR.Thumb" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <!-- Legend text next to the colour keys -->
+    <style name="RR.LegendText">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">5dp</item>
+        <item name="android:fontFamily">@font/karla_medium</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/rr_text_secondary</item>
+    </style>
+
+    <!-- Map layers sheet: white, 30 dp top corners (Figma bg_sheet), 24% scrim -->
+    <style name="ThemeOverlay.RR.LayersSheet" parent="ThemeOverlay.RR.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.RR.BottomSheet</item>
+        <item name="android:backgroundDimAmount">0.24</item>
+    </style>
+
+    <style name="Widget.RR.BottomSheet" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="shapeAppearance">@style/ShapeAppearance.RR.SheetTop</item>
+        <item name="backgroundTint">@color/rr_surface</item>
+    </style>
+
+    <style name="ShapeAppearance.RR.SheetTop" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">30dp</item>
+        <item name="cornerSizeTopRight">30dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+
+    <!-- Capacity screen cards: glass, 24 dp corners, 14 dp padding, 12 dp apart (Figma bg_card) -->
+    <style name="RR.CapacityCard">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">12dp</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:background">@drawable/bg_card</item>
+        <item name="android:elevation">@dimen/elevation_sm</item>
+        <item name="android:padding">@dimen/card_padding</item>
+    </style>
+
+    <!-- 0 / 70% / 90% under the capacity gauge -->
+    <style name="RR.GaugeLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:fontFamily">@font/karla_medium</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@color/rr_text_subtle</item>
+    </style>
+</resources>

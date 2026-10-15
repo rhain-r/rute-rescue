@@ -94,8 +94,10 @@ public final class Badges {
     public static void center(TextView badge, CenterStatus status) {
         switch (status) {
             case OPEN: style(badge, "Open", Tone.GREEN); break;
-            case STANDBY: style(badge, "Standby", Tone.ORANGE); break;
+            case NEAR_CAPACITY: style(badge, "Near capacity", Tone.ORANGE); break;
+            case FULL: style(badge, "Full", Tone.RED); break;
             case CLOSED: style(badge, "Closed", Tone.RED); break;
+            case UNAVAILABLE: style(badge, "Unavailable", Tone.GREY); break;
             default: style(badge, "Not reported", Tone.GREY);
         }
     }

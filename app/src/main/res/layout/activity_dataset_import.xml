@@ -32,6 +32,16 @@
             android:text="@string/use_legacy_list"
             app:icon="@drawable/ic_file" />
 
+        <!-- Phase 2: the PLM SSC list (24 Jul 2024), with barangay and landmark for each center -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/import_plmssc"
+            style="@style/Widget.RR.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/use_plmssc_list"
+            app:icon="@drawable/ic_file" />
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/import_choose"
             style="@style/Widget.RR.Button.Secondary"

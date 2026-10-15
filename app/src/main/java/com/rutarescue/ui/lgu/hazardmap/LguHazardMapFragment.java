@@ -23,6 +23,7 @@ import com.rutarescue.model.center.EvacuationCenter;
 import com.rutarescue.model.common.GeoPoint;
 import com.rutarescue.model.hazard.FloodScenario;
 import com.rutarescue.model.hazard.HazardClass;
+import com.rutarescue.model.map.MapLayerSettings;
 import com.rutarescue.model.route.RoadClosure;
 import com.rutarescue.model.structure.RoadStructureRecord;
 import com.rutarescue.model.structure.StructureStatus;
@@ -30,11 +31,13 @@ import com.rutarescue.model.user.LguProfile;
 import com.rutarescue.repository.StructureStatusRepository;
 import com.rutarescue.risk.HazardLookup;
 import com.rutarescue.risk.StructureIndex;
+import com.rutarescue.service.MapLayerPreferences;
 import com.rutarescue.ui.common.Badges;
 import com.rutarescue.ui.common.BaseFragment;
 import com.rutarescue.ui.common.Dialogs;
 import com.rutarescue.ui.common.UiCallback;
 import com.rutarescue.ui.map.MapController;
+import com.rutarescue.ui.map.MapLayersSheet;
 import com.rutarescue.util.Formats;
 import com.rutarescue.util.GeoMath;
 import com.rutarescue.validation.InputValidator;
@@ -51,7 +54,7 @@ import java.util.Map;
  * closures. Each change is written with an audit event and immediately affects the
  * residents' route ranking.
  */
-public class LguHazardMapFragment extends BaseFragment {
+public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet.Listener {
 
     private LguProfile lgu;
     /** Parallel ways closer than this (metres, degrees) are parts of the same bridge or tunnel. */
@@ -60,6 +63,8 @@ public class LguHazardMapFragment extends BaseFragment {
 
     private MapController map;
     private FloodScenario scenario = FloodScenario.DEFAULT;
+    private MapLayerSettings layers;
+    private boolean syncingPills; // true while the pills are updated from the Map layers sheet
     private StructureIndex structureIndex;
     private List<RoadClosure> closures = new ArrayList<>();
     private GeoPoint selected;
@@ -77,12 +82,13 @@ public class LguHazardMapFragment extends BaseFragment {
         sheet = view.findViewById(R.id.lgu_map_sheet);
         ((TextView) view.findViewById(R.id.lgu_closures_title)).setText("Active closures • "
                 + lgu.getJurisdiction().getDisplayName());
+        layers = container().mapLayers.load(MapLayerPreferences.LGU_MAP);
+        scenario = layers.getAssessmentScenario();
         updateLayerLabel();
 
         map = new MapController(view.findViewById(R.id.lgu_map), BuildConfig.TOMTOM_API_KEY);
         map.onCreate(state, ready -> {
-            ready.showHazard(scenario, container().hazards, container().executors);
-            ready.setTrafficVisible(true);
+            ready.applyLayers(layers, container().hazards, container().executors);
             ready.setOnMapClick(this::select);
             ready.setOnMapLongClick(point -> {
                 select(point);
@@ -100,20 +106,29 @@ public class LguHazardMapFragment extends BaseFragment {
         Chip zones = view.findViewById(R.id.lgu_layer_zones);
         Chip structures = view.findViewById(R.id.lgu_layer_structures);
         Chip centers = view.findViewById(R.id.lgu_layer_centers);
+        syncPills(view);
         zones.setOnCheckedChangeListener((b, checked) -> map.setHazardVisible(checked));
         // "Routes" layer: bridges/tunnels, LGU closures and (with a TomTom key) live traffic.
         structures.setOnCheckedChangeListener((b, checked) -> {
-            map.setStructuresVisible(checked);
-            map.setTrafficVisible(checked);
+            if (syncingPills) return;
+            layers.setStructuresVisible(checked);
+            layers.setTrafficVisible(checked);
+            saveAndApplyLayers();
         });
-        centers.setOnCheckedChangeListener((b, checked) -> map.setCentersVisible(checked));
+        centers.setOnCheckedChangeListener((b, checked) -> {
+            if (syncingPills) return;
+            layers.setCentersVisible(checked);
+            saveAndApplyLayers();
+        });
         ChipGroup scenarios = view.findViewById(R.id.lgu_scenario_chips);
         scenarios.setOnCheckedStateChangeListener((group, ids) -> {
-            if (ids.isEmpty()) return;
+            if (ids.isEmpty() || syncingPills) return;
             int id = ids.get(0);
             scenario = id == R.id.lgu_scenario_25 ? FloodScenario.TWENTY_FIVE_YEAR
                     : id == R.id.lgu_scenario_100 ? FloodScenario.HUNDRED_YEAR : FloodScenario.FIVE_YEAR;
-            map.showHazard(scenario, container().hazards, container().executors);
+            // A scenario pill shows that one scenario; the Map layers sheet can show several.
+            for (FloodScenario each : FloodScenario.values()) layers.setFloodVisible(each, each == scenario);
+            saveAndApplyLayers();
             updateLayerLabel();
             if (selected != null) select(selected);
         });
@@ -127,10 +142,45 @@ public class LguHazardMapFragment extends BaseFragment {
                 .setPositiveButton(android.R.string.ok, null)
                 .show());
         view.findViewById(R.id.lgu_locate).setOnClickListener(v -> locate());
-        view.findViewById(R.id.lgu_layers).setOnClickListener(v -> zones.setChecked(!zones.isChecked()));
+        view.findViewById(R.id.lgu_layers).setOnClickListener(v -> openLayers());
 
         view.findViewById(R.id.lgu_sel_set_status).setOnClickListener(v -> setStructureStatus());
         view.findViewById(R.id.lgu_sel_report_closure).setOnClickListener(v -> reportClosure());
+    }
+
+    // ------------------------------------------------------------------ map layers (Phase 1 sheet)
+
+    private void openLayers() {
+        MapLayersSheet.TrafficState traffic = BuildConfig.TOMTOM_API_KEY == null || BuildConfig.TOMTOM_API_KEY.isEmpty()
+                ? MapLayersSheet.TrafficState.NO_KEY
+                : container().connectivity.isOnline() ? MapLayersSheet.TrafficState.LIVE : MapLayersSheet.TrafficState.CACHED;
+        MapLayersSheet.newInstance(layers, traffic).show(getChildFragmentManager(), MapLayersSheet.TAG);
+    }
+
+    @Override
+    public void onLayersChanged(MapLayerSettings settings) {
+        layers = settings;
+        scenario = settings.getAssessmentScenario();
+        saveAndApplyLayers();
+        updateLayerLabel();
+        if (getView() != null) syncPills(getView());
+        if (selected != null) select(selected);
+    }
+
+    private void saveAndApplyLayers() {
+        container().mapLayers.save(MapLayerPreferences.LGU_MAP, layers);
+        if (map != null && map.isReady()) map.applyLayers(layers, container().hazards, container().executors);
+    }
+
+    /** Shows the sheet's choices on the Figma pills without running their listeners. */
+    private void syncPills(View view) {
+        syncingPills = true;
+        ((Chip) view.findViewById(R.id.lgu_layer_structures)).setChecked(layers.isStructuresVisible());
+        ((Chip) view.findViewById(R.id.lgu_layer_centers)).setChecked(layers.isCentersVisible());
+        int pill = scenario == FloodScenario.TWENTY_FIVE_YEAR ? R.id.lgu_scenario_25
+                : scenario == FloodScenario.HUNDRED_YEAR ? R.id.lgu_scenario_100 : R.id.lgu_scenario_5;
+        ((ChipGroup) view.findViewById(R.id.lgu_scenario_chips)).check(pill);
+        syncingPills = false;
     }
 
     /** Centers the map on the officer's location, or on the jurisdiction's first center. */

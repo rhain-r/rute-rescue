@@ -17,14 +17,17 @@ import java.util.Locale;
 
 /**
  * Reads an evacuation-center CSV for the LGU "import, validate, preview, publish" flow
- * (DOCX section 3). Expected header:
+ * (DOCX section 3). Two headers are accepted:
  *     name,address,city,latitude,longitude,source
- * Every row is validated with the EvacuationCenter constructor; bad rows are reported
- * with their line number instead of stopping the import.
+ *     name,address,city,latitude,longitude,source,barangay,landmark,location_verified
+ * The second one (PLM SSC 2024 list, Phase 2) adds the barangay, a landmark residents can look
+ * for, and whether the pin was checked on site. Every row is validated with the EvacuationCenter
+ * constructor; bad rows are reported with their line number instead of stopping the import.
  */
 public final class CenterCsvReader {
 
     public static final String HEADER = "name,address,city,latitude,longitude,source";
+    public static final String EXTENDED_HEADER = HEADER + ",barangay,landmark,location_verified";
 
     /** One previewed row: either a valid (still unverified) center or an error. */
     public static final class Row {
@@ -53,8 +56,11 @@ public final class CenterCsvReader {
             return rows;
         }
         if (header.startsWith("\uFEFF")) header = header.substring(1);
-        if (!HEADER.equals(header.strip().toLowerCase(Locale.ROOT))) {
-            rows.add(new Row(1, null, "", "Unexpected header. Use: " + HEADER));
+        String normalized = header.strip().toLowerCase(Locale.ROOT);
+        boolean extended = EXTENDED_HEADER.equals(normalized);
+        if (!extended && !HEADER.equals(normalized)) {
+            rows.add(new Row(1, null, "", "Unexpected header. Use: " + HEADER + " (optionally with "
+                    + ",barangay,landmark,location_verified)"));
             return rows;
         }
         String line;
@@ -62,15 +68,15 @@ public final class CenterCsvReader {
         while ((line = reader.readLine()) != null) {
             lineNumber++;
             if (line.isBlank()) continue;
-            rows.add(parseRow(lineNumber, line));
+            rows.add(parseRow(lineNumber, line, extended ? 9 : 6));
         }
         return rows;
     }
 
-    private static Row parseRow(int lineNumber, String line) {
+    private static Row parseRow(int lineNumber, String line, int columns) {
         List<String> fields = splitCsv(line);
-        if (fields.size() != 6) {
-            return new Row(lineNumber, null, "", "Expected 6 columns but found " + fields.size() + ".");
+        if (fields.size() != columns) {
+            return new Row(lineNumber, null, "", "Expected " + columns + " columns but found " + fields.size() + ".");
         }
         MetroManilaCity city = MetroManilaCity.fromLooseName(fields.get(2));
         if (city == null) {
@@ -82,6 +88,9 @@ public final class CenterCsvReader {
             EvacuationCenter center = new EvacuationCenter(null, fields.get(0), fields.get(1), city,
                     new GeoPoint(lat, lon), CenterStatus.NOT_REPORTED, EnumSet.noneOf(AccessibilityFeature.class),
                     VerificationInfo.unverified(fields.get(5)), false, "");
+            if (columns == 9) {
+                center.setLocationDetails(fields.get(6), fields.get(7), "true".equalsIgnoreCase(fields.get(8).strip()));
+            }
             return new Row(lineNumber, center, fields.get(5), null);
         } catch (NumberFormatException badNumber) {
             return new Row(lineNumber, null, fields.get(5), "Latitude/longitude must be decimal numbers.");

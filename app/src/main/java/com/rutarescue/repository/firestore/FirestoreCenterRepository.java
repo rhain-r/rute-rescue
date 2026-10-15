@@ -13,6 +13,7 @@ import com.rutarescue.model.common.MetroManilaCity;
 import com.rutarescue.model.common.SourcedData;
 import com.rutarescue.repository.Callback;
 import com.rutarescue.repository.CenterRepository;
+import com.rutarescue.repository.CenterSnapshot;
 import com.rutarescue.repository.ListenerHandle;
 import com.rutarescue.service.ConnectivityMonitor;
 import com.rutarescue.service.FreshnessService;
@@ -82,6 +83,28 @@ public final class FirestoreCenterRepository implements CenterRepository {
                     }
                 })
                 .addOnFailureListener(callback::onError);
+    }
+
+    @Override
+    public ListenerHandle listen(String id, Callback<CenterSnapshot> callback) {
+        ListenerRegistration registration = db.collection(COLLECTION).document(id)
+                .addSnapshotListener(MetadataChanges.INCLUDE, (doc, error) -> {
+                    if (error != null) {
+                        callback.onError(error);
+                        return;
+                    }
+                    if (doc == null || !doc.exists()) {
+                        callback.onError(new IllegalStateException("This center no longer exists."));
+                        return;
+                    }
+                    try {
+                        callback.onSuccess(new CenterSnapshot(FirestoreMappers.center(doc),
+                                doc.getMetadata().hasPendingWrites()));
+                    } catch (ValidationException | RuntimeException damaged) {
+                        callback.onError(damaged);
+                    }
+                });
+        return registration::remove;
     }
 
     @Override

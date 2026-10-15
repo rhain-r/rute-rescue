@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One facility checkbox on the capacity screen (two per row) -->
+<com.google.android.material.checkbox.MaterialCheckBox xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.RR.CheckBox"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content" />

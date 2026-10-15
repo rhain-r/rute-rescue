@@ -66,6 +66,9 @@
     <!-- Safe route -->
     <string name="search_destination">Search destination</string>
     <string name="travel_walking">Walking</string>
+    <string name="travel_walk_short">Walk</string>
+    <string name="travel_moto_short">Ride</string>
+    <string name="travel_car_short">Drive</string>
     <string name="travel_motorcycle">Motorcycle</string>
     <string name="travel_vehicle">Vehicle</string>
     <string name="risk_horizon">Risk horizon</string>
@@ -211,6 +214,7 @@
     <string name="dataset_import">Import evacuation centers</string>
     <string name="dataset_import_intro">Import → validate → preview → publish. Only rows for your city can be published, and you must name how you verified them.</string>
     <string name="use_legacy_list">Use bundled legacy list (unverified)</string>
+    <string name="use_plmssc_list">Use PLM SSC 2024 list (unverified)</string>
     <string name="choose_csv">Choose CSV file</string>
     <string name="publish_valid_rows">Publish valid rows</string>
 
@@ -244,4 +248,71 @@
     <string name="lift_closure">Lift this closure</string>
     <string name="map_legend_title">Map legend</string>
     <string name="lgu_map_legend">Risk zones: the selected prepared Project NOAH scenario (yellow = LOW, orange = MEDIUM, red = HIGH). It is a modelled scenario, not live flooding.\n\nRoutes: bridges and tunnels the route engine checks (violet = unverified, green = verified open, black = closed) and the road closures your LGU reported.\n\nCenters: evacuation centers in your jurisdiction.\n\nTap a point to inspect it. Long-press to report a closure.</string>
+
+    <!-- Phase 2: Map layers sheet (approved Phase 1 frame) -->
+    <string name="map_layers_title">Map layers</string>
+    <string name="map_layers_caption">Changes show on the map right away.</string>
+    <string name="layers_base_map">Base map</string>
+    <string name="layers_flood_group">Flood risk · Project NOAH</string>
+    <string name="layers_prepared">Prepared, not live</string>
+    <string name="layers_on_map">On the map</string>
+    <string name="legend_low">Low</string>
+    <string name="legend_medium">Medium</string>
+    <string name="legend_high">High (over 1.5 m)</string>
+    <string name="sheet_layer_centers">Evacuation centers</string>
+    <string name="layer_centers_caption">LGU-verified only</string>
+    <string name="sheet_layer_structures">Bridges and tunnels</string>
+    <string name="layer_structures_caption">Purple means not yet verified</string>
+    <string name="layer_traffic">Traffic</string>
+    <string name="layer_traffic_caption">From TomTom; cached copy when offline</string>
+    <string name="layer_traffic_no_key">Needs a free TomTom key in local.properties</string>
+    <string name="close">Close</string>
+    <string name="reset">Reset</string>
+    <string name="done">Done</string>
+
+    <!-- Phase 2: three routes and the warning drawer -->
+    <string name="routes_title_many">%1$d routes to %2$s</string>
+    <string name="routes_title_one">Route to %1$s</string>
+    <string name="routes_caption">%1$s · checked against the NOAH %2$s flood map</string>
+    <string name="recommended">Recommended</string>
+    <string name="start_guidance_short">Start guidance</string>
+    <string name="start_anyway">Start anyway</string>
+    <string name="warnings_none">No warnings on this route</string>
+    <string name="warnings_one">1 warning · %1$s</string>
+    <string name="warnings_many">%1$d warnings on this route</string>
+    <string name="cd_route_layers">Map layers</string>
+    <string name="flood_tag">%1$s flood</string>
+
+    <!-- Phase 2: guidance with quiet rerouting -->
+    <string name="guide_in_distance">In %1$s</string>
+    <string name="guide_follow">Follow the highlighted route</string>
+    <string name="guide_left">%1$s left · %2$s · arrive %3$s</string>
+    <string name="end">End</string>
+    <string name="reroute_lower_risk">Switched to a lower-risk path</string>
+    <string name="reroute_less_traffic">Switched to a path with less traffic</string>
+
+    <!-- Phase 2: LGU center capacity -->
+    <string name="center_capacity">Center capacity</string>
+    <string name="current_headcount">Current headcount</string>
+    <string name="headcount_of">of %1$d people · %2$d%%</string>
+    <string name="capacity_not_set">Capacity not set yet</string>
+    <string name="set_capacity">Set total capacity</string>
+    <string name="exact_headcount">Exact headcount</string>
+    <string name="set">Set</string>
+    <string name="capacity_limit">The limit is %1$d people (120%% of capacity).</string>
+    <string name="status_label">Status</string>
+    <string name="status_suggested">Suggested from the headcount; you can change it.</string>
+    <string name="status_overridden">You changed this from the suggested "%1$s".</string>
+    <string name="facilities">Facilities</string>
+    <string name="location_verified">Location verified</string>
+    <string name="location_not_verified">Location not verified</string>
+    <string name="landmark_chip">Landmark: %1$s</string>
+    <string name="pending_sync">Pending sync · %1$s saved on this phone</string>
+    <string name="save_changes">Save changes</string>
+    <string name="save_on_phone">Save on this phone</string>
+    <string name="no_capacity_change">No headcount entered yet.</string>
+    <string name="edit_center_details">Edit center details</string>
+    <string name="capacity_source_hint">Source of this count (e.g. barangay field check)</string>
+    <string name="capacity_saved">Capacity saved</string>
+    <string name="capacity_saved_offline">Saved on this phone. It uploads when you are back online.</string>
 </resources>

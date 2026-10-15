@@ -138,6 +138,30 @@ public class SecurityRulesTest {
         assertTrue(db.get("centers/" + centerId, tokenA).ok());
     }
 
+    /** Phase 2 capacity screen: the database refuses a headcount above 120% of capacity. */
+    @Test
+    public void centerHeadcountCannotPassOneHundredTwentyPercent() throws IOException {
+        String centerId = "center-" + UUID.randomUUID();
+
+        String overAudit = UUID.randomUUID().toString();
+        Map<String, Object> over = Docs.center("MANILA", true, true, overAudit);
+        over.put("capacity", 120);
+        over.put("occupancy", 145); // limit is 144
+        Map<String, Map<String, Object>> tooMany = new LinkedHashMap<>();
+        tooMany.put("centers/" + centerId, over);
+        tooMany.put("auditEvents/" + overAudit, Docs.audit(lguManila, "MANILA", "UPDATE_CAPACITY", "center", centerId, "x"));
+        assertTrue("145 of 120 people is refused", db.commit(tooMany, tokenManila).denied());
+
+        String okAudit = UUID.randomUUID().toString();
+        Map<String, Object> atLimit = Docs.center("MANILA", true, true, okAudit);
+        atLimit.put("capacity", 120);
+        atLimit.put("occupancy", 144);
+        Map<String, Map<String, Object>> allowed = new LinkedHashMap<>();
+        allowed.put("centers/" + centerId, atLimit);
+        allowed.put("auditEvents/" + okAudit, Docs.audit(lguManila, "MANILA", "UPDATE_CAPACITY", "center", centerId, "ok"));
+        assertTrue("144 of 120 people (exactly 120%) is allowed", db.commit(allowed, tokenManila).ok());
+    }
+
     // ------------------------------------------------------------------ Ligtas Priority
 
     @Test

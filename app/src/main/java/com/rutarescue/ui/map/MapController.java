@@ -1,11 +1,23 @@
 package com.rutarescue.ui.map;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Gravity;
+
+import androidx.core.content.res.ResourcesCompat;
+
+import com.rutarescue.R;
 
 import com.rutarescue.model.center.EvacuationCenter;
 import com.rutarescue.model.common.GeoPoint;
 import com.rutarescue.model.hazard.FloodScenario;
+import com.rutarescue.model.map.BaseMap;
+import com.rutarescue.model.map.MapLayerSettings;
 import com.rutarescue.model.route.RoadClosure;
 import com.rutarescue.model.route.RouteAssessment;
 import com.rutarescue.model.route.RouteSample;
@@ -13,6 +25,7 @@ import com.rutarescue.model.structure.RoadStructureRecord;
 import com.rutarescue.model.structure.StructureStatus;
 import com.rutarescue.repository.HazardRepository;
 import com.rutarescue.util.AppExecutors;
+import com.rutarescue.util.GeoMath;
 import com.rutarescue.util.SafeLog;
 
 import org.maplibre.android.camera.CameraUpdateFactory;
@@ -28,6 +41,7 @@ import org.maplibre.android.style.layers.Layer;
 import org.maplibre.android.style.layers.LineLayer;
 import org.maplibre.android.style.layers.Property;
 import org.maplibre.android.style.layers.PropertyFactory;
+import org.maplibre.android.style.layers.SymbolLayer;
 import org.maplibre.android.style.sources.GeoJsonOptions;
 import org.maplibre.android.style.sources.GeoJsonSource;
 import org.maplibre.geojson.Feature;
@@ -38,14 +52,17 @@ import org.maplibre.geojson.Point;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Wraps a MapLibre MapView so screens can say "show this scenario", "show these routes",
  * "show these centers" without dealing with sources and layers themselves.
  *
- * Layers from bottom to top: basemap, NOAH LOW/MEDIUM/HIGH fills, bridges/tunnels, closures,
- * other routes, selected route (coloured by risk), centers, origin/destination, selection.
+ * Layers from bottom to top: base map (Standard, Topographic or Satellite), NOAH LOW/MEDIUM/HIGH
+ * fills for each scenario (100-year at the bottom, 5-year on top), bridges/tunnels, closures,
+ * other routes, selected route (coloured by risk), route time pills, centers, origin/destination.
  */
 public final class MapController {
 
@@ -65,20 +82,26 @@ public final class MapController {
 
     private static final String TAG = "RR-Map";
 
-    private static final String SRC_HAZARD = "rr-hazard";
     private static final String SRC_STRUCTURES = "rr-structures";
     private static final String SRC_CLOSURES = "rr-closures";
     private static final String SRC_ROUTES = "rr-routes";
     private static final String SRC_CENTERS = "rr-centers";
     private static final String SRC_MARKERS = "rr-markers";
+    private static final String SRC_ROUTE_LABELS = "rr-route-labels";
 
-    private static final String[] HAZARD_LAYERS = {"rr-hazard-low", "rr-hazard-medium", "rr-hazard-high"};
+    /** Drawn first to last, so the smaller, more frequent flood sits on top. */
+    private static final FloodScenario[] FLOOD_DRAW_ORDER = {
+            FloodScenario.HUNDRED_YEAR, FloodScenario.TWENTY_FIVE_YEAR, FloodScenario.FIVE_YEAR};
+    private static final String[] HAZARD_CLASSES = {"low", "medium", "high"};
 
     private final MapView mapView;
     private final String tomTomKey;
     private MapLibreMap map;
     private Style style;
-    private FloodScenario hazardScenario;
+    /** Scenarios whose GeoJSON was requested (loading or loaded). */
+    private final EnumSet<FloodScenario> requestedFloods = EnumSet.noneOf(FloodScenario.class);
+    private final EnumSet<FloodScenario> visibleFloods = EnumSet.noneOf(FloodScenario.class);
+    private boolean floodsShown = true;
     private PointListener clickListener;
     private PointListener longClickListener;
 
@@ -112,20 +135,27 @@ public final class MapController {
     }
 
     private void addSourcesAndLayers() {
-        // NOAH display overlay (bundled GeoJSON; filled in by showHazard()).
-        style.addSource(new GeoJsonSource(SRC_HAZARD, FeatureCollection.fromFeatures(new ArrayList<>()),
-                new GeoJsonOptions().withMaxZoom(15).withTolerance(0.6f)));
+        // NOAH display overlays, one source per scenario (bundled GeoJSON, loaded when first shown).
         String[] colors = {MapStyles.COLOR_LOW, MapStyles.COLOR_MEDIUM, MapStyles.COLOR_HIGH};
-        for (int i = 0; i < HAZARD_LAYERS.length; i++) {
-            style.addLayer(new FillLayer(HAZARD_LAYERS[i], SRC_HAZARD)
-                    .withFilter(Expression.eq(Expression.get("cls"), Expression.literal(i + 1)))
-                    .withProperties(PropertyFactory.fillColor(colors[i]), PropertyFactory.fillOpacity(0.42f)));
+        for (FloodScenario scenario : FLOOD_DRAW_ORDER) {
+            style.addSource(new GeoJsonSource(hazardSource(scenario), FeatureCollection.fromFeatures(new ArrayList<>()),
+                    new GeoJsonOptions().withMaxZoom(15).withTolerance(0.6f)));
+            for (int i = 0; i < HAZARD_CLASSES.length; i++) {
+                style.addLayer(new FillLayer(hazardLayer(scenario, i), hazardSource(scenario))
+                        .withFilter(Expression.eq(Expression.get("cls"), Expression.literal(i + 1)))
+                        .withProperties(PropertyFactory.fillColor(colors[i]), PropertyFactory.fillOpacity(0.42f),
+                                PropertyFactory.visibility(Property.NONE)));
+            }
         }
 
         style.addSource(new GeoJsonSource(SRC_STRUCTURES, FeatureCollection.fromFeatures(new ArrayList<>())));
+        // Thin and faint at city zoom (5,000+ bridges), clearer when zoomed in to street level.
         style.addLayer(new LineLayer("rr-structures", SRC_STRUCTURES).withProperties(
                 PropertyFactory.lineColor(Expression.toColor(Expression.get("color"))),
-                PropertyFactory.lineWidth(4f), PropertyFactory.lineOpacity(0.85f),
+                PropertyFactory.lineWidth(Expression.interpolate(Expression.linear(), Expression.zoom(),
+                        Expression.stop(10, 1f), Expression.stop(13, 2.5f), Expression.stop(16, 5f))),
+                PropertyFactory.lineOpacity(Expression.interpolate(Expression.linear(), Expression.zoom(),
+                        Expression.stop(10, 0.3f), Expression.stop(14, 0.85f))),
                 PropertyFactory.lineCap(Property.LINE_CAP_ROUND)));
 
         style.addSource(new GeoJsonSource(SRC_CLOSURES, FeatureCollection.fromFeatures(new ArrayList<>())));
@@ -136,14 +166,21 @@ public final class MapController {
         style.addSource(new GeoJsonSource(SRC_ROUTES, FeatureCollection.fromFeatures(new ArrayList<>())));
         style.addLayer(new LineLayer("rr-routes-other", SRC_ROUTES)
                 .withFilter(Expression.eq(Expression.get("selected"), Expression.literal(0)))
-                .withProperties(PropertyFactory.lineColor(MapStyles.COLOR_OTHER_ROUTE), PropertyFactory.lineWidth(5f),
-                        PropertyFactory.lineOpacity(0.8f), PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
+                .withProperties(PropertyFactory.lineColor(Expression.toColor(Expression.get("color"))),
+                        PropertyFactory.lineWidth(5f),
+                        PropertyFactory.lineOpacity(0.6f), PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
                         PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND)));
         style.addLayer(new LineLayer("rr-routes-selected", SRC_ROUTES)
                 .withFilter(Expression.eq(Expression.get("selected"), Expression.literal(1)))
                 .withProperties(PropertyFactory.lineColor(Expression.toColor(Expression.get("color"))),
                         PropertyFactory.lineWidth(7f), PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
                         PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND)));
+
+        // Phase 1 route time pills ("41 min"): one small image per route, drawn by routePill().
+        style.addSource(new GeoJsonSource(SRC_ROUTE_LABELS, FeatureCollection.fromFeatures(new ArrayList<>())));
+        style.addLayer(new SymbolLayer("rr-route-labels", SRC_ROUTE_LABELS).withProperties(
+                PropertyFactory.iconImage(Expression.get("icon")), PropertyFactory.iconAllowOverlap(true),
+                PropertyFactory.iconIgnorePlacement(true)));
 
         style.addSource(new GeoJsonSource(SRC_CENTERS, FeatureCollection.fromFeatures(new ArrayList<>())));
         style.addLayer(new CircleLayer("rr-centers", SRC_CENTERS).withProperties(
@@ -191,33 +228,91 @@ public final class MapController {
 
     // ------------------------------------------------------------------ content
 
-    /**
-     * Switches the NOAH overlay to another scenario. The bundled GeoJSON (5-7 MB) is read on
-     * a background thread and handed to MapLibre on the UI thread. A newer request wins
-     * if the user switches scenarios quickly.
-     */
+    /** Shows exactly one NOAH scenario (LGU map scenario pills). */
     public void showHazard(FloodScenario scenario, HazardRepository hazards, AppExecutors executors) {
-        if (!isReady() || scenario == hazardScenario) return;
-        hazardScenario = scenario;
+        showFloods(EnumSet.of(scenario), hazards, executors);
+    }
+
+    /**
+     * Shows any mix of NOAH scenarios (Phase 1 "Map layers" switches). Each bundled GeoJSON
+     * (5-7 MB) is read once on a background thread and handed to MapLibre on the UI thread.
+     * With more than one scenario the fills are lighter so the layers stay readable.
+     */
+    public void showFloods(Set<FloodScenario> scenarios, HazardRepository hazards, AppExecutors executors) {
+        if (!isReady()) return;
+        visibleFloods.clear();
+        visibleFloods.addAll(scenarios);
+        refreshFloodLayers();
+        for (FloodScenario scenario : scenarios) {
+            if (!requestedFloods.contains(scenario)) loadFlood(scenario, hazards, executors);
+        }
+    }
+
+    private void loadFlood(FloodScenario scenario, HazardRepository hazards, AppExecutors executors) {
+        requestedFloods.add(scenario);
         executors.io().execute(() -> {
             try {
                 String geoJson = hazards.loadGeoJsonBlocking(scenario);
                 executors.main().execute(() -> {
-                    if (!isReady() || scenario != hazardScenario) return;
-                    GeoJsonSource source = style.getSourceAs(SRC_HAZARD);
+                    if (!isReady()) return;
+                    GeoJsonSource source = style.getSourceAs(hazardSource(scenario));
                     if (source != null) source.setGeoJson(geoJson);
                 });
             } catch (IOException error) {
                 SafeLog.w(TAG, "Could not load the " + scenario.getLabel() + " overlay", error);
-                executors.main().execute(() -> {
-                    if (scenario == hazardScenario) hazardScenario = null;
-                });
+                executors.main().execute(() -> requestedFloods.remove(scenario));
             }
         });
     }
 
+    /** Hides or shows every chosen flood scenario at once (LGU "Risk zones" pill). */
     public void setHazardVisible(boolean visible) {
-        for (String id : HAZARD_LAYERS) setVisible(id, visible);
+        floodsShown = visible;
+        refreshFloodLayers();
+    }
+
+    private void refreshFloodLayers() {
+        if (!isReady()) return;
+        float opacity = visibleFloods.size() > 1 ? 0.30f : 0.42f;
+        for (FloodScenario scenario : FLOOD_DRAW_ORDER) {
+            boolean on = floodsShown && visibleFloods.contains(scenario);
+            for (int i = 0; i < HAZARD_CLASSES.length; i++) {
+                Layer layer = style.getLayer(hazardLayer(scenario, i));
+                if (layer != null) {
+                    layer.setProperties(PropertyFactory.visibility(on ? Property.VISIBLE : Property.NONE),
+                            PropertyFactory.fillOpacity(opacity));
+                }
+            }
+        }
+    }
+
+    private static String hazardSource(FloodScenario scenario) {
+        return "rr-hazard-" + scenario.getReturnPeriodYears();
+    }
+
+    private static String hazardLayer(FloodScenario scenario, int classIndex) {
+        return hazardSource(scenario) + "-" + HAZARD_CLASSES[classIndex];
+    }
+
+    /** Switches between the Standard, Topographic and Satellite base maps. */
+    public void setBaseMap(BaseMap baseMap) {
+        setVisible(MapStyles.BASE_STANDARD, baseMap == BaseMap.STANDARD);
+        setVisible(MapStyles.BASE_TOPOGRAPHIC, baseMap == BaseMap.TOPOGRAPHIC);
+        setVisible(MapStyles.BASE_SATELLITE, baseMap == BaseMap.SATELLITE);
+    }
+
+    /** Applies everything chosen in the Map layers sheet. */
+    public void applyLayers(MapLayerSettings settings, HazardRepository hazards, AppExecutors executors) {
+        setBaseMap(settings.getBaseMap());
+        EnumSet<FloodScenario> floods = EnumSet.noneOf(FloodScenario.class);
+        for (FloodScenario scenario : FloodScenario.values()) {
+            if (settings.isFloodVisible(scenario)) floods.add(scenario);
+        }
+        floodsShown = true;
+        showFloods(floods, hazards, executors);
+        setCentersVisible(settings.isCentersVisible());
+        setStructuresVisible(settings.isStructuresVisible());
+        setTrafficVisible(settings.isTrafficVisible());
     }
 
     /** Shows or hides the TomTom live-traffic overlay (does nothing without a TomTom key). */
@@ -239,20 +334,87 @@ public final class MapController {
         if (layer != null) layer.setProperties(PropertyFactory.visibility(visible ? Property.VISIBLE : Property.NONE));
     }
 
-    /** Draws all alternatives; the selected one is coloured piece by piece by its risk. */
+    /** Draws all alternatives in grey; the selected one is coloured piece by piece by its risk. */
     public void showRoutes(List<RouteAssessment> routes, int selectedIndex) {
+        List<String> grey = new ArrayList<>();
+        for (int i = 0; i < routes.size(); i++) grey.add(MapStyles.COLOR_OTHER_ROUTE);
+        showRoutes(routes, selectedIndex, grey, null);
+    }
+
+    /**
+     * Phase 1 route comparison: each other route in its own colour (cyan lowest risk, brand
+     * balanced, grey most direct) at 60%, the selected route coloured by risk, and a time pill
+     * ("41 min") halfway along each route (navy for the selected one).
+     */
+    public void showRoutes(List<RouteAssessment> routes, int selectedIndex, List<String> colors, List<String> pills) {
         if (!isReady()) return;
         List<Feature> features = new ArrayList<>();
         for (int i = 0; i < routes.size(); i++) {
             if (i == selectedIndex) continue;
             Feature other = Feature.fromGeometry(LineString.fromLngLats(points(routes.get(i).getCandidate().getPoints())));
             other.addNumberProperty("selected", 0);
+            other.addStringProperty("color", colors.get(i));
             features.add(other);
         }
         if (selectedIndex >= 0 && selectedIndex < routes.size()) {
             features.addAll(coloredRuns(routes.get(selectedIndex).getSamples()));
         }
         setFeatures(SRC_ROUTES, features);
+
+        List<Feature> labels = new ArrayList<>();
+        if (pills != null) {
+            for (int i = 0; i < routes.size(); i++) {
+                String icon = "rr-pill-" + i + (i == selectedIndex ? "-on" : "");
+                style.addImage(icon, routePill(mapView.getContext(), pills.get(i), i == selectedIndex));
+                Feature label = Feature.fromGeometry(point(halfway(routes.get(i).getCandidate().getPoints())));
+                label.addStringProperty("icon", icon);
+                labels.add(label);
+            }
+        }
+        setFeatures(SRC_ROUTE_LABELS, labels);
+    }
+
+    /** The point halfway along a line (by distance). */
+    private static GeoPoint halfway(List<GeoPoint> line) {
+        double total = 0;
+        for (int i = 1; i < line.size(); i++) total += GeoMath.distanceMeters(line.get(i - 1), line.get(i));
+        double walked = 0;
+        for (int i = 1; i < line.size(); i++) {
+            double step = GeoMath.distanceMeters(line.get(i - 1), line.get(i));
+            if (walked + step >= total / 2) return line.get(i);
+            walked += step;
+        }
+        return line.get(line.size() / 2);
+    }
+
+    /** Draws a Figma time pill: 22 dp high, Karla Bold 11 sp, navy (selected) or white with a border. */
+    private static Bitmap routePill(Context context, String text, boolean selected) {
+        float density = context.getResources().getDisplayMetrics().density;
+        Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        Typeface karla = ResourcesCompat.getFont(context, R.font.karla_bold);
+        textPaint.setTypeface(karla);
+        textPaint.setTextSize(11 * density);
+        textPaint.setColor(selected ? 0xFFFFFFFF : 0xFF162235);
+        float width = textPaint.measureText(text) + 20 * density;
+        float height = 22 * density;
+        Bitmap bitmap = Bitmap.createBitmap((int) Math.ceil(width + 2 * density), (int) Math.ceil(height + 2 * density),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        RectF box = new RectF(density, density, width + density, height + density);
+        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fill.setColor(selected ? 0xFF152B3F : 0xFFFFFFFF);
+        canvas.drawRoundRect(box, height / 2, height / 2, fill);
+        if (!selected) {
+            Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+            stroke.setStyle(Paint.Style.STROKE);
+            stroke.setStrokeWidth(density);
+            stroke.setColor(0xFFE8EAED);
+            canvas.drawRoundRect(box, height / 2, height / 2, stroke);
+        }
+        Paint.FontMetrics metrics = textPaint.getFontMetrics();
+        float baseline = box.centerY() - (metrics.ascent + metrics.descent) / 2;
+        canvas.drawText(text, box.left + 10 * density, baseline, textPaint);
+        return bitmap;
     }
 
     /** Groups consecutive samples of the same colour into one line feature. */
@@ -285,6 +447,7 @@ public final class MapController {
 
     public void clearRoutes() {
         setFeatures(SRC_ROUTES, new ArrayList<>());
+        setFeatures(SRC_ROUTE_LABELS, new ArrayList<>());
     }
 
     public void showCenters(List<EvacuationCenter> centers) {

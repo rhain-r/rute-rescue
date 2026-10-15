@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Facility checkbox: brand #24547F when ticked, #C5CCD6 outline otherwise -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/rr_navy_light" android:state_checked="true" />
+    <item android:color="@color/rr_radio_off" />
+</selector>

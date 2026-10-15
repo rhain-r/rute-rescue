@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Map layers sheet: "Standard" base map thumbnail (street map) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp" android:height="70dp" android:viewportWidth="100" android:viewportHeight="70">
+    <path android:fillColor="#EEF1F6" android:pathData="M0,0h100v70h-100z" />
+    <path android:fillColor="#DCEFD9" android:pathData="M77,8h18v14h-18z" />
+    <path android:strokeColor="#CDE6F2" android:strokeWidth="8" android:pathData="M0,58C30,50 60,62 100,54" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="6" android:pathData="M0,40L100,30" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="5" android:pathData="M30,0L44,70" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="3" android:pathData="M70,0L64,70" />
+</vector>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    One switch row of the Phase 1 "Map layers" sheet: 32 dp tinted swatch with its icon,
+    Mobile/Label title (with an optional soft chip such as "LIVE"), Mobile/Caption line and a
+    brand switch. MapLayersSheet fills the texts, colours and state.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layer_row"
+    style="@style/RR.LayerRow">
+
+    <ImageView
+        android:id="@+id/layer_swatch"
+        style="@style/RR.LayerSwatch"
+        tools:src="@drawable/ic_layers_two" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/layer_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.RR.Label"
+                tools:text="5-year flood" />
+
+            <TextView
+                android:id="@+id/layer_chip"
+                style="@style/RR.SoftChip"
+                android:layout_marginStart="6dp"
+                android:visibility="gone"
+                tools:text="Live"
+                tools:visibility="visible" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/layer_caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.RR.Caption"
+            android:textColor="@color/rr_text_secondary"
+            tools:text="20% chance in any year" />
+    </LinearLayout>
+
+    <com.google.android.material.materialswitch.MaterialSwitch
+        android:id="@+id/layer_switch"
+        style="@style/Widget.RR.Switch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+</LinearLayout>

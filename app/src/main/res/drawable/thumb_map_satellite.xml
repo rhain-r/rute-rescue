@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Map layers sheet: "Satellite" base map thumbnail (aerial imagery) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp" android:height="70dp" android:viewportWidth="100" android:viewportHeight="70">
+    <path android:fillColor="#3E5144" android:pathData="M0,0h100v70h-100z" />
+    <path android:fillColor="#56685A" android:pathData="M6,6h26v18h-26z" />
+    <path android:fillColor="#6B6F66" android:pathData="M40,10h30v20h-30z" />
+    <path android:fillColor="#4C5F50" android:pathData="M62,36h30v22h-30z" />
+    <path android:fillColor="#7A7D73" android:pathData="M10,34h34v16h-34z" />
+    <path android:strokeColor="#2D4A5A" android:strokeWidth="8" android:pathData="M0,60C30,54 60,64 100,56" />
+    <path android:strokeColor="#9A9C94" android:strokeWidth="2" android:pathData="M0,30L100,26" />
+</vector>

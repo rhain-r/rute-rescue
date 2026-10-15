@@ -28,7 +28,17 @@ public final class MapStyles {
     /** Id of the TomTom live-traffic overlay layer (absent without a key). */
     public static final String TRAFFIC_LAYER = "traffic";
 
+    /** Base-map layer ids (Phase 1 "Map layers": Standard, Topographic, Satellite). */
+    public static final String BASE_STANDARD = "osm";
+    public static final String BASE_TOPOGRAPHIC = "topo";
+    public static final String BASE_SATELLITE = "satellite";
+
     private static final String OSM_TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+    /** OpenTopoMap: free, CC-BY-SA, light use only (tile usage policy), zoom up to 17. */
+    private static final String TOPO_TILES = "https://tile.opentopomap.org/{z}/{x}/{y}.png";
+    /** Esri World Imagery: free to view without a key; check Esri's terms before a public release. */
+    private static final String SATELLITE_TILES =
+            "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 
     private MapStyles() {
     }
@@ -37,8 +47,14 @@ public final class MapStyles {
         String background = "{\"id\":\"background\",\"type\":\"background\",\"paint\":{\"background-color\":\"#EEF1F6\"}}";
         StringBuilder sources = new StringBuilder("\"osm\":{\"type\":\"raster\",\"tiles\":[\"" + OSM_TILES + "\"],"
                 + "\"tileSize\":256,\"maxzoom\":19,\"attribution\":\"© OpenStreetMap contributors\"}");
+        sources.append(",\"topo\":{\"type\":\"raster\",\"tiles\":[\"").append(TOPO_TILES)
+                .append("\"],\"tileSize\":256,\"maxzoom\":17,\"attribution\":\"© OpenTopoMap (CC-BY-SA)\"}");
+        sources.append(",\"satellite\":{\"type\":\"raster\",\"tiles\":[\"").append(SATELLITE_TILES)
+                .append("\"],\"tileSize\":256,\"maxzoom\":19,\"attribution\":\"Imagery © Esri\"}");
         StringBuilder layers = new StringBuilder(background
-                + ",{\"id\":\"osm\",\"type\":\"raster\",\"source\":\"osm\",\"paint\":{\"raster-saturation\":-0.35}}");
+                + ",{\"id\":\"osm\",\"type\":\"raster\",\"source\":\"osm\",\"paint\":{\"raster-saturation\":-0.35}}"
+                + ",{\"id\":\"topo\",\"type\":\"raster\",\"source\":\"topo\",\"layout\":{\"visibility\":\"none\"}}"
+                + ",{\"id\":\"satellite\",\"type\":\"raster\",\"source\":\"satellite\",\"layout\":{\"visibility\":\"none\"}}");
         if (tomTomKey != null && !tomTomKey.isEmpty()) {
             String traffic = "https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?tileSize=256&key=" + tomTomKey;
             sources.append(",\"traffic\":{\"type\":\"raster\",\"tiles\":[\"").append(traffic)

@@ -1,0 +1,65 @@
+{
+  "source": "PLM Supreme Student Council Facebook post, 24 Jul 2024 (Typhoon Carina)",
+  "note": "Corrected: the post listed these numbers one line out of step.",
+  "hotlines": [
+    {
+      "agency": "National Emergency Hotline",
+      "numbers": [
+        "911"
+      ]
+    },
+    {
+      "agency": "Philippine Red Cross",
+      "numbers": [
+        "143",
+        "(02) 8527-8385 to 95"
+      ]
+    },
+    {
+      "agency": "Philippine Coast Guard",
+      "numbers": [
+        "(02) 8527-3877",
+        "(02) 8527-8481 to 89"
+      ]
+    },
+    {
+      "agency": "Bureau of Fire Protection",
+      "numbers": [
+        "(02) 8426-0219",
+        "(02) 8426-0246"
+      ]
+    },
+    {
+      "agency": "NDRRMC",
+      "numbers": [
+        "(02) 8911-5061 to 65 loc. 100"
+      ]
+    },
+    {
+      "agency": "Philippine National Police",
+      "numbers": [
+        "117",
+        "(02) 8722-0650"
+      ]
+    },
+    {
+      "agency": "DSWD",
+      "numbers": [
+        "(02) 8931-8101 to 07"
+      ]
+    },
+    {
+      "agency": "PAGASA",
+      "numbers": [
+        "(02) 8284-0800"
+      ]
+    },
+    {
+      "agency": "MMDA",
+      "numbers": [
+        "136",
+        "(02) 8882-4151 to 77"
+      ]
+    }
+  ]
+}

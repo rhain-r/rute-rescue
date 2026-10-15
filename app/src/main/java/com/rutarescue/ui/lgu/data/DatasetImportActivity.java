@@ -38,6 +38,8 @@ import java.util.List;
 public class DatasetImportActivity extends BaseActivity {
 
     private static final String LEGACY_ASSET = "seed/centers_legacy_unverified.csv";
+    /** PLM Supreme Student Council list (Facebook, 24 Jul 2024); pins located with OpenStreetMap. */
+    private static final String PLMSSC_ASSET = "seed/centers_plmssc_2024_unverified.csv";
 
     private LguProfile lgu;
     private SimpleListAdapter<CenterCsvReader.Row> adapter;
@@ -62,6 +64,8 @@ public class DatasetImportActivity extends BaseActivity {
         list.setAdapter(adapter);
 
         findViewById(R.id.import_legacy).setOnClickListener(v -> previewLegacy());
+        findViewById(R.id.import_plmssc).setOnClickListener(v -> previewAsset(PLMSSC_ASSET,
+                "PLM SSC evacuation-center list, 24 Jul 2024 (" + PLMSSC_ASSET + ")"));
         findViewById(R.id.import_choose).setOnClickListener(v -> chooseFile.launch(new String[]{"text/*", "*/*"}));
         findViewById(R.id.import_publish).setOnClickListener(v -> publish());
     }
@@ -73,6 +77,16 @@ public class DatasetImportActivity extends BaseActivity {
             container().datasets().previewCenterCsv(stream, ui(this::showPreview));
         } catch (IOException e) {
             showMessage("The bundled legacy list is missing: " + e.getMessage());
+        }
+    }
+
+    private void previewAsset(String asset, String label) {
+        try {
+            InputStream stream = getAssets().open(asset);
+            fileLabel = label;
+            container().datasets().previewCenterCsv(stream, ui(this::showPreview));
+        } catch (IOException e) {
+            showMessage("The bundled list is missing: " + e.getMessage());
         }
     }
 

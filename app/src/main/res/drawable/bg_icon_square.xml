@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 30-32 dp icon tile (tinted per warning or layer) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/rr_surface_secondary" />
+    <corners android:radius="10dp" />
+</shape>

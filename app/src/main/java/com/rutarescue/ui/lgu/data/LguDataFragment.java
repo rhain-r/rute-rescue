@@ -136,10 +136,13 @@ public class LguDataFragment extends BaseFragment {
             ((TextView) row.findViewById(R.id.data_row_title)).setText(center.getName());
             long updated = center.getAuditInfo() == null ? 0 : center.getAuditInfo().getUpdatedAt();
             String state = review ? "Needs review" : center.isPublished() ? "Published" : "Hidden";
-            ((TextView) row.findViewById(R.id.data_row_meta)).setText(center.getStatus().getLabel() + " • " + state
-                    + " • Updated " + Formats.relative(updated, System.currentTimeMillis()));
-            row.setOnClickListener(v -> startActivity(new Intent(requireContext(), CenterEditorActivity.class)
-                    .putExtra(CenterEditorActivity.EXTRA_ID, center.getId())));
+            String headcount = center.getCapacity().isSet() ? center.getCapacity().getCurrentOccupancy() + "/"
+                    + center.getCapacity().getTotalPersons() + " people • " : "";
+            ((TextView) row.findViewById(R.id.data_row_meta)).setText(center.getStatus().getLabel() + " • " + headcount
+                    + state + " • Updated " + Formats.relative(updated, System.currentTimeMillis()));
+            // Phase 1: a center row opens "Center capacity"; details are under its More menu.
+            row.setOnClickListener(v -> startActivity(new Intent(requireContext(), CenterCapacityActivity.class)
+                    .putExtra(CenterCapacityActivity.EXTRA_ID, center.getId())));
             list.addView(row);
         }
         if (data.getData().isEmpty()) {

@@ -17,6 +17,9 @@ public interface CenterRepository {
 
     void get(String id, Callback<EvacuationCenter> callback);
 
+    /** Follows one center, including whether this phone still has changes to upload. */
+    ListenerHandle listen(String id, Callback<CenterSnapshot> callback);
+
     String newId();
 
     /** Saves the center together with its audit event in one atomic batch. */

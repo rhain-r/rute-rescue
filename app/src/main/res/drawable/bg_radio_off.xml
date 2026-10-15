@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Route card radio, not chosen: 18 dp ring -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <size android:width="18dp" android:height="18dp" />
+    <solid android:color="@color/rr_surface" />
+    <stroke android:width="2dp" android:color="@color/rr_radio_off" />
+</shape>

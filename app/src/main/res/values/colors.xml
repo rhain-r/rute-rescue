@@ -54,4 +54,22 @@
     <color name="route_closed">#1B1B1F</color>
     <color name="route_other">#9AA6B2</color>
     <color name="route_no_data">#7A8796</color>
+
+    <!-- Phase 2 screens (approved Phase 1 frames, docs/design/phase1-ui.html) -->
+    <color name="route_balanced">#24547F</color>            <!-- Balanced route line (brand-600) -->
+    <color name="route_direct_selected">#5E6B7A</color>     <!-- Most direct line when chosen -->
+    <color name="rr_route_card_selected">#F4FCFE</color>    <!-- chosen route card -->
+    <color name="rr_route_card_serious">#FFF8F7</color>     <!-- chosen route card with a serious warning -->
+    <color name="rr_radio_off">#C5CCD6</color>
+    <color name="rr_field_stroke">#D0D5DD</color>
+    <color name="rr_green_tint">#E6F4EE</color>             <!-- "Location verified" chip -->
+    <color name="rr_gauge_amber">#E9B23C</color>            <!-- capacity gauge 70-90% -->
+    <color name="rr_step_plus_stroke">#C3EEF6</color>
+    <color name="rr_step_plus_text">#0B6E82</color>
+    <color name="rr_pending_text">#8A5A10</color>           <!-- "Pending sync" banner text -->
+    <color name="rr_swatch_5yr">#FDF1D8</color>
+    <color name="rr_swatch_25yr">#FDE7D6</color>
+    <color name="rr_swatch_100yr">#FBE1DF</color>
+    <color name="rr_hazard_25yr">#E06A2B</color>
+    <color name="rr_turn_tile">#1FFFFFFF</color>            <!-- white 12% on the navy turn card -->
 </resources>

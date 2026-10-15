@@ -23,6 +23,7 @@ public class MaxHeightScrollView extends NestedScrollView {
     private static final float MAX_SHARE_OF_PARENT = 0.55f;
 
     private int maxHeight = Integer.MAX_VALUE;
+    private float maxShare = MAX_SHARE_OF_PARENT;
 
     public MaxHeightScrollView(Context context) {
         this(context, null);
@@ -45,12 +46,18 @@ public class MaxHeightScrollView extends NestedScrollView {
         requestLayout();
     }
 
+    /** Share of the parent's height the card may use (0.55 by default; more while comparing routes). */
+    public void setMaxShareOfParent(float share) {
+        this.maxShare = share;
+        requestLayout();
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int limit = maxHeight;
         int offered = View.MeasureSpec.getSize(heightMeasureSpec);
         if (View.MeasureSpec.getMode(heightMeasureSpec) != View.MeasureSpec.UNSPECIFIED && offered > 0) {
-            limit = Math.min(limit, (int) (offered * MAX_SHARE_OF_PARENT));
+            limit = Math.min(limit, (int) (offered * maxShare));
         }
         super.onMeasure(widthMeasureSpec, View.MeasureSpec.makeMeasureSpec(limit, View.MeasureSpec.AT_MOST));
     }
