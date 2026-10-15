@@ -6,6 +6,11 @@ A flood-preparedness and safer-route app for Metro Manila, built as a native And
 
 > RutaRescue supports decisions; it never calls a route "safe", and in an emergency you should call 911.
 
+## Run it
+
+- Open this folder in Android Studio and press **Run**; the app connects to the team's Firebase project, so you can sign in or create a resident account.
+- Live traffic needs a TomTom key in `local.properties` (`TOMTOM_API_KEY=...`); without one, routes use free OpenStreetMap routing.
+
 ## Ad (20 s)
 
 ![RutaRescue ad (plays automatically)](docs/media/recording-ads.gif)
@@ -14,13 +19,23 @@ The full-quality version is [`docs/media/recording-ads.mp4`](docs/media/recordin
 
 ## Screens
 
-Real screens from the Android emulator, using made-up demo data.
+Real screens from the Android emulator, using made-up demo data (one resident name is hidden).
+
+### Residents
 
 | Home | Evacuation centers | Ranked routes |
 |:---:|:---:|:---:|
 | <img src="docs/demo/screens/home-hotlines.jpg" width="220" alt="Home with the nearest center and emergency hotlines"> | <img src="docs/demo/screens/centers-list.jpg" width="220" alt="Evacuation centers with headcounts"> | <img src="docs/demo/screens/route-cards.jpg" width="220" alt="Three routes ranked by flood risk"> |
-| **Center capacity (resident)** | **Center capacity (LGU)** | **My Record** |
-| <img src="docs/demo/screens/center-capacity.jpg" width="220" alt="Resident view of a center's headcount"> | <img src="docs/demo/screens/lgu-capacity.jpg" width="220" alt="LGU headcount screen"> | <img src="docs/demo/screens/record-ligtas.jpg" width="220" alt="Family record with a Ligtas Priority application"> |
+| **Center capacity** | **My Record** | **Ligtas Priority application** |
+| <img src="docs/demo/screens/center-capacity.jpg" width="220" alt="Resident view of a center's headcount"> | <img src="docs/demo/screens/record-ligtas.jpg" width="220" alt="Family record with a Ligtas Priority application"> | <img src="docs/demo/screens/ligtas-apply.jpg" width="220" alt="Ligtas Priority application form with a synthetic proof"> |
+
+### LGU operations
+
+| Operations overview | Ligtas reviews | Review an application |
+|:---:|:---:|:---:|
+| <img src="docs/demo/screens/lgu-overview.jpg" width="220" alt="LGU operations overview"> | <img src="docs/demo/screens/lgu-reviews.jpg" width="220" alt="Ligtas Priority reviews list"> | <img src="docs/demo/screens/lgu-review.jpg" width="220" alt="Reviewing one Ligtas Priority application"> |
+| **Data and centers** | **Center capacity** | **Operations map** |
+| <img src="docs/demo/screens/lgu-data.jpg" width="220" alt="LGU datasets and evacuation centers"> | <img src="docs/demo/screens/lgu-capacity.jpg" width="220" alt="LGU headcount screen"> | <img src="docs/demo/screens/lgu-map.jpg" width="220" alt="LGU map with bridges, centers and closures"> |
 
 ---
 
@@ -165,12 +180,15 @@ app/src/main/res/layout/   XML views
 | `structures/` | 5,023 bridges and 240 tunnels from OpenStreetMap, unverified until an LGU confirms them. |
 | `seed/` | 91 PLM SSC evacuation centers (Jul 2024) shown every day, plus 90 from the old app, all unverified until an LGU confirms them. |
 | `seed/hotlines_plmssc_2024.json` | Nine emergency hotlines from the same PLM SSC post, with its mixed-up labels corrected. |
+| `data/raw/` (repo root) | The raw NOAH shapefiles and OpenStreetMap export that `tools/dataprep` turns into the files above. |
 
 ---
 
 ## Security and privacy
 
 - Database rules enforce each user's role and city.
+- The Firebase settings file (`app/google-services.json`) is shared on purpose, because `firebase/firestore.rules` decides who may read or change each record.
+- The TomTom key stays in each computer's `local.properties` and is never uploaded.
 - Every LGU change writes a permanent audit record.
 - Ligtas Priority uses sample images only, never real IDs or medical files.
 - QR codes hold only an application number.

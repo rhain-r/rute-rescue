@@ -61,3 +61,13 @@ Result: 149 app unit tests pass (131 before, 18 new), and the debug app builds.
 | `README.md` | MODIFY | Logo, ad, new screens, centers, capacity, hotlines and the test count. |
 
 Result: 156 app unit tests pass, and the debug app builds.
+
+## 5. Downloadable repo and LGU screens
+
+| File path | Action | Purpose |
+|---|---|---|
+| `.gitignore` | MODIFY | Commits `app/google-services.json` and `data/raw/` so a downloaded copy runs and matches the team folder; `local.properties` (SDK path, TomTom key) stays private. |
+| `app/google-services.json` | CREATE (in Git) | Firebase app config for project `rutarescue`; access is controlled by `firebase/firestore.rules`. |
+| `data/raw/` | CREATE (in Git) | Raw NOAH shapefiles and the OSM export that `tools/dataprep` turns into the bundled assets. |
+| `docs/demo/screens/lgu-*.jpg` (5 files) | CREATE | LGU overview, reviews, one review, data and map screens (no flood layer; one resident name hidden). |
+| `README.md` | MODIFY | "Run it" lines, separate Residents and LGU operations screens, and notes on the shared Firebase file and raw data. |

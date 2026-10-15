@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "1068334228443",
+    "firebase_url": "https://rutarescue-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "rutarescue",
+    "storage_bucket": "rutarescue.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1068334228443:android:48a280bcabe8ff31267dfe",
+        "android_client_info": {
+          "package_name": "com.oop.rutarescue"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAolqLt9tLst1eeD7dayAMK4M2gzaL8qJU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

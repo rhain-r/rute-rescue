@@ -11,12 +11,16 @@ build/
 .idea/
 .DS_Store
 
-# Secrets and private configuration (DOCX section 12) - never commit these
+# Private, per-computer settings (DOCX section 12) - never commit: the Android SDK path of
+# this computer and the TomTom key (without it, routes use free OpenStreetMap routing).
 local.properties
-app/google-services.json
 
-# Raw Project NOAH shapefiles and OSM exports (large; keep them in Google Drive)
-data/raw/
+# app/google-services.json IS committed (team decision, 2026-10-15) so a downloaded copy can
+# sign in: it is the Firebase app config that ships inside every APK, not a password, and
+# firebase/firestore.rules decide who may read or change data. See the exception further down.
+
+# Raw Project NOAH shapefiles and OSM exports are committed too (data/raw/, 106 MB, largest
+# file 36 MB) so this repo matches the team folder; only tools/dataprep reads them.
 
 # Firebase emulator logs
 firebase-debug.log
@@ -40,6 +44,7 @@ firebase/.firebase/
 *.crt
 *.cer
 google-services.json
+!app/google-services.json
 service-account*.json
 *-firebase-adminsdk-*.json
 secrets/
