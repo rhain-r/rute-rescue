@@ -215,8 +215,8 @@ vite.config.ts.timestamp-*
 .turbo
 
 # ---------------------------------------------------------------------------
-# Explainer video project: keep it all off GitHub EXCEPT the finished ad,
-# which the README shows. (Kept last so no rule above can undo it.)
-# ---------------------------------------------------------------------------
-/RutaRescue-explainer-video/*
-!/RutaRescue-explainer-video/recording-ads.mp4
+# Explainer video project: lives outside this repo; never upload it.
+/RutaRescue-explainer-video/
+
+# Local Claude Code preview settings
+/.claude/

@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RutaRescue Demo</title>
+<meta name="description" content="Tap through real RutaRescue screens captured from the Android emulator.">
+<link rel="icon" href="demo/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #152B3F;
+    --brand: #24547F;
+    --cyan: #12B5D0;
+    --text: #162235;
+    --muted: #667085;
+    --border: #E8EAED;
+    --bg: #F4F7FA;
+    --card: #FFFFFF;
+    --bezel: #0E1C2A;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --text: #E8EEF4;
+      --muted: #9AA8B8;
+      --border: #263A4E;
+      --bg: #0B1621;
+      --card: #12222F;
+      --brand: #7FB6E6;
+      --bezel: #02070C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --text: #E8EEF4;
+    --muted: #9AA8B8;
+    --border: #263A4E;
+    --bg: #0B1621;
+    --card: #12222F;
+    --brand: #7FB6E6;
+    --bezel: #02070C;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Karla, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 24px 16px 40px; }
+  header { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+  header img { width: 48px; height: 48px; border-radius: 12px; }
+  h1, h2 { font-family: Montserrat, system-ui, sans-serif; margin: 0; }
+  h1 { font-size: 24px; letter-spacing: -0.01em; }
+  .eyebrow { color: var(--cyan); font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+
+  .layout { display: grid; grid-template-columns: auto 1fr; gap: 40px; align-items: start; }
+  @media (max-width: 760px) { .layout { grid-template-columns: 1fr; gap: 24px; } }
+
+  .phone {
+    position: relative;
+    width: min(360px, 86vw, max(240px, calc((100vh - 170px) * 0.45)));
+    aspect-ratio: 1080 / 2400;
+    margin: 0 auto;
+    padding: 10px;
+    background: var(--bezel);
+    border-radius: 46px;
+    box-shadow: 0 24px 60px rgba(21, 43, 63, .28);
+  }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 36px; overflow: hidden; background: #fff; }
+  .screen img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .hot {
+    position: absolute;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .hints .hot {
+    outline: 2px solid rgba(18, 181, 208, .85);
+    outline-offset: -2px;
+    background: rgba(18, 181, 208, .10);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  .hot:hover, .hot:focus-visible { outline: 3px solid var(--cyan); outline-offset: -3px; background: rgba(18, 181, 208, .18); }
+  @keyframes pulse { 50% { background: rgba(18, 181, 208, .02); } }
+  @media (prefers-reduced-motion: reduce) { .hints .hot { animation: none; } }
+
+  .panel { display: grid; gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+  .roles { display: inline-flex; background: var(--card); border: 1px solid var(--border); border-radius: 999px; padding: 4px; }
+  .roles button {
+    border: 0; background: transparent; color: var(--text);
+    font: 600 14px Karla, system-ui, sans-serif;
+    padding: 8px 16px; border-radius: 999px; cursor: pointer;
+  }
+  .roles button[aria-pressed="true"] { background: var(--navy); color: #fff; }
+  h2 { font-size: 20px; margin-bottom: 6px; }
+  .caption { margin: 0; color: var(--muted); }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  .tools { display: flex; gap: 10px; align-items: center; }
+  .tools button {
+    border: 1px solid var(--border); background: var(--card); color: var(--text);
+    font: 600 14px Karla, system-ui, sans-serif; padding: 8px 14px; border-radius: 10px; cursor: pointer;
+  }
+  .tools button:disabled { opacity: .45; cursor: default; }
+  label.toggle { display: inline-flex; gap: 8px; align-items: center; color: var(--muted); font-size: 14px; cursor: pointer; }
+  .list-title { font-weight: 600; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips button {
+    border: 1px solid var(--border); background: var(--card); color: var(--text);
+    font: 500 14px Karla, system-ui, sans-serif; padding: 6px 12px; border-radius: 999px; cursor: pointer;
+  }
+  .chips button[aria-current="true"] { border-color: var(--cyan); background: rgba(18, 181, 208, .12); }
+  .note { font-size: 14px; color: var(--muted); margin: 0; }
+  .note a { color: var(--brand); }
+  footer { margin-top: 32px; font-size: 14px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="demo/logo.png" alt="">
+    <div>
+      <div class="eyebrow">Clickable demo</div>
+      <h1>RutaRescue</h1>
+    </div>
+  </header>
+  <p class="lead">Real screens from the Android emulator; tap the highlighted spots to move through the app.</p>
+
+  <div class="layout">
+    <div class="phone" id="phone">
+      <div class="screen hints" id="screen">
+        <img id="shot" src="demo/screens/login.jpg" alt="">
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="row">
+        <div class="roles" role="group" aria-label="Choose a user">
+          <button type="button" data-role="resident" aria-pressed="true">Resident</button>
+          <button type="button" data-role="lgu" aria-pressed="false">LGU staff</button>
+        </div>
+        <div class="tools">
+          <button type="button" id="back" disabled>← Back</button>
+          <label class="toggle"><input type="checkbox" id="hints" checked> Show tap spots</label>
+        </div>
+      </div>
+
+      <div class="card" aria-live="polite">
+        <h2 id="title"></h2>
+        <p class="caption" id="caption"></p>
+      </div>
+
+      <div class="card">
+        <p class="list-title">Jump to a screen</p>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <p class="note">Demo data only: "Maria Demo" and "Lola Rosa Demo" are made-up people.</p>
+      <p class="note">RutaRescue never calls a route "safe"; in an emergency, call 911.</p>
+    </div>
+  </div>
+
+  <footer>
+    Built with Java and XML for Android · Flood data: UP NOAH · Maps: © OpenStreetMap contributors · Routing: TomTom and OSRM.
+  </footer>
+</div>
+
+<script>
+  // Every coordinate is in the screenshot's own pixels (1080 x 2400).
+  const W = 1080, H = 2400;
+  const NAV = [[21, 2159, 272, 2311], [283, 2159, 534, 2311], [545, 2159, 796, 2311], [807, 2159, 1059, 2311]];
+  const NAV_TARGETS = {
+    resident: ["home", "route-5yr", "centers", "record-approved"],
+    lgu: ["lgu-overview", "lgu-map", "lgu-reviews", "lgu-data"]
+  };
+  const NAV_LABELS = {
+    resident: ["Home", "Route", "Centers", "Record"],
+    lgu: ["Overview", "Map", "Reviews", "Data"]
+  };
+
+  const SCREENS = {
+    "login": { role: "both", title: "Sign in", caption: "Residents and LGU staff use their own accounts, and the app reads each role from the database.", nav: false,
+      spots: [[63, 1496, 1017, 1633, "@start", "Sign in"]] },
+
+    "home": { role: "resident", title: "Home", caption: "Home shows the latest LGU advisory and the nearest verified evacuation center.",
+      spots: [[89, 989, 501, 1078, "route-5yr", "Find a safer route"], [42, 1435, 356, 1682, "route-5yr", "Safe route"],
+              [382, 1435, 697, 1682, "centers", "Centers"], [723, 1435, 1038, 1682, "record-approved", "Family record"]] },
+    "route-5yr": { role: "resident", title: "Route map: 5-year flood", caption: "The map shows the NOAH 5-year flood scenario and the nearest centers.",
+      spots: [[387, 453, 554, 537, "route-100yr", "Switch to the 100-year flood"], [42, 1720, 1038, 1850, "route-results", "Route to Almario Elementary School"]] },
+    "route-100yr": { role: "resident", title: "Route map: 100-year flood", caption: "The 100-year scenario shows the largest modelled flood.",
+      spots: [[48, 453, 189, 537, "route-5yr", "Switch to the 5-year flood"], [42, 1720, 1038, 1850, "route-results", "Route to Almario Elementary School"]] },
+    "route-results": { role: "resident", title: "Ranked routes", caption: "The best option is labelled \"Safer among available alternatives\", never \"safe\".",
+      spots: [[84, 1760, 996, 1891, "route-guidance", "Start safer-route guidance"], [42, 1302, 1038, 1700, "route-compare", "See why this route ranks first"]] },
+    "route-compare": { role: "resident", title: "Why this route", caption: "Each route lists its flood hazard, flooded distance and unverified bridges.",
+      spots: [[0, 640, 1080, 1250, "route-results", "Back to the route summary"]] },
+    "route-guidance": { role: "resident", title: "Guidance", caption: "Step-by-step directions follow the phone's GPS position.",
+      spots: [[84, 1515, 996, 1640, "route-results", "End guidance"]] },
+    "centers": { role: "resident", title: "Evacuation centers", caption: "Centers lists LGU-verified evacuation centers by distance.", spots: [] },
+    "record-approved": { role: "resident", title: "My Record", caption: "The family record and its Ligtas Priority status stay on the phone, even offline.",
+      spots: [[84, 1717, 618, 1823, "ligtas-qr", "Open verification record"], [84, 1849, 605, 1955, "ligtas-apply", "Apply for Ligtas Priority"]] },
+    "ligtas-apply": { role: "resident", title: "Apply for Ligtas Priority", caption: "Families ask for priority help for a senior, PWD, pregnant member or infant.", nav: false,
+      spots: [[42, 2090, 1038, 2225, "record", "Submit application"], [42, 160, 160, 290, "record-approved", "Back"]] },
+    "record": { role: "resident", title: "Application pending", caption: "The application now waits for the city's LGU to review it." , spots: [] },
+    "ligtas-qr": { role: "resident", title: "Verification QR", caption: "The QR code holds only an application ID, never names or medical details.", nav: false,
+      spots: [[798, 1674, 926, 1769, "record-approved", "Close"]] },
+
+    "lgu-overview": { role: "lgu", title: "LGU overview", caption: "The overview counts open reviews, closures, centers and advisories for the city.",
+      spots: [[42, 1515, 1038, 1640, "lgu-reviews", "Review Ligtas applications"]] },
+    "lgu-map": { role: "lgu", title: "Flood-risk map", caption: "LGU staff inspect flood zones, routes and centers on one map.",
+      spots: [[387, 447, 554, 531, "lgu-map-100yr", "Switch to the 100-year flood"]] },
+    "lgu-map-100yr": { role: "lgu", title: "Flood-risk map: 100-year", caption: "Long-pressing the map reports a road closure that every route then avoids.",
+      spots: [[48, 447, 189, 531, "lgu-map", "Switch to the 5-year flood"]] },
+    "lgu-reviews": { role: "lgu", title: "Ligtas reviews", caption: "Staff see Ligtas Priority applications from their own city only.",
+      spots: [[42, 890, 1038, 1245, "lgu-review-detail", "Review application"]] },
+    "lgu-review-detail": { role: "lgu", title: "Review an application", caption: "Every approval or rejection needs a reason and is saved to the audit trail.", nav: false,
+      spots: [[42, 160, 160, 290, "lgu-reviews", "Back"]] },
+    "lgu-data": { role: "lgu", title: "Data and centers", caption: "Data shows the bundled flood maps and the evacuation centers the LGU has published.", spots: [] }
+  };
+
+  const START = { resident: "home", lgu: "lgu-overview" };
+  let role = "resident";
+  let current = "login";
+  const history = [];
+
+  const shot = document.getElementById("shot");
+  const screen = document.getElementById("screen");
+  const title = document.getElementById("title");
+  const caption = document.getElementById("caption");
+  const chips = document.getElementById("chips");
+  const back = document.getElementById("back");
+
+  function pct(v, total) { return (v / total * 100) + "%"; }
+
+  function addSpot(x1, y1, x2, y2, target, label) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "hot";
+    b.style.left = pct(x1, W);
+    b.style.top = pct(y1, H);
+    b.style.width = pct(x2 - x1, W);
+    b.style.height = pct(y2 - y1, H);
+    b.setAttribute("aria-label", label);
+    b.title = label;
+    b.addEventListener("click", () => go(target === "@start" ? START[role] : target));
+    screen.appendChild(b);
+  }
+
+  function render() {
+    const s = SCREENS[current];
+    shot.src = "demo/screens/" + current + ".jpg";
+    shot.alt = s.title + " screen";
+    title.textContent = s.title;
+    caption.textContent = s.caption;
+    screen.querySelectorAll(".hot").forEach(el => el.remove());
+    s.spots.forEach(p => addSpot(...p));
+    const navRole = s.role === "both" ? null : s.role;
+    if (navRole && s.nav !== false) {
+      NAV.forEach((r, i) => {
+        if (NAV_TARGETS[navRole][i] !== current) addSpot(...r, NAV_TARGETS[navRole][i], NAV_LABELS[navRole][i] + " tab");
+      });
+    }
+    back.disabled = history.length === 0;
+    renderChips();
+  }
+
+  function renderChips() {
+    chips.innerHTML = "";
+    const ids = ["login"].concat(Object.keys(SCREENS).filter(id => SCREENS[id].role === role));
+    ids.forEach(id => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = SCREENS[id].title;
+      if (id === current) b.setAttribute("aria-current", "true");
+      b.addEventListener("click", () => go(id));
+      chips.appendChild(b);
+    });
+  }
+
+  function go(id) {
+    if (id === current) return;
+    history.push(current);
+    current = id;
+    const r = SCREENS[id].role;
+    if (r !== "both" && r !== role) setRole(r, false);
+    render();
+  }
+
+  function setRole(r, reset) {
+    role = r;
+    document.querySelectorAll(".roles button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.role === r)));
+    if (reset) { history.length = 0; current = "login"; render(); }
+  }
+
+  document.querySelectorAll(".roles button").forEach(b => b.addEventListener("click", () => setRole(b.dataset.role, true)));
+  back.addEventListener("click", () => {
+    if (!history.length) return;
+    current = history.pop();
+    const r = SCREENS[current].role;
+    if (r !== "both" && r !== role) setRole(r, false);
+    render();
+  });
+  document.getElementById("hints").addEventListener("change", e => screen.classList.toggle("hints", e.target.checked));
+
+  // Load every screen early so taps feel instant.
+  Object.keys(SCREENS).forEach(id => { const i = new Image(); i.src = "demo/screens/" + id + ".jpg"; });
+  render();
+</script>
+</body>
+</html>
