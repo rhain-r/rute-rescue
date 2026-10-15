@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Unselected pills have a 1 dp #E8EAED border; the selected pill has none (same colour as its fill). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/rr_navy_light" android:state_checked="true" />
+    <item android:color="@color/rr_divider" />
+</selector>

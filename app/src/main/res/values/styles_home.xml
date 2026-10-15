@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Figma "Safe route / Centers / Family Action" tiles: 116 x 94 dp, glass, padding 12, gap 6 -->
+    <style name="RR.QuickAction">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">94dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:background">@drawable/bg_card</item>
+        <item name="android:elevation">@dimen/elevation_sm</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:foreground">@drawable/ripple_card</item>
+    </style>
+
+    <!-- 24 dp icon; each tile sets its own Figma colour with app:tint -->
+    <style name="RR.QuickActionIcon">
+        <item name="android:layout_width">24dp</item>
+        <item name="android:layout_height">24dp</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
+    <!-- "Label": Mobile/Label, primary text -->
+    <style name="RR.QuickActionTitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Label</item>
+    </style>
+
+    <!-- "Sub": Mobile/Micro, secondary text, 6 dp below the label -->
+    <style name="RR.QuickActionSub">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Micro</item>
+    </style>
+</resources>

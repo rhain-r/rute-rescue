@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Figma "LGU / Ligtas Reviews": pinned LGU header, then "Screen Content" (16 dp padding, 12 dp gap):
+    Section Header ("Ligtas Priority reviews" + "18 pending"), Review Tabs (Pending / Approved /
+    Rejected, 8 dp apart), Search Field, application cards, Review Standard card.
+    DOCX additions: the QR verification scanner button and the freshness label.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.core.widget.NestedScrollView style="@style/RR.TabScroll">
+
+        <LinearLayout style="@style/RR.ScreenColumn">
+
+            <!-- "Section Header" -->
+            <LinearLayout
+                style="@style/RR.SectionRow"
+                android:layout_marginTop="0dp">
+
+                <TextView
+                    style="@style/RR.SectionTitle"
+                    android:text="@string/ligtas_reviews" />
+
+                <TextView
+                    android:id="@+id/reviews_pending_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.RR.Label"
+                    android:textColor="@color/rr_navy_light" />
+            </LinearLayout>
+
+            <!-- "Review Tabs" + QR scanner -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/reviews_tabs"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:chipSpacingHorizontal="8dp"
+                    app:selectionRequired="true"
+                    app:singleSelection="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/reviews_tab_pending"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="@string/pending" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/reviews_tab_approved"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/approved" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/reviews_tab_rejected"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/rejected" />
+                </com.google.android.material.chip.ChipGroup>
+
+                <ImageButton
+                    android:id="@+id/reviews_scan"
+                    style="@style/RR.MapButton"
+                    android:layout_marginStart="8dp"
+                    android:contentDescription="@string/scan_qr"
+                    android:src="@drawable/ic_scan" />
+            </LinearLayout>
+
+            <!-- "RR / Search Field" -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="@dimen/item_gap"
+                android:background="@drawable/bg_search"
+                android:elevation="@dimen/elevation_sm"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/rr_icon_search" />
+
+                <EditText
+                    android:id="@+id/reviews_search"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:background="@null"
+                    android:hint="@string/search_resident_hint"
+                    android:imeOptions="actionSearch"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.RR.Body"
+                    android:textColorHint="@color/rr_text_secondary" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/reviews_freshness"
+                style="@style/RR.FreshnessChip"
+                android:layout_marginTop="@dimen/item_gap"
+                android:layout_marginBottom="@dimen/item_gap" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/reviews_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false" />
+
+            <TextView
+                android:id="@+id/reviews_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/item_gap"
+                android:textAppearance="@style/TextAppearance.RR.Caption"
+                android:visibility="gone" />
+
+            <!-- "Review Standard": padding 14, gap 8 -->
+            <LinearLayout style="@style/RR.CardColumn">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/documented_criteria_title"
+                    android:textAppearance="@style/TextAppearance.RR.Section" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/documented_criteria_body"
+                    android:textAppearance="@style/TextAppearance.RR.Body"
+                    android:textColor="@color/rr_text_secondary" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <include layout="@layout/view_app_header" />
+</FrameLayout>

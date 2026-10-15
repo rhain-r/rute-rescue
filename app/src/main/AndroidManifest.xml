@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- TomTom, Firebase and map tiles -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Route origin and guidance progress (used on the device only, never logged) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!--
+        allowBackup is off because the app stores family records and Ligtas data
+        (DOCX section 12: collect and keep only what evacuation assistance needs).
+    -->
+    <application
+        android:name=".RutaRescueApp"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:theme="@style/Theme.RutaRescue">
+
+        <activity
+            android:name=".ui.auth.LoginActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.auth.RegisterActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.shell.MainShellActivity"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustPan" />
+        <activity android:name=".ui.resident.home.InboxActivity" />
+        <activity android:name=".ui.resident.centers.CenterDetailActivity" />
+        <activity
+            android:name=".ui.resident.record.FamilyEditActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ui.resident.record.LegacyDataActivity" />
+        <activity
+            android:name=".ui.resident.ligtas.LigtasApplyActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ui.resident.ligtas.LigtasStatusActivity" />
+        <activity
+            android:name=".ui.lgu.overview.AdvisoryEditorActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.lgu.reviews.ReviewDetailActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.lgu.data.CenterEditorActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.lgu.data.DatasetImportActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ui.about.AboutActivity" />
+    </application>
+
+</manifest>

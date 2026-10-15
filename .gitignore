@@ -1,3 +1,69 @@
+# Build output
+.gradle/
+build/
+/captures
+.externalNativeBuild
+.cxx
+.kotlin/
+
+# IDE files
+*.iml
+.idea/
+.DS_Store
+
+# Secrets and private configuration (DOCX section 12) - never commit these
+local.properties
+app/google-services.json
+
+# Raw Project NOAH shapefiles and OSM exports (large; keep them in Google Drive)
+data/raw/
+
+# Firebase emulator logs
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+firebase/.firebase/
+
+# ---------------------------------------------------------------------------
+# Extra safety rules (added 2026-10-15 before the first GitHub upload)
+# ---------------------------------------------------------------------------
+
+# Passwords, settings files, keys and certificates - never upload
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.crt
+*.cer
+google-services.json
+service-account*.json
+*-firebase-adminsdk-*.json
+secrets/
+
+# Downloaded dependency folders
+node_modules/
+venv/
+.venv/
+__pycache__/
+
+# Build output (app packages)
+*.apk
+*.aab
+
+# System junk
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*
+
+
+# ---------------------------------------------------------------------------
+# GitHub's original .gitignore (Node.js template), kept as-is below
+# ---------------------------------------------------------------------------
 # Logs
 logs
 *.log
@@ -147,3 +213,10 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# ---------------------------------------------------------------------------
+# Explainer video project: keep it all off GitHub EXCEPT the finished ad,
+# which the README shows. (Kept last so no rule above can undo it.)
+# ---------------------------------------------------------------------------
+/RutaRescue-explainer-video/*
+!/RutaRescue-explainer-video/recording-ads.mp4

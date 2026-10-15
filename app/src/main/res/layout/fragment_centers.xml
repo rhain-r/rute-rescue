@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Figma "Client / Centers": pinned header, then "Screen Content" (16 dp padding, 12 dp gap):
+    Section Header ("Evacuation centers" + "Map view"), Search Field, Center Filters, Capacity Note,
+    Center Rows, Preparedness Reminder. "Map view" switches to a map of the same centers.
+    The freshness label is a DOCX addition (section 11: cached data is labelled).
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/centers_scroll"
+        style="@style/RR.TabScroll">
+
+        <LinearLayout style="@style/RR.ScreenColumn">
+
+            <!-- "Section Header" -->
+            <LinearLayout
+                style="@style/RR.SectionRow"
+                android:layout_marginTop="0dp">
+
+                <TextView
+                    style="@style/RR.SectionTitle"
+                    android:text="@string/evacuation_centers" />
+
+                <TextView
+                    android:id="@+id/centers_show_map"
+                    style="@style/RR.SectionAction"
+                    android:text="@string/map_view" />
+            </LinearLayout>
+
+            <!-- "RR / Search Field" -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_search"
+                android:elevation="@dimen/elevation_sm"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/rr_icon_search" />
+
+                <EditText
+                    android:id="@+id/centers_search"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:background="@null"
+                    android:hint="@string/search_centers_hint"
+                    android:imeOptions="actionSearch"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.RR.Body"
+                    android:textColorHint="@color/rr_text_secondary" />
+            </LinearLayout>
+
+            <!-- "Center Filters": 8 dp apart -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/centers_filters"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/item_gap"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/centers_filter_nearby"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/filter_nearby" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/centers_filter_open"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/filter_open" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/centers_filter_accessible"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/filter_accessible" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <!-- "Capacity Note": #FFF4DF, 16 dp corners, padding 12, 20 dp info icon -->
+            <TextView
+                style="@style/RR.Note.Warning"
+                android:layout_marginTop="@dimen/item_gap"
+                android:text="@string/capacity_notice" />
+
+            <TextView
+                android:id="@+id/centers_freshness"
+                style="@style/RR.FreshnessChip"
+                android:layout_marginTop="@dimen/item_gap"
+                android:layout_marginBottom="@dimen/item_gap" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/centers_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false" />
+
+            <TextView
+                android:id="@+id/centers_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/item_gap"
+                android:textAppearance="@style/TextAppearance.RR.Caption"
+                android:visibility="gone" />
+
+            <!-- "Preparedness Reminder": padding 14, gap 8 -->
+            <LinearLayout style="@style/RR.CardColumn">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/essentials_title"
+                    android:textAppearance="@style/TextAppearance.RR.Section" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/essentials_body"
+                    android:textAppearance="@style/TextAppearance.RR.Body"
+                    android:textColor="@color/rr_text_secondary" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Map mode: same header, a section row with "List view", then the centers on a map -->
+    <LinearLayout
+        android:id="@+id/centers_map_mode"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingTop="@dimen/header_height"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:minHeight="56dp"
+            android:orientation="horizontal"
+            android:paddingStart="@dimen/screen_padding"
+            android:paddingEnd="@dimen/screen_padding">
+
+            <TextView
+                style="@style/RR.SectionTitle"
+                android:text="@string/evacuation_centers" />
+
+            <TextView
+                android:id="@+id/centers_show_list"
+                style="@style/RR.SectionAction"
+                android:text="@string/list_view" />
+        </LinearLayout>
+
+        <org.maplibre.android.maps.MapView
+            android:id="@+id/centers_map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="@dimen/bottom_nav_height" />
+    </LinearLayout>
+
+    <include layout="@layout/view_app_header" />
+</FrameLayout>

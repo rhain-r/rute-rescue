@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Figma "RR / Center Row" (378 x 104 dp in the frames): glass card, padding 14, gap 12,
+    42 dp pin tile, Mobile/Section name, Mobile/Caption meta ("0.8 km • Open • LGU updated 8 min ago"),
+    20 dp chevron. The status is part of the meta line, exactly as in Figma.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/center_card"
+    style="@style/RR.RowCard"
+    android:minHeight="104dp">
+
+    <ImageView
+        style="@style/RR.IconTile"
+        android:src="@drawable/ic_pin" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/center_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.RR.Section" />
+
+        <TextView
+            android:id="@+id/center_meta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:textAppearance="@style/TextAppearance.RR.Caption" />
+    </LinearLayout>
+
+    <ImageView
+        style="@style/RR.Chevron"
+        app:tint="@color/rr_icon_muted" />
+</LinearLayout>

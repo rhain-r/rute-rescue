@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma "Map Title" pill: glass, 24 dp corners (48 dp tall). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/rr_glass" />
+    <corners android:radius="24dp" />
+</shape>

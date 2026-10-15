@@ -1,0 +1,16 @@
+# Copy this file to local.properties (which is git-ignored) and fill in your own values.
+# Android Studio writes sdk.dir automatically.
+sdk.dir=C\:\\Users\\YOUR_NAME\\AppData\\Local\\Android\\Sdk
+
+# Free TomTom developer key (no credit card): Routing API (navigation with live traffic) and
+# Traffic API (traffic overlay). Get it at https://my.tomtom.com/keys - see README section 5.
+# Leave empty to use free OpenStreetMap routing only. Keep it private; rotate it if leaked.
+TOMTOM_API_KEY=
+
+# true  = store synthetic Ligtas proof images in Firebase Storage (needs the Blaze plan)
+# false = store a compressed synthetic thumbnail inside Firestore (works on the free Spark plan)
+USE_FIREBASE_STORAGE=false
+
+# Set to true only when running against the local Firebase Emulator Suite.
+USE_FIREBASE_EMULATOR=false
+EMULATOR_HOST=10.0.2.2

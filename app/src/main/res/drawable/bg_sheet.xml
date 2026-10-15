@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma map bottom sheet: glass, 1 dp border, 30 dp corners (floats 16 dp from the edges). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/rr_glass" />
+    <corners android:radius="30dp" />
+    <stroke android:width="1dp" android:color="@color/rr_divider" />
+</shape>

@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+        App theme (light), built from the RutaRescue Figma design system:
+        - colours: values/colors.xml (Figma variables)
+        - fonts: Montserrat for headings, Karla for everything else (res/font)
+        - text styles: the seven Figma "Mobile/..." styles below
+        - background: Figma "Surface/Ambient" gradient (drawable/bg_ambient.xml)
+    -->
+    <style name="Theme.RutaRescue" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/rr_navy</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/rr_teal_soft</item>
+        <item name="colorOnPrimaryContainer">@color/rr_navy</item>
+        <item name="colorSecondary">@color/rr_navy_light</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSecondaryContainer">@color/rr_teal_soft</item>
+        <item name="colorOnSecondaryContainer">@color/rr_navy</item>
+        <item name="colorError">@color/rr_red</item>
+        <item name="android:colorBackground">@color/rr_background</item>
+        <item name="colorSurface">@color/rr_surface</item>
+        <item name="colorSurfaceContainer">@color/rr_surface</item>
+        <item name="colorSurfaceContainerLow">@color/rr_surface</item>
+        <item name="colorSurfaceContainerHigh">@color/rr_surface</item>
+        <item name="colorOnSurface">@color/rr_text</item>
+        <item name="colorOnSurfaceVariant">@color/rr_text_secondary</item>
+        <item name="colorOutline">@color/rr_divider</item>
+        <item name="colorOutlineVariant">@color/rr_divider</item>
+        <item name="android:windowBackground">@drawable/bg_ambient</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <!-- Older Android versions simply ignore these attributes. -->
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="29">false</item>
+
+        <!-- Figma surfaces are pure white glass: no Material 3 tonal tint on elevated surfaces. -->
+        <item name="elevationOverlayEnabled">false</item>
+
+        <!-- Figma shadows are navy (#152B3F) at 8-12 %: tint every elevation shadow the same way. -->
+        <item name="android:spotShadowAlpha">0.12</item>
+        <item name="android:ambientShadowAlpha">0.04</item>
+        <item name="android:outlineSpotShadowColor" tools:targetApi="28">@color/rr_navy</item>
+        <item name="android:outlineAmbientShadowColor" tools:targetApi="28">@color/rr_navy</item>
+
+        <!--
+            Default text for any TextView without its own text appearance: Mobile/Body (Karla).
+            Do not put android:fontFamily directly in the theme: a theme font overrides the font
+            of every text appearance, so all headings would lose Montserrat.
+        -->
+        <item name="android:textViewStyle">@style/Widget.RR.TextView</item>
+
+        <!-- Material 3 type roles mapped to the Figma fonts (buttons, chips, dialogs, inputs...) -->
+        <item name="textAppearanceDisplayLarge">@style/TextAppearance.RR.M3.Display</item>
+        <item name="textAppearanceDisplayMedium">@style/TextAppearance.RR.M3.Display</item>
+        <item name="textAppearanceDisplaySmall">@style/TextAppearance.RR.M3.Display</item>
+        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.RR.M3.Display</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.RR.M3.Headline</item>
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.RR.M3.Headline</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.RR.M3.Headline</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.RR.M3.Title</item>
+        <item name="textAppearanceTitleSmall">@style/TextAppearance.RR.M3.TitleSmall</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.RR.M3.BodyLarge</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.RR.M3.Body</item>
+        <item name="textAppearanceBodySmall">@style/TextAppearance.RR.M3.BodySmall</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.RR.M3.Label</item>
+        <item name="textAppearanceLabelMedium">@style/TextAppearance.RR.M3.LabelMedium</item>
+        <item name="textAppearanceLabelSmall">@style/TextAppearance.RR.M3.LabelSmall</item>
+
+        <item name="materialCardViewStyle">@style/Widget.RR.Card</item>
+        <item name="textInputStyle">@style/Widget.RR.TextInput</item>
+        <item name="chipStyle">@style/Widget.RR.Chip</item>
+        <item name="materialButtonStyle">@style/Widget.RR.Button.Primary</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.RR.Dialog</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.RR.BottomSheetDialog</item>
+        <item name="snackbarStyle">@style/Widget.RR.Snackbar</item>
+        <item name="snackbarTextViewStyle">@style/Widget.RR.SnackbarText</item>
+        <item name="snackbarButtonStyle">@style/Widget.RR.SnackbarButton</item>
+    </style>
+
+    <!-- ============================================================
+         The seven Figma text styles ("Mobile/..."), sizes in sp.
+         Figma letter spacing is in px; Android uses em (px / font size).
+         ============================================================ -->
+
+    <!-- Mobile/Display: Montserrat Bold 28/34, -0.35 px -->
+    <style name="TextAppearance.RR.Display" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:fontFamily">@font/montserrat_bold</item>
+        <item name="fontFamily">@font/montserrat_bold</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">28sp</item>
+        <item name="android:lineHeight" tools:targetApi="28">34sp</item>
+        <item name="lineHeight">34sp</item>
+        <item name="android:letterSpacing">-0.0125</item>
+        <item name="android:textColor">@color/rr_text</item>
+    </style>
+
+    <!-- Mobile/Title: Montserrat Bold 20/26, -0.2 px -->
+    <style name="TextAppearance.RR.Title" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:fontFamily">@font/montserrat_bold</item>
+        <item name="fontFamily">@font/montserrat_bold</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:lineHeight" tools:targetApi="28">26sp</item>
+        <item name="lineHeight">26sp</item>
+        <item name="android:letterSpacing">-0.01</item>
+        <item name="android:textColor">@color/rr_text</item>
+    </style>
+
+    <!-- Mobile/Section: Montserrat SemiBold 16/22, -0.1 px (section headers, card titles) -->
+    <style name="TextAppearance.RR.Section" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:fontFamily">@font/montserrat_semibold</item>
+        <item name="fontFamily">@font/montserrat_semibold</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineHeight" tools:targetApi="28">22sp</item>
+        <item name="lineHeight">22sp</item>
+        <item name="android:letterSpacing">-0.00625</item>
+        <item name="android:textColor">@color/rr_text</item>
+    </style>
+
+    <!-- Older name kept for existing layouts: identical to Mobile/Section. -->
+    <style name="TextAppearance.RR.Subtitle" parent="TextAppearance.RR.Section" />
+
+    <!-- Mobile/Body: Karla Regular 14/20 -->
+    <style name="TextAppearance.RR.Body" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:fontFamily">@font/karla_regular</item>
+        <item name="fontFamily">@font/karla_regular</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:lineHeight" tools:targetApi="28">20sp</item>
+        <item name="lineHeight">20sp</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:textColor">@color/rr_text</item>
+    </style>
+
+    <!-- Mobile/Label: Karla SemiBold 13/18 (buttons, links, row titles) -->
+    <style name="TextAppearance.RR.Label" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:fontFamily">@font/karla_semibold</item>
+        <item name="fontFamily">@font/karla_semibold</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:lineHeight" tools:targetApi="28">18sp</item>
+        <item name="lineHeight">18sp</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:textColor">@color/rr_text</item>
+    </style>
+
+    <!-- Mobile/Caption: Karla Regular 12/16 -->
+    <style name="TextAppearance.RR.Caption" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:fontFamily">@font/karla_regular</item>
+        <item name="fontFamily">@font/karla_regular</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:lineHeight" tools:targetApi="28">16sp</item>
+        <item name="lineHeight">16sp</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:textColor">@color/rr_text_secondary</item>
+    </style>
+
+    <!-- Mobile/Micro: Karla Medium 10/14, +0.1 px (labels, nav, chips) -->
+    <style name="TextAppearance.RR.Micro" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:fontFamily">@font/karla_medium</item>
+        <item name="fontFamily">@font/karla_medium</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:lineHeight" tools:targetApi="28">14sp</item>
+        <item name="lineHeight">14sp</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/rr_text_secondary</item>
+    </style>
+
+    <!-- Mobile/Micro in capitals and cyan: the "COMMUNITY SAFETY" eyebrow -->
+    <style name="TextAppearance.RR.Eyebrow" parent="TextAppearance.RR.Micro">
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/rr_teal</item>
+    </style>
+
+    <!-- Default TextView style: only sets the text appearance, so explicit appearances still win. -->
+    <style name="Widget.RR.TextView" parent="Widget.MaterialComponents.TextView">
+        <item name="android:textAppearance">@style/TextAppearance.RR.Body</item>
+    </style>
+
+    <!-- Material 3 roles (used by Material widgets, not directly by our layouts) -->
+    <style name="TextAppearance.RR.M3.Display" parent="TextAppearance.Material3.DisplaySmall">
+        <item name="fontFamily">@font/montserrat_bold</item>
+        <item name="android:fontFamily">@font/montserrat_bold</item>
+    </style>
+
+    <style name="TextAppearance.RR.M3.Headline" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="fontFamily">@font/montserrat_bold</item>
+        <item name="android:fontFamily">@font/montserrat_bold</item>
+        <item name="android:textSize">20sp</item>
+        <item name="lineHeight">26sp</item>
+        <item name="android:letterSpacing">-0.01</item>
+    </style>
+
+    <style name="TextAppearance.RR.M3.Title" parent="TextAppearance.Material3.TitleMedium">
+        <item name="fontFamily">@font/montserrat_semibold</item>
+        <item name="android:fontFamily">@font/montserrat_semibold</item>
+        <item name="android:textSize">16sp</item>
+        <item name="lineHeight">22sp</item>
+        <item name="android:letterSpacing">-0.00625</item>
+    </style>
+
+    <style name="TextAppearance.RR.M3.TitleSmall" parent="TextAppearance.Material3.TitleSmall">
+        <item name="fontFamily">@font/montserrat_semibold</item>
+        <item name="android:fontFamily">@font/montserrat_semibold</item>
+    </style>
+
+    <style name="TextAppearance.RR.M3.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
+        <item name="fontFamily">@font/karla_regular</item>
+        <item name="android:fontFamily">@font/karla_regular</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="TextAppearance.RR.M3.Body" parent="TextAppearance.Material3.BodyMedium">
+        <item name="fontFamily">@font/karla_regular</item>
+        <item name="android:fontFamily">@font/karla_regular</item>
+        <item name="android:textSize">14sp</item>
+        <item name="lineHeight">20sp</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="TextAppearance.RR.M3.BodySmall" parent="TextAppearance.Material3.BodySmall">
+        <item name="fontFamily">@font/karla_regular</item>
+        <item name="android:fontFamily">@font/karla_regular</item>
+        <item name="android:textSize">12sp</item>
+        <item name="lineHeight">16sp</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="TextAppearance.RR.M3.Label" parent="TextAppearance.Material3.LabelLarge">
+        <item name="fontFamily">@font/karla_semibold</item>
+        <item name="android:fontFamily">@font/karla_semibold</item>
+        <item name="android:textSize">13sp</item>
+        <item name="lineHeight">18sp</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="TextAppearance.RR.M3.LabelMedium" parent="TextAppearance.Material3.LabelMedium">
+        <item name="fontFamily">@font/karla_medium</item>
+        <item name="android:fontFamily">@font/karla_medium</item>
+    </style>
+
+    <style name="TextAppearance.RR.M3.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
+        <item name="fontFamily">@font/karla_medium</item>
+        <item name="android:fontFamily">@font/karla_medium</item>
+        <item name="android:textSize">10sp</item>
+        <item name="lineHeight">14sp</item>
+        <item name="android:letterSpacing">0.01</item>
+    </style>
+
+    <!-- ============================================================
+         Components (Figma component board)
+         ============================================================ -->
+
+    <!-- Glass card: white 93 %, 1 dp #E8EAED stroke, 24 dp radius, Elevation/Sm -->
+    <style name="Widget.RR.Card" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardCornerRadius">24dp</item>
+        <item name="cardElevation">6dp</item>
+        <item name="cardBackgroundColor">@color/rr_glass</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="strokeColor">@color/rr_divider</item>
+    </style>
+
+    <!-- "RR / Button / Type=Primary": navy pill, 52 dp, Karla SemiBold 13, 20 dp icon, gap 8 -->
+    <style name="Widget.RR.Button.Primary" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/rr_navy</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="iconTint">@color/white</item>
+        <item name="iconSize">20dp</item>
+        <item name="iconPadding">8dp</item>
+        <item name="iconGravity">textStart</item>
+        <item name="cornerRadius">26dp</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:paddingStart">20dp</item>
+        <item name="android:paddingEnd">20dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Label</item>
+        <item name="android:textColorHighlight">@color/rr_teal_soft</item>
+        <item name="elevation">8dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <!-- "RR / Button / Type=Secondary": glass pill, brand-600 label, no stroke -->
+    <style name="Widget.RR.Button.Secondary" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/rr_glass</item>
+        <item name="android:textColor">@color/rr_navy_light</item>
+        <item name="iconTint">@color/rr_navy_light</item>
+        <item name="iconSize">20dp</item>
+        <item name="iconPadding">8dp</item>
+        <item name="iconGravity">textStart</item>
+        <item name="rippleColor">@color/rr_teal_soft</item>
+        <item name="cornerRadius">26dp</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:paddingStart">20dp</item>
+        <item name="android:paddingEnd">20dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Label</item>
+        <item name="elevation">6dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <!-- Compact pill (Figma "Advisory Action"): 34 dp, padding 8/12, 18 dp icon -->
+    <style name="Widget.RR.Button.Small" parent="Widget.RR.Button.Primary">
+        <item name="android:minHeight">34dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="iconSize">18dp</item>
+        <item name="cornerRadius">17dp</item>
+        <item name="elevation">6dp</item>
+    </style>
+
+    <!-- Text link (Figma "See all", "Edit", "View report"): Karla SemiBold 13, brand-600 -->
+    <style name="Widget.RR.Button.Text" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">@color/rr_navy_light</item>
+        <item name="iconTint">@color/rr_navy_light</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Label</item>
+        <item name="android:minHeight">36dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <!--
+        Filter pill (Figma "Nearby Filter", "Pending 18 Tab"): 32 dp, padding 8/12, Mobile/Micro label,
+        selected = brand-600 fill with white text, unselected = white with a #E8EAED border.
+    -->
+    <style name="Widget.RR.Chip" parent="Widget.Material3.Chip.Filter">
+        <item name="chipBackgroundColor">@color/chip_background</item>
+        <item name="android:textColor">@color/chip_text</item>
+        <item name="chipStrokeColor">@color/chip_stroke</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="checkedIconVisible">false</item>
+        <item name="chipCornerRadius">16dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.ChipText</item>
+        <item name="chipMinHeight">32dp</item>
+        <item name="chipStartPadding">0dp</item>
+        <item name="chipEndPadding">0dp</item>
+        <item name="iconStartPadding">12dp</item>
+        <item name="iconEndPadding">0dp</item>
+        <item name="textStartPadding">12dp</item>
+        <item name="textEndPadding">12dp</item>
+        <item name="ensureMinTouchTargetSize">false</item>
+        <item name="chipIconTint">@color/chip_text</item>
+        <item name="chipIconSize">15dp</item>
+        <item name="rippleColor">@color/rr_teal_soft</item>
+    </style>
+
+    <!-- Map pill (Figma "Walking Mode", "Risk zones Mode"): navy when selected, glass otherwise, Elevation/Sm -->
+    <style name="Widget.RR.Chip.Map">
+        <item name="chipBackgroundColor">@color/chip_background_map</item>
+        <item name="chipStrokeColor">@color/chip_stroke_map</item>
+        <item name="android:elevation">@dimen/elevation_sm</item>
+    </style>
+
+    <style name="TextAppearance.RR.ChipText" parent="TextAppearance.RR.Micro" />
+
+    <!-- Form fields: glass box, 1 dp #E8EAED outline, 16 dp radius, Karla -->
+    <style name="Widget.RR.TextInput" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">16dp</item>
+        <item name="boxCornerRadiusTopEnd">16dp</item>
+        <item name="boxCornerRadiusBottomStart">16dp</item>
+        <item name="boxCornerRadiusBottomEnd">16dp</item>
+        <item name="boxBackgroundColor">@color/rr_glass</item>
+        <item name="boxStrokeColor">@color/text_input_stroke</item>
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="hintTextColor">@color/rr_navy_light</item>
+        <item name="android:textColorHint">@color/rr_text_secondary</item>
+        <item name="endIconTint">@color/rr_text_secondary</item>
+        <item name="hintTextAppearance">@style/TextAppearance.RR.Caption</item>
+        <item name="helperTextTextAppearance">@style/TextAppearance.RR.Caption</item>
+        <item name="errorTextAppearance">@style/TextAppearance.RR.Caption</item>
+    </style>
+
+    <style name="Widget.RR.TextInput.Dropdown" parent="Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+        <item name="boxCornerRadiusTopStart">16dp</item>
+        <item name="boxCornerRadiusTopEnd">16dp</item>
+        <item name="boxCornerRadiusBottomStart">16dp</item>
+        <item name="boxCornerRadiusBottomEnd">16dp</item>
+        <item name="boxBackgroundColor">@color/rr_glass</item>
+        <item name="boxStrokeColor">@color/text_input_stroke</item>
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="hintTextColor">@color/rr_navy_light</item>
+        <item name="android:textColorHint">@color/rr_text_secondary</item>
+        <item name="endIconTint">@color/rr_text_secondary</item>
+    </style>
+
+    <!-- "RR / Status Chip": pill, padding 7/10, gap 6, 15 dp icon, Karla Medium 10 caps -->
+    <style name="RR.Badge">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingTop">7dp</item>
+        <item name="android:paddingBottom">7dp</item>
+        <item name="android:drawablePadding">6dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Micro</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:background">@drawable/bg_badge</item>
+    </style>
+
+    <!-- Figma "Section Header": Mobile/Section, 14 dp above (the screen's auto-layout gap) -->
+    <style name="RR.SectionHeader">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">@dimen/section_gap</item>
+        <item name="android:layout_marginBottom">@dimen/item_gap</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Section</item>
+    </style>
+
+    <!-- Dialogs, bottom sheets and snackbars in the same fonts and colours -->
+    <style name="ThemeOverlay.RR.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.RR.Dialog</item>
+        <item name="colorSurface">@color/rr_surface</item>
+        <item name="colorSurfaceContainerHigh">@color/rr_surface</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/RR.DialogTitle</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/RR.DialogBody</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.RR.Button.Text</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.RR.Button.Text</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.RR.Button.Text</item>
+    </style>
+
+    <style name="ShapeAppearance.RR.Dialog" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">28dp</item>
+    </style>
+
+    <style name="RR.DialogTitle" parent="MaterialAlertDialog.Material3.Title.Text">
+        <item name="android:textAppearance">@style/TextAppearance.RR.Title</item>
+    </style>
+
+    <style name="RR.DialogBody" parent="MaterialAlertDialog.Material3.Body.Text">
+        <item name="android:textAppearance">@style/TextAppearance.RR.Body</item>
+        <item name="android:textColor">@color/rr_text_secondary</item>
+    </style>
+
+    <style name="ThemeOverlay.RR.BottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="colorSurface">@color/rr_surface</item>
+        <item name="colorSurfaceContainerLow">@color/rr_surface</item>
+    </style>
+
+    <style name="Widget.RR.Snackbar" parent="Widget.Material3.Snackbar">
+        <item name="backgroundTint">@color/rr_navy</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.RR.Snackbar</item>
+    </style>
+
+    <style name="ShapeAppearance.RR.Snackbar" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">20dp</item>
+    </style>
+
+    <style name="Widget.RR.SnackbarText" parent="Widget.Material3.Snackbar.TextView">
+        <item name="android:textAppearance">@style/TextAppearance.RR.Body</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="Widget.RR.SnackbarButton" parent="Widget.Material3.Button.TextButton.Snackbar">
+        <item name="android:textAppearance">@style/TextAppearance.RR.Label</item>
+        <item name="android:textColor">@color/rr_teal</item>
+    </style>
+</resources>

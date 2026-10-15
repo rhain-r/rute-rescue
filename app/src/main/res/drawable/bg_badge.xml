@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma "RR / Status Chip" pill. Badges.java tints the background per status. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/rr_surface_secondary" />
+    <corners android:radius="999dp" />
+</shape>

@@ -1,0 +1,332 @@
+{
+  "manifestVersion": 1,
+  "generatedAt": "2026-10-08T06:03:41.388567300Z",
+  "tool": "RutaRescue tools/dataprep HazardPrep 1.0",
+  "attribution": "Flood hazard maps: Project NOAH (UP NOAH Center), Metro Manila 5-, 25- and 100-year flood hazard scenarios.",
+  "license": "Attribution to Project NOAH is required (Open Data Commons attribution per the RutaRescue design document). Confirm the exact license text with the data provider.",
+  "interpretation": "Modelled return-period scenarios, not observations of past floods and not live conditions.",
+  "crs": "EPSG:4326 (WGS 84)",
+  "classMapping": {
+    "1": "LOW (0-0.5 m, yellow)",
+    "2": "MEDIUM (>0.5-1.5 m, orange)",
+    "3": "HIGH (>1.5 m, red)"
+  },
+  "grid": {
+    "format": "RRHG v1: GZIP + DataOutputStream header + 2 bits per cell, row 0 = south",
+    "minLon": 120.9,
+    "minLat": 14.35,
+    "cellSizeDeg": 1.0E-4,
+    "cols": 2400,
+    "rows": 4400,
+    "cellRule": "cell centre inside polygon (even-odd); highest class wins"
+  },
+  "simplification": {
+    "method": "Douglas-Peucker per ring, 5-decimal rounding, validity check with smaller-tolerance retry, original kept as last resort",
+    "toleranceDeg": 1.2E-4,
+    "minDisplayRingAreaDeg2": 1.0E-7,
+    "note": "Simplification is for display only; the hazard grid is built from the original polygons."
+  },
+  "scenarios": [
+    {
+      "scenario": "FIVE_YEAR",
+      "returnPeriodYears": 5,
+      "annualChancePercent": 20,
+      "datasetVersion": "noah-5yr-v1",
+      "source": "Project NOAH shapefile supplied in Google Drive: RutaRescue PDF Compilation / DATA FLOOD / MetroManila5yrs / MetroManila_Flood_5year.shp",
+      "sourceFiles": {
+        "shp": {
+          "name": "MetroManila_Flood_5year.shp",
+          "bytes": 33381116,
+          "sha256": "0bef21e14bfa51259f9948b0b7daf4806b8e0ca2fae06a5a439ace2ff2e15aa4"
+        },
+        "shx": {
+          "name": "MetroManila_Flood_5year.shx",
+          "bytes": 124,
+          "sha256": "2a88d8ad910413f8b23be155b65e5527dc9c7aa6e4c9bc727bf7314798716d05"
+        },
+        "dbf": {
+          "name": "MetroManila_Flood_5year.dbf",
+          "bytes": 126,
+          "sha256": "4fb5c7022caf0bbe99d0ed0bfb78d357c502ff86b8b7aec74f29c5c160d74df1"
+        },
+        "prj": {
+          "name": "MetroManila_Flood_5year.prj",
+          "bytes": 145,
+          "sha256": "a02a27b1d1982c8516d83398e85a3c8b1aef1713c13ef4d84d7bde17430c07c4"
+        }
+      },
+      "bounds": [
+        120.90710838503028,
+        14.353892874200941,
+        121.13503641400007,
+        14.785291728000022
+      ],
+      "dbfVarFieldType": "F",
+      "featuresByClass": {
+        "1": {
+          "rawVar": "1.00000000000e+000",
+          "rings": 94155,
+          "points": 1261345
+        },
+        "2": {
+          "rawVar": "2.00000000000e+000",
+          "rings": 35629,
+          "points": 630119
+        },
+        "3": {
+          "rawVar": "3.00000000000e+000",
+          "rings": 6063,
+          "points": 160878
+        }
+      },
+      "gridCellCounts": {
+        "NONE": 9032020,
+        "LOW": 699183,
+        "MEDIUM": 600568,
+        "HIGH": 228229
+      },
+      "controlPoints": {
+        "checked": 600,
+        "matched": 600,
+        "method": "random cell centres (half inside mapped hazard) re-classified with ray casting on the ORIGINAL polygons"
+      },
+      "displaySimplification": {
+        "sourceRings": 135847,
+        "outerRings": 126322,
+        "holeRings": 9525,
+        "polygonsWritten": 14186,
+        "ringsWritten": 15494,
+        "pointsWritten": 235026,
+        "droppedTinyRings": 120352,
+        "retriedWithSmallerTolerance": 170,
+        "keptOriginalGeometry": 3,
+        "holesAssignedBySearch": 0,
+        "holesWithoutOuter": 1
+      },
+      "outputs": {
+        "grid": {
+          "path": "flood_data/noah_5yr.grid",
+          "bytes": 486799,
+          "sha256": "283f910c8088653beed576a5f426b805a77702673b7c321a5bbca1e858edd7f6"
+        },
+        "geojson": {
+          "path": "flood_data/noah_5yr.geojson",
+          "bytes": 4950353,
+          "sha256": "31d41246767e1c1226b3c001ef14e3733d41d7f7e01c7b40a9a1033cacc7ddda"
+        }
+      },
+      "gates": {
+        "requiredFilesExist": "PASS",
+        "crsIsWgs84": "PASS",
+        "geometryIsPolygon": "PASS",
+        "boundsInsideMetroManilaRegion": "PASS",
+        "dbfRecordCountMatchesShp": "PASS",
+        "everyRecordMapsToLowMediumHigh": "PASS",
+        "controlPointsPreserveClass": "PASS",
+        "simplificationCreatedNoInvalidPolygons": "PASS"
+      },
+      "allGatesPassed": true
+    },
+    {
+      "scenario": "TWENTY_FIVE_YEAR",
+      "returnPeriodYears": 25,
+      "annualChancePercent": 4,
+      "datasetVersion": "noah-25yr-v1",
+      "source": "Project NOAH shapefile supplied in Google Drive: RutaRescue PDF Compilation / DATA FLOOD / MetroManila25yrs / MetroManila_Flood_25year.shp",
+      "sourceFiles": {
+        "shp": {
+          "name": "MetroManila_Flood_25year.shp",
+          "bytes": 36247404,
+          "sha256": "c4718cedcd8deb7019238dee2ea196726e13adb2559ef8f2d613d3ee651301e4"
+        },
+        "shx": {
+          "name": "MetroManila_Flood_25year.shx",
+          "bytes": 124,
+          "sha256": "948a0e2290f89e450af08c71acc3498b031093fb1e7c3bc7083ce5f9d217d621"
+        },
+        "dbf": {
+          "name": "MetroManila_Flood_25year.dbf",
+          "bytes": 126,
+          "sha256": "897bbbebbe71bef4bad94dcbb79a597767b98005a73b1913fbf6bd380701f336"
+        },
+        "prj": {
+          "name": "MetroManila_Flood_25year.prj",
+          "bytes": 145,
+          "sha256": "a02a27b1d1982c8516d83398e85a3c8b1aef1713c13ef4d84d7bde17430c07c4"
+        }
+      },
+      "bounds": [
+        120.90683162703927,
+        14.35383899775383,
+        121.13503641400006,
+        14.785291728000036
+      ],
+      "dbfVarFieldType": "F",
+      "featuresByClass": {
+        "1": {
+          "rawVar": "1.00000000000e+000",
+          "rings": 94670,
+          "points": 1275608
+        },
+        "2": {
+          "rawVar": "2.00000000000e+000",
+          "rings": 37421,
+          "points": 739656
+        },
+        "3": {
+          "rawVar": "3.00000000000e+000",
+          "rings": 7052,
+          "points": 215397
+        }
+      },
+      "gridCellCounts": {
+        "NONE": 8587295,
+        "LOW": 690528,
+        "MEDIUM": 888441,
+        "HIGH": 393736
+      },
+      "controlPoints": {
+        "checked": 600,
+        "matched": 600,
+        "method": "random cell centres (half inside mapped hazard) re-classified with ray casting on the ORIGINAL polygons"
+      },
+      "displaySimplification": {
+        "sourceRings": 139143,
+        "outerRings": 126941,
+        "holeRings": 12202,
+        "polygonsWritten": 14492,
+        "ringsWritten": 16335,
+        "pointsWritten": 287676,
+        "droppedTinyRings": 122806,
+        "retriedWithSmallerTolerance": 201,
+        "keptOriginalGeometry": 4,
+        "holesAssignedBySearch": 0,
+        "holesWithoutOuter": 2
+      },
+      "outputs": {
+        "grid": {
+          "path": "flood_data/noah_25yr.grid",
+          "bytes": 512526,
+          "sha256": "f7bd6ed11f0650fd66beddb3443481fbf46ed57a3de2c1742c87e7e25c532759"
+        },
+        "geojson": {
+          "path": "flood_data/noah_25yr.geojson",
+          "bytes": 6134979,
+          "sha256": "db09ea43af38fba2e65c72a3a9e1ac19d605b9566508d14a63f7c247a6886426"
+        }
+      },
+      "gates": {
+        "requiredFilesExist": "PASS",
+        "crsIsWgs84": "PASS",
+        "geometryIsPolygon": "PASS",
+        "boundsInsideMetroManilaRegion": "PASS",
+        "dbfRecordCountMatchesShp": "PASS",
+        "everyRecordMapsToLowMediumHigh": "PASS",
+        "controlPointsPreserveClass": "PASS",
+        "simplificationCreatedNoInvalidPolygons": "PASS"
+      },
+      "allGatesPassed": true
+    },
+    {
+      "scenario": "HUNDRED_YEAR",
+      "returnPeriodYears": 100,
+      "annualChancePercent": 1,
+      "datasetVersion": "noah-100yr-v1",
+      "source": "Project NOAH shapefile supplied in Google Drive: RutaRescue PDF Compilation / DATA FLOOD / Metro Manila100yrs / MetroManila_Flood_100year.shp",
+      "sourceFiles": {
+        "shp": {
+          "name": "MetroManila_Flood_100year.shp",
+          "bytes": 38157700,
+          "sha256": "ea548d3c6f3884484bba57d616395f030d8cb759e0ae1b9c3d95a13514b82e3e"
+        },
+        "shx": {
+          "name": "MetroManila_Flood_100year.shx",
+          "bytes": 124,
+          "sha256": "71969f8c348953f794a77075f7f9f133ebf6d6ec620cdd27f72d0f6d1012dfe2"
+        },
+        "dbf": {
+          "name": "MetroManila_Flood_100year.dbf",
+          "bytes": 126,
+          "sha256": "a113cdd5ce1ebf6b9fb7d151086d8c7928571233148227adc156a3c09dfe0243"
+        },
+        "prj": {
+          "name": "MetroManila_Flood_100year.prj",
+          "bytes": 145,
+          "sha256": "a02a27b1d1982c8516d83398e85a3c8b1aef1713c13ef4d84d7bde17430c07c4"
+        }
+      },
+      "bounds": [
+        120.90673880071594,
+        14.351790725957223,
+        121.13503641400004,
+        14.784375978796906
+      ],
+      "dbfVarFieldType": "N",
+      "featuresByClass": {
+        "1": {
+          "rawVar": "1.000",
+          "rings": 102949,
+          "points": 1243123
+        },
+        "2": {
+          "rawVar": "2.000",
+          "rings": 43913,
+          "points": 848356
+        },
+        "3": {
+          "rawVar": "3.000",
+          "rings": 8567,
+          "points": 254504
+        }
+      },
+      "gridCellCounts": {
+        "NONE": 8486615,
+        "LOW": 595397,
+        "MEDIUM": 943348,
+        "HIGH": 534640
+      },
+      "controlPoints": {
+        "checked": 600,
+        "matched": 600,
+        "method": "random cell centres (half inside mapped hazard) re-classified with ray casting on the ORIGINAL polygons"
+      },
+      "displaySimplification": {
+        "sourceRings": 155429,
+        "outerRings": 142413,
+        "holeRings": 13016,
+        "polygonsWritten": 14401,
+        "ringsWritten": 16180,
+        "pointsWritten": 319409,
+        "droppedTinyRings": 139247,
+        "retriedWithSmallerTolerance": 209,
+        "keptOriginalGeometry": 2,
+        "holesAssignedBySearch": 0,
+        "holesWithoutOuter": 2
+      },
+      "outputs": {
+        "grid": {
+          "path": "flood_data/noah_100yr.grid",
+          "bytes": 523882,
+          "sha256": "75c2a4134f7cf573e370886c39e3bc3a3a9d535d581a3c675be3ce42675d8ac3"
+        },
+        "geojson": {
+          "path": "flood_data/noah_100yr.geojson",
+          "bytes": 6902915,
+          "sha256": "21583f3b336b8b4a48997bd6aef9c3d99a32584eadf73c21889f6ca443ea69d4"
+        }
+      },
+      "gates": {
+        "requiredFilesExist": "PASS",
+        "crsIsWgs84": "PASS",
+        "geometryIsPolygon": "PASS",
+        "boundsInsideMetroManilaRegion": "PASS",
+        "dbfRecordCountMatchesShp": "PASS",
+        "everyRecordMapsToLowMediumHigh": "PASS",
+        "controlPointsPreserveClass": "PASS",
+        "simplificationCreatedNoInvalidPolygons": "PASS"
+      },
+      "allGatesPassed": true
+    }
+  ],
+  "allGatesPassed": true
+}

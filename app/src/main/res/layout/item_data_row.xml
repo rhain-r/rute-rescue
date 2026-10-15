@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Figma compact row ("Flood-risk zones v12", "San Isidro Covered Court" in LGU / Data & Centers):
+    380 x 66 dp glass card, padding 12, gap 12, 40 dp info-soft tile with a 20 dp coloured icon,
+    Mobile/Label title over a Mobile/Caption meta line, 20 dp chevron.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/data_row"
+    style="@style/RR.RowCard.Compact"
+    android:minHeight="66dp">
+
+    <ImageView
+        android:id="@+id/data_row_icon"
+        style="@style/RR.IconTile.Small" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/data_row_title"
+            style="@style/RR.RowTitle" />
+
+        <TextView
+            android:id="@+id/data_row_meta"
+            style="@style/RR.RowMeta" />
+    </LinearLayout>
+
+    <ImageView style="@style/RR.Chevron" />
+</LinearLayout>

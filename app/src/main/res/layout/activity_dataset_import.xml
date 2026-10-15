@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/import_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/screen_padding"
+        android:paddingEnd="@dimen/screen_padding"
+        android:paddingBottom="32dp">
+
+        <include layout="@layout/view_toolbar" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_info_card"
+            android:padding="14dp"
+            android:text="@string/dataset_import_intro"
+            android:textAppearance="@style/TextAppearance.RR.Body" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/import_legacy"
+            style="@style/Widget.RR.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/use_legacy_list"
+            app:icon="@drawable/ic_file" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/import_choose"
+            style="@style/Widget.RR.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/choose_csv"
+            app:icon="@drawable/ic_upload" />
+
+        <TextView
+            android:id="@+id/import_summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textAppearance="@style/TextAppearance.RR.Subtitle" />
+
+        <!-- Verification source and publish sit above the preview so they are reachable with long files -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/import_source_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="@string/verification_source">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/import_source"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapSentences" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/import_publish"
+            style="@style/Widget.RR.Button.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:enabled="false"
+            android:text="@string/publish_valid_rows" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/import_rows"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_card"
+            android:nestedScrollingEnabled="false" />
+    </LinearLayout>
+</ScrollView>

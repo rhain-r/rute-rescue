@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Figma "Client / My Record": pinned header, then "Screen Content" (16 dp padding, 12 dp gap):
+    Section Header ("My safety record" + "Edit"), Resident Profile, Family Members, Ligtas Priority,
+    Trusted contacts. DOCX additions in the same style: record ID and preferred center, the
+    member-count review notice, Ligtas apply/history links, and the Lab 5-7 file card.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.core.widget.NestedScrollView style="@style/RR.TabScroll">
+
+        <LinearLayout style="@style/RR.ScreenColumn">
+
+            <!-- "Section Header" -->
+            <LinearLayout
+                style="@style/RR.SectionRow"
+                android:layout_marginTop="0dp">
+
+                <TextView
+                    style="@style/RR.SectionTitle"
+                    android:text="@string/my_safety_record" />
+
+                <TextView
+                    android:id="@+id/record_edit"
+                    style="@style/RR.SectionAction"
+                    android:text="@string/edit" />
+            </LinearLayout>
+
+            <!-- Empty state (no family record yet) -->
+            <LinearLayout
+                android:id="@+id/record_empty"
+                style="@style/RR.CardColumn"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/no_record_title"
+                    android:textAppearance="@style/TextAppearance.RR.Section" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/no_record_body"
+                    android:textAppearance="@style/TextAppearance.RR.Body"
+                    android:textColor="@color/rr_text_secondary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/record_create"
+                    style="@style/Widget.RR.Button.Primary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/create_record"
+                    app:icon="@drawable/ic_family_add" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/record_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- "Resident Profile": padding 16, gap 12 -->
+                <LinearLayout
+                    style="@style/RR.CardColumn"
+                    android:padding="16dp">
+
+                    <!-- "Profile Row": 52 dp info-soft circle, 12 dp gap -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/record_avatar"
+                            android:layout_width="52dp"
+                            android:layout_height="52dp"
+                            android:background="@drawable/bg_avatar"
+                            android:importantForAccessibility="no" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/record_head"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textAppearance="@style/TextAppearance.RR.Title" />
+
+                            <TextView
+                                android:id="@+id/record_address"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:textAppearance="@style/TextAppearance.RR.Caption" />
+
+                            <TextView
+                                android:id="@+id/record_id"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:textAppearance="@style/TextAppearance.RR.Caption" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- "Verified Address" row style: 18 dp check icon + Mobile/Label status -->
+                    <TextView
+                        android:id="@+id/record_freshness"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:drawablePadding="6dp"
+                        android:gravity="center_vertical"
+                        android:textAppearance="@style/TextAppearance.RR.Label"
+                        android:textColor="@color/rr_green"
+                        app:drawableStartCompat="@drawable/ic_check_circle" />
+
+                    <TextView
+                        android:id="@+id/record_review"
+                        style="@style/RR.Note.Warning"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/member_review_needed"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <!-- "Family Members": padding 14, gap 10 -->
+                <LinearLayout style="@style/RR.CardColumn">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:minHeight="24dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/RR.SectionTitle"
+                            android:text="@string/family_members" />
+
+                        <TextView
+                            android:id="@+id/record_member_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="@style/TextAppearance.RR.Label"
+                            android:textColor="@color/rr_navy_light" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/record_members"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+                </LinearLayout>
+
+                <!-- "Ligtas Priority": navy gradient, 28 dp corners, padding 16, gap 10, Elevation/Float -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/item_gap"
+                    android:background="@drawable/bg_hero_navy"
+                    android:elevation="@dimen/elevation_float"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- "Priority Header" -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:minHeight="30dp"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_shield_check"
+                            app:tint="@color/rr_cyan_icon" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:text="@string/ligtas_priority"
+                            android:textAppearance="@style/TextAppearance.RR.Section"
+                            android:textColor="@color/white" />
+
+                        <TextView
+                            android:id="@+id/record_ligtas_badge"
+                            style="@style/RR.Badge"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
+                    <!-- "Headline": Mobile/Title, white -->
+                    <TextView
+                        android:id="@+id/record_ligtas_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:textAppearance="@style/TextAppearance.RR.Title"
+                        android:textColor="@color/white" />
+
+                    <!-- "Body": Mobile/Body, #F1F3F4 -->
+                    <TextView
+                        android:id="@+id/record_ligtas_body"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:textAppearance="@style/TextAppearance.RR.Body"
+                        android:textColor="@color/rr_surface_secondary" />
+
+                    <!-- "QR Record": white, 14 dp corners, padding 9/12, 22 dp QR icon, brand-600 label -->
+                    <TextView
+                        android:id="@+id/record_ligtas_qr"
+                        style="@style/RR.LigtasAction"
+                        android:text="@string/open_verification_record"
+                        android:visibility="gone"
+                        app:drawableStartCompat="@drawable/ic_qr" />
+
+                    <TextView
+                        android:id="@+id/record_ligtas_apply"
+                        style="@style/RR.LigtasAction"
+                        android:text="@string/apply_ligtas"
+                        app:drawableStartCompat="@drawable/ic_shield_check" />
+
+                    <TextView
+                        android:id="@+id/record_ligtas_list"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp"
+                        android:text="@string/view_applications"
+                        android:textAppearance="@style/TextAppearance.RR.Label"
+                        android:textColor="@color/white" />
+                </LinearLayout>
+
+                <!-- "Emergency Contacts" ("Trusted contacts"): padding 14, gap 8 -->
+                <LinearLayout style="@style/RR.CardColumn">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/trusted_contacts"
+                        android:textAppearance="@style/TextAppearance.RR.Section" />
+
+                    <TextView
+                        android:id="@+id/record_contacts"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:textAppearance="@style/TextAppearance.RR.Body"
+                        android:textColor="@color/rr_text_secondary" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Lab 5-7 files (family_records.txt / system.dat) - DOCX section 9 -->
+            <LinearLayout style="@style/RR.CardColumn">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/lab_files_title"
+                    android:textAppearance="@style/TextAppearance.RR.Section" />
+
+                <TextView
+                    android:id="@+id/record_lab_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textAppearance="@style/TextAppearance.RR.Caption" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/record_lab_open"
+                    style="@style/Widget.RR.Button.Secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/lab_files_open"
+                    app:icon="@drawable/ic_file" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <include layout="@layout/view_app_header" />
+</FrameLayout>

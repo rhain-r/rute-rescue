@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// RutaRescue Cloud Storage rules (DOCX section 12): synthetic Ligtas proof images only.
+// Owners may upload one JPEG/PNG under 2 MB to their own folder; the owner and LGU staff
+// of the application's city may read it. Nothing can be overwritten or deleted.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isLguReviewer(appId) {
+      let staff = /databases/(default)/documents/lgu_staff/$(request.auth.uid);
+      let application = /databases/(default)/documents/ligtasApplications/$(appId);
+      return firestore.exists(staff)
+        && firestore.exists(application)
+        && firestore.get(application).data.city == firestore.get(staff).data.jurisdiction;
+    }
+
+    match /ligtas/{uid}/{appId}/{fileName} {
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png)');
+      allow read: if request.auth != null
+        && (request.auth.uid == uid || isLguReviewer(appId));
+      allow update, delete: if false;
+    }
+  }
+}

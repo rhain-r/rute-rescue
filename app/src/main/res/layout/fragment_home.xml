@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Figma "Client / Home" (412 x 917). The header is pinned; "Screen Content" scrolls under it with
+    16 dp padding and 14 dp between blocks: Safety Advisory, Search, Quick actions, Nearby evacuation
+    center, Verified LGU Update. DOCX additions kept in the same visual language: the advisory
+    freshness label, saved places, and the data-source timestamps card (DOCX section 4).
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.core.widget.NestedScrollView style="@style/RR.TabScroll">
+
+        <LinearLayout style="@style/RR.ScreenColumn">
+
+            <!-- "Safety Advisory": 28 dp corners, padding 18, gap 10, Elevation/Float -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_hero_resident"
+                android:elevation="@dimen/elevation_float"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <!-- "Alert Meta": 18 dp icon, 8 dp gap, Mobile/Micro warning colour -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/home_hero_icon"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_warning"
+                        app:tint="@color/rr_orange" />
+
+                    <TextView
+                        android:id="@+id/home_hero_eyebrow"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:textAppearance="@style/TextAppearance.RR.Eyebrow"
+                        android:textColor="@color/rr_orange" />
+                </LinearLayout>
+
+                <!-- "Headline": Mobile/Display -->
+                <TextView
+                    android:id="@+id/home_greeting"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:textAppearance="@style/TextAppearance.RR.Display" />
+
+                <!-- "Body": Mobile/Body, secondary text -->
+                <TextView
+                    android:id="@+id/home_hero_body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:textAppearance="@style/TextAppearance.RR.Body"
+                    android:textColor="@color/rr_text_secondary" />
+
+                <TextView
+                    android:id="@+id/home_hero_freshness"
+                    style="@style/RR.FreshnessChip"
+                    android:layout_marginTop="10dp" />
+
+                <!-- "Advisory Action": 34 dp navy pill, 18 dp icon -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/home_find_route"
+                    style="@style/Widget.RR.Button.Small"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/find_safer_route"
+                    app:icon="@drawable/ic_route" />
+            </LinearLayout>
+
+            <!-- "RR / Search Field": 52 dp, padding 14, gap 10 -->
+            <LinearLayout
+                android:id="@+id/home_search"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="@dimen/gap_home"
+                android:background="@drawable/bg_search"
+                android:clickable="true"
+                android:elevation="@dimen/elevation_sm"
+                android:focusable="true"
+                android:foreground="@drawable/ripple_card"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/rr_icon_search" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="@string/search_hint_home"
+                    android:textAppearance="@style/TextAppearance.RR.Body"
+                    android:textColor="@color/rr_text_secondary" />
+            </LinearLayout>
+
+            <!-- "Quick actions" -->
+            <TextView
+                style="@style/RR.SectionHeader"
+                android:layout_marginTop="@dimen/gap_home"
+                android:layout_marginBottom="@dimen/gap_home"
+                android:text="@string/quick_actions" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:id="@+id/home_qa_route"
+                    style="@style/RR.QuickAction">
+
+                    <ImageView
+                        style="@style/RR.QuickActionIcon"
+                        android:src="@drawable/ic_route"
+                        app:tint="@color/rr_cyan_icon" />
+
+                    <TextView
+                        style="@style/RR.QuickActionTitle"
+                        android:text="@string/qa_route" />
+
+                    <TextView
+                        style="@style/RR.QuickActionSub"
+                        android:text="@string/qa_route_sub" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/home_qa_centers"
+                    style="@style/RR.QuickAction"
+                    android:layout_marginStart="10dp">
+
+                    <ImageView
+                        style="@style/RR.QuickActionIcon"
+                        android:src="@drawable/ic_center"
+                        app:tint="@color/rr_teal_green" />
+
+                    <TextView
+                        style="@style/RR.QuickActionTitle"
+                        android:text="@string/qa_centers" />
+
+                    <TextView
+                        style="@style/RR.QuickActionSub"
+                        android:text="@string/qa_centers_sub" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/home_qa_family"
+                    style="@style/RR.QuickAction"
+                    android:layout_marginStart="10dp">
+
+                    <ImageView
+                        style="@style/RR.QuickActionIcon"
+                        android:src="@drawable/ic_family_add"
+                        app:tint="@color/rr_navy_light" />
+
+                    <TextView
+                        style="@style/RR.QuickActionTitle"
+                        android:text="@string/qa_family" />
+
+                    <TextView
+                        style="@style/RR.QuickActionSub"
+                        android:text="@string/qa_family_sub" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Saved places (DOCX: quick-access locations); only shown when there are some -->
+            <TextView
+                android:id="@+id/home_saved_title"
+                style="@style/RR.SectionHeader"
+                android:text="@string/saved_places"
+                android:visibility="gone" />
+
+            <HorizontalScrollView
+                android:id="@+id/home_saved_scroll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:scrollbars="none"
+                android:visibility="gone">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/home_saved_chips"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:chipSpacingHorizontal="8dp"
+                    app:singleLine="true" />
+            </HorizontalScrollView>
+
+            <!-- "Nearby evacuation center" + "See all" -->
+            <LinearLayout
+                style="@style/RR.SectionRow"
+                android:layout_marginTop="@dimen/gap_home"
+                android:layout_marginBottom="@dimen/gap_home">
+
+                <TextView
+                    style="@style/RR.SectionTitle"
+                    android:text="@string/nearby_center" />
+
+                <TextView
+                    android:id="@+id/home_see_all"
+                    style="@style/RR.SectionAction"
+                    android:text="@string/see_all" />
+            </LinearLayout>
+
+            <include
+                android:id="@+id/home_nearby_center"
+                layout="@layout/item_center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/gap_home"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/home_no_center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/gap_home"
+                android:text="@string/no_center_yet"
+                android:textAppearance="@style/TextAppearance.RR.Caption" />
+
+            <!-- "Verified LGU Update" cards -->
+            <LinearLayout
+                android:id="@+id/home_advisories"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <!-- Data sources and freshness (DOCX section 4: data-source timestamps) -->
+            <LinearLayout style="@style/RR.CardColumn">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/data_sources"
+                    android:textAppearance="@style/TextAppearance.RR.Section" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/source_noah"
+                    android:textAppearance="@style/TextAppearance.RR.Label" />
+
+                <TextView
+                    android:id="@+id/home_source_noah"
+                    style="@style/RR.FreshnessChip"
+                    android:layout_marginTop="6dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/source_advisories"
+                    android:textAppearance="@style/TextAppearance.RR.Label" />
+
+                <TextView
+                    android:id="@+id/home_source_advisories"
+                    style="@style/RR.FreshnessChip"
+                    android:layout_marginTop="6dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/source_centers"
+                    android:textAppearance="@style/TextAppearance.RR.Label" />
+
+                <TextView
+                    android:id="@+id/home_source_centers"
+                    style="@style/RR.FreshnessChip"
+                    android:layout_marginTop="6dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/disclaimer_short"
+                    android:textAppearance="@style/TextAppearance.RR.Caption" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <include layout="@layout/view_app_header" />
+</FrameLayout>

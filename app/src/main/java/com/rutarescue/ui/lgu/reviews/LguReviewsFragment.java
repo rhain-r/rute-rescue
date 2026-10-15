@@ -1,0 +1,174 @@
+package com.rutarescue.ui.lgu.reviews;
+
+import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.TextView;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+import com.journeyapps.barcodescanner.ScanContract;
+import com.journeyapps.barcodescanner.ScanOptions;
+import com.rutarescue.R;
+import com.rutarescue.model.common.SourcedData;
+import com.rutarescue.model.ligtas.ApplicationStatus;
+import com.rutarescue.model.ligtas.LigtasApplication;
+import com.rutarescue.model.user.LguProfile;
+import com.rutarescue.ui.about.AboutActivity;
+import com.rutarescue.ui.common.Badges;
+import com.rutarescue.ui.common.BaseFragment;
+import com.rutarescue.ui.common.SimpleListAdapter;
+import com.rutarescue.ui.resident.home.InboxActivity;
+import com.rutarescue.util.Formats;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+/**
+ * Ligtas Priority reviews (Figma "LGU / Ligtas Reviews"): Pending / Approved / Rejected
+ * tabs for the officer's jurisdiction only, search, and QR verification of approved
+ * applications.
+ */
+public class LguReviewsFragment extends BaseFragment {
+
+    private LguProfile lgu;
+    private SimpleListAdapter<LigtasApplication> adapter;
+    private List<LigtasApplication> all = new ArrayList<>();
+    private ApplicationStatus tab = ApplicationStatus.PENDING;
+    private EditText search;
+
+    private final ActivityResultLauncher<ScanOptions> scanner = registerForActivityResult(new ScanContract(), result -> {
+        if (result.getContents() == null) return;
+        String id = LigtasApplication.parseQrPayload(result.getContents());
+        if (id == null) {
+            showMessage("This is not a RutaRescue Ligtas QR code.");
+        } else {
+            startActivity(ReviewDetailActivity.intent(requireContext(), id, true));
+        }
+    });
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle state) {
+        return inflater.inflate(R.layout.fragment_lgu_reviews, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle state) {
+        lgu = container().session().requireLgu();
+        ((TextView) view.findViewById(R.id.header_eyebrow)).setText(R.string.eyebrow_lgu);
+        view.findViewById(R.id.header_bell).setOnClickListener(v -> startActivity(new Intent(requireContext(), InboxActivity.class)));
+        view.findViewById(R.id.header_logo).setOnClickListener(v -> startActivity(new Intent(requireContext(), AboutActivity.class)));
+
+        RecyclerView list = view.findViewById(R.id.reviews_list);
+        list.setLayoutManager(new LinearLayoutManager(requireContext()));
+        adapter = new SimpleListAdapter<>(R.layout.item_ligtas, this::bind);
+        list.setAdapter(adapter);
+
+        ChipGroup tabs = view.findViewById(R.id.reviews_tabs);
+        tabs.setOnCheckedStateChangeListener((group, ids) -> {
+            if (ids.isEmpty()) return;
+            int id = ids.get(0);
+            tab = id == R.id.reviews_tab_approved ? ApplicationStatus.APPROVED
+                    : id == R.id.reviews_tab_rejected ? ApplicationStatus.REJECTED : ApplicationStatus.PENDING;
+            applyFilter();
+        });
+        search = view.findViewById(R.id.reviews_search);
+        search.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                applyFilter();
+            }
+        });
+        view.findViewById(R.id.reviews_scan).setOnClickListener(v -> {
+            ScanOptions options = new ScanOptions();
+            options.setDesiredBarcodeFormats(ScanOptions.QR_CODE);
+            options.setPrompt("Scan a resident's Ligtas verification QR");
+            options.setBeepEnabled(false);
+            options.setOrientationLocked(false);
+            scanner.launch(options);
+        });
+
+        track(container().ligtas().listenForReviewer(lgu, ui(this::onApplications)));
+    }
+
+    private void onApplications(SourcedData<List<LigtasApplication>> data) {
+        all = data.getData();
+        Badges.freshness(requireView().findViewById(R.id.reviews_freshness), data.getFreshness(), data.getRetrievedAt(), "");
+        int pending = 0, approved = 0, rejected = 0;
+        for (LigtasApplication application : all) {
+            if (application.getStatus() == ApplicationStatus.PENDING) pending++;
+            else if (application.getStatus() == ApplicationStatus.APPROVED) approved++;
+            else rejected++;
+        }
+        View view = requireView();
+        ((Chip) view.findViewById(R.id.reviews_tab_pending)).setText(getString(R.string.pending) + " " + pending);
+        ((Chip) view.findViewById(R.id.reviews_tab_approved)).setText(getString(R.string.approved) + " " + approved);
+        ((Chip) view.findViewById(R.id.reviews_tab_rejected)).setText(getString(R.string.rejected) + " " + rejected);
+        ((TextView) view.findViewById(R.id.reviews_pending_count)).setText(pending + " pending");
+        applyFilter();
+    }
+
+    private void applyFilter() {
+        if (adapter == null) return;
+        String needle = search.getText().toString().strip().toLowerCase(Locale.ROOT);
+        List<LigtasApplication> shown = new ArrayList<>();
+        for (LigtasApplication application : all) {
+            if (application.getStatus() != tab) continue;
+            String haystack = (application.getMemberName() + " " + application.getApplicantName() + " "
+                    + application.getCategory().getLabel()).toLowerCase(Locale.ROOT);
+            if (!needle.isEmpty() && !haystack.contains(needle)) continue;
+            shown.add(application);
+        }
+        adapter.submit(shown);
+        TextView empty = requireView().findViewById(R.id.reviews_empty);
+        empty.setVisibility(shown.isEmpty() ? View.VISIBLE : View.GONE);
+        empty.setText("No " + tab.getLabel().toLowerCase(Locale.ROOT) + " applications in "
+                + lgu.getJurisdiction().getDisplayName() + ".");
+    }
+
+    /** Figma "Application / ..." card. */
+    private void bind(View row, LigtasApplication application, int position) {
+        long now = System.currentTimeMillis();
+        boolean urgent = application.isWaitingLong(now);
+        row.findViewById(R.id.ligtas_avatar).setBackgroundTintList(ColorStateList.valueOf(
+                ContextCompat.getColor(requireContext(), urgent ? R.color.rr_red_soft : R.color.rr_teal_soft)));
+        ((TextView) row.findViewById(R.id.ligtas_title)).setText(application.getMemberName());
+        ((TextView) row.findViewById(R.id.ligtas_meta)).setText("Submitted " + Formats.relative(application.getSubmittedAt(), now)
+                + " • by " + application.getApplicantName());
+        TextView state = row.findViewById(R.id.ligtas_badge);
+        if (urgent) Badges.label(state, "Urgent", Badges.Tone.RED);
+        else if (application.getStatus() == ApplicationStatus.PENDING) Badges.label(state, "New", Badges.Tone.TEAL);
+        else if (application.getStatus() == ApplicationStatus.APPROVED) Badges.label(state, "Approved", Badges.Tone.GREEN);
+        else Badges.label(state, "Rejected", Badges.Tone.RED);
+        ((TextView) row.findViewById(R.id.ligtas_body)).setText(application.getCategory().getLabel() + ": "
+                + application.getJustification());
+        boolean pending = application.getStatus() == ApplicationStatus.PENDING;
+        row.findViewById(R.id.ligtas_proof).setVisibility(pending ? View.VISIBLE : View.GONE);
+        ((TextView) row.findViewById(R.id.ligtas_footer)).setText(pending
+                ? getString(R.string.review_application) : "Reason: " + application.getReviewReason());
+        row.setOnClickListener(v -> startActivity(ReviewDetailActivity.intent(requireContext(), application.getId(), false)));
+    }
+}

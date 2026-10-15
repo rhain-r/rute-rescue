@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Exported from the RutaRescue Figma file (Lucide-style outline icon). Tint with app:tint. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp"
+    android:height="22dp"
+    android:viewportWidth="22"
+    android:viewportHeight="22">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M11 7.33337C15.5563 7.33337 19.25 6.10216 19.25 4.58337C19.25 3.06459 15.5563 1.83337 11 1.83337C6.44365 1.83337 2.75 3.06459 2.75 4.58337C2.75 6.10216 6.44365 7.33337 11 7.33337Z"
+        android:strokeColor="#FF98A2B3"
+        android:strokeWidth="1.83333"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M2.75 4.58337V10.0834C2.75 11.6417 6.41667 12.8334 11 12.8334C15.5833 12.8334 19.25 11.6417 19.25 10.0834V4.58337"
+        android:strokeColor="#FF98A2B3"
+        android:strokeWidth="1.83333"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M2.75 10.0834V15.5834C2.75 17.1417 6.41667 18.3334 11 18.3334C15.5833 18.3334 19.25 17.1417 19.25 15.5834V10.0834"
+        android:strokeColor="#FF98A2B3"
+        android:strokeWidth="1.83333"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

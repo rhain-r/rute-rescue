@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Figma paint style "Surface/Ambient": vertical gradient #FBFAF7 (0) > #F7F7F5 (0.42) >
+    #EEF9FB (0.76) > #F3EEFF (1). A vector drawable is used because <shape> gradients only
+    support three colours. It stretches to fill any screen.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="412dp"
+    android:height="917dp"
+    android:viewportWidth="412"
+    android:viewportHeight="917">
+    <path android:pathData="M0,0H412V917H0Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="0"
+                android:endY="917"
+                android:startX="0"
+                android:startY="0"
+                android:type="linear">
+                <item android:color="#FBFAF7" android:offset="0" />
+                <item android:color="#F7F7F5" android:offset="0.42" />
+                <item android:color="#EEF9FB" android:offset="0.76" />
+                <item android:color="#F3EEFF" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

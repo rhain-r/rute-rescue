@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Reusable view styles that mirror the Figma component board (values copied from Figma). -->
+<resources>
+
+    <!-- Empty base style: every "RR.Something" style implicitly inherits from "RR". -->
+    <style name="RR" />
+
+    <!-- ===== Bottom navigation item: 96 x 58 dp, icon 22 dp, 3 dp gap, Mobile/Micro label ===== -->
+    <style name="RR.NavItem">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">58dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <style name="RR.NavIcon">
+        <item name="android:layout_width">22dp</item>
+        <item name="android:layout_height">22dp</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
+    <style name="RR.NavLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">3dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Micro</item>
+    </style>
+
+    <!-- ===== Tab screen: content scrolls below the 74 dp header and above the 78 dp nav ===== -->
+    <style name="RR.TabScroll">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:clipToPadding">false</item>
+        <item name="android:paddingTop">@dimen/header_height</item>
+        <item name="android:scrollbars">none</item>
+    </style>
+
+    <!-- "Screen Content": 16 dp padding on every side -->
+    <style name="RR.ScreenColumn">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:paddingStart">@dimen/screen_padding</item>
+        <item name="android:paddingTop">@dimen/screen_padding</item>
+        <item name="android:paddingEnd">@dimen/screen_padding</item>
+        <item name="android:paddingBottom">@dimen/bottom_nav_space</item>
+    </style>
+
+    <!-- ===== Glass card (LinearLayout): 24 dp corners, 14 dp padding, Elevation/Sm ===== -->
+    <style name="RR.CardColumn">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:background">@drawable/bg_card</item>
+        <item name="android:elevation">@dimen/elevation_sm</item>
+        <item name="android:padding">@dimen/card_padding</item>
+        <item name="android:layout_marginBottom">@dimen/item_gap</item>
+    </style>
+
+    <!-- "RR / Center Row": icon tile + two lines + chevron, padding 14, gap 12 -->
+    <style name="RR.RowCard">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:background">@drawable/bg_card</item>
+        <item name="android:elevation">@dimen/elevation_sm</item>
+        <item name="android:padding">@dimen/card_padding</item>
+        <item name="android:layout_marginBottom">@dimen/item_gap</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:foreground">@drawable/ripple_card</item>
+    </style>
+
+    <!-- Compact row ("Review Ligtas applications", datasets, LGU centers): padding 12, 40 dp tile -->
+    <style name="RR.RowCard.Compact">
+        <item name="android:padding">12dp</item>
+    </style>
+
+    <!-- 42 dp icon tile, #E2F7FB, 14 dp corners, 22 dp icon (10 dp inset) -->
+    <style name="RR.IconTile">
+        <item name="android:layout_width">@dimen/icon_tile</item>
+        <item name="android:layout_height">@dimen/icon_tile</item>
+        <item name="android:background">@drawable/bg_icon_tile</item>
+        <item name="android:padding">10dp</item>
+        <item name="tint">@color/rr_navy_light</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
+    <!-- 40 dp icon tile (12 dp corners, 20 dp icon) used by the compact LGU rows -->
+    <style name="RR.IconTile.Small">
+        <item name="android:layout_width">40dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:background">@drawable/bg_icon_tile_small</item>
+    </style>
+
+    <style name="RR.Chevron">
+        <item name="android:layout_width">20dp</item>
+        <item name="android:layout_height">20dp</item>
+        <item name="android:layout_marginStart">12dp</item>
+        <item name="android:src">@drawable/ic_chevron_right</item>
+        <item name="tint">@color/rr_icon_muted</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
+    <!-- "Section Header": Mobile/Section title on the left, Mobile/Label link on the right -->
+    <style name="RR.SectionRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">@dimen/section_gap</item>
+        <item name="android:layout_marginBottom">@dimen/item_gap</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:minHeight">24dp</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="RR.SectionTitle">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Section</item>
+    </style>
+
+    <!-- Right-hand section link ("See all", "Edit", "Map view"...) -->
+    <style name="RR.SectionAction">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+        <item name="android:paddingTop">3dp</item>
+        <item name="android:paddingBottom">3dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Label</item>
+        <item name="android:textColor">@color/rr_navy_light</item>
+    </style>
+
+    <!-- Freshness label: a status chip without an icon -->
+    <style name="RR.FreshnessChip" parent="RR.Badge">
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <!-- 44 dp glass map button ("Back", "Map Settings", "Locate", "Layers", "More") -->
+    <style name="RR.MapButton">
+        <item name="android:layout_width">44dp</item>
+        <item name="android:layout_height">44dp</item>
+        <item name="android:background">@drawable/bg_map_button</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:elevation">@dimen/elevation_sm</item>
+        <item name="android:foreground">@drawable/ripple_round</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="tint">@color/rr_navy</item>
+    </style>
+
+    <!-- Screen toolbar on secondary screens: 44 dp back button + Mobile/Title -->
+    <style name="RR.Toolbar">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+    </style>
+
+    <!-- Bottom sheet card ("Safe Route Bottom Sheet"): glass, 30 dp corners, padding 10/16/16/16 -->
+    <style name="RR.Sheet">
+        <item name="android:background">@drawable/bg_sheet</item>
+        <item name="android:elevation">@dimen/elevation_float</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingBottom">16dp</item>
+    </style>
+
+    <!-- Figma "QR Record" button on the navy Ligtas card: white, 14 dp corners, padding 9/12, gap 10 -->
+    <style name="RR.LigtasAction">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">10dp</item>
+        <item name="android:minHeight">40dp</item>
+        <item name="android:background">@drawable/bg_qr_button</item>
+        <item name="android:foreground">?attr/selectableItemBackground</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingTop">9dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:paddingBottom">9dp</item>
+        <item name="android:drawablePadding">10dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Label</item>
+        <item name="android:textColor">@color/rr_navy_light</item>
+        <item name="drawableTint">@color/rr_navy_light</item>
+    </style>
+
+    <!-- Notes (Figma "Capacity Note", "Prepared Data Notice", "Scope Notice") -->
+    <style name="RR.Note">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:drawablePadding">10dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Caption</item>
+    </style>
+
+    <style name="RR.Note.Warning">
+        <item name="android:background">@drawable/bg_notice</item>
+        <item name="android:textColor">@color/rr_orange</item>
+        <item name="drawableTint">@color/rr_orange</item>
+        <item name="android:drawableStart">@drawable/ic_info</item>
+    </style>
+
+    <style name="RR.Note.Info">
+        <item name="android:background">@drawable/bg_info_card</item>
+        <item name="android:textColor">@color/rr_navy_light</item>
+        <item name="drawableTint">@color/rr_navy_light</item>
+        <item name="android:drawableStart">@drawable/ic_shield</item>
+    </style>
+</resources>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    One ranked route alternative in the Safe Route sheet, built from the Figma card language:
+    glass, 1 dp #E8EAED border, 20 dp corners, padding 14; the selected route uses the
+    info-soft (#E2F7FB) background. Rank in a 28 dp circle, Mobile/Label title, status chip,
+    Mobile/Caption summary and Mobile/Micro metrics.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/alt_card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    android:background="@drawable/bg_pill_outline"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/alt_rank"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@drawable/bg_avatar"
+            android:gravity="center"
+            android:textAppearance="@style/TextAppearance.RR.Label"
+            android:textColor="@color/rr_navy" />
+
+        <TextView
+            android:id="@+id/alt_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:textAppearance="@style/TextAppearance.RR.Label" />
+
+        <TextView
+            android:id="@+id/alt_badge"
+            style="@style/RR.Badge"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/alt_summary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textAppearance="@style/TextAppearance.RR.Caption"
+        android:textColor="@color/rr_text" />
+
+    <TextView
+        android:id="@+id/alt_metrics"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textAppearance="@style/TextAppearance.RR.Micro" />
+</LinearLayout>

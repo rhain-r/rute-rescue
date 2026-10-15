@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    DEBUG BUILDS ONLY. Android 17 (API 37) blocks apps from reaching local-network
+    addresses such as 10.0.2.2 unless ACCESS_LOCAL_NETWORK is granted. The app only needs
+    this to talk to the Firebase Local Emulator Suite on your computer; release builds
+    talk to Firebase over the internet and never declare it.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
+
+</manifest>

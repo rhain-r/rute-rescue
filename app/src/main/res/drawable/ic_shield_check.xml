@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Exported from the RutaRescue Figma file (Lucide-style outline icon). Tint with app:tint. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp"
+    android:height="22dp"
+    android:viewportWidth="22"
+    android:viewportHeight="22">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M18.3334 11.9166C18.3334 16.5 15.1251 18.7916 11.0001 20.1666C6.87508 18.7916 3.66675 16.5 3.66675 11.9166V4.58331L11.0001 1.83331L18.3334 4.58331V11.9166Z"
+        android:strokeColor="#FF08A9D1"
+        android:strokeWidth="1.83333"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M8.25 11L10.0833 12.8334L13.75 9.16669"
+        android:strokeColor="#FF08A9D1"
+        android:strokeWidth="1.83333"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

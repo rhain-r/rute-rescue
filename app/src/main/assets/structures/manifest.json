@@ -1,0 +1,22 @@
+{
+  "manifestVersion": 1,
+  "generatedAt": "2026-10-08T06:04:59.356050Z",
+  "datasetVersion": "osm-structures-2026-10-08",
+  "source": "OpenStreetMap contributors, extracted with the Overpass API (query in tools/dataprep/overpass_structures.ql)",
+  "license": "Open Database License (ODbL) 1.0 - attribution \"(c) OpenStreetMap contributors\" is required.",
+  "osmTimestamp": "2026-10-08T06:03:32Z",
+  "bridges": 5023,
+  "tunnels": 240,
+  "points": 16866,
+  "skippedElements": 0,
+  "statusNote": "All structures start as UNVERIFIED. LGU staff record CLOSED or VERIFIED_OPEN evidence in the app.",
+  "input": {
+    "file": "structures_overpass.json",
+    "sha256": "cde42ec6512355dfec786809d0ffc44089238640e8a0fd2db8ebd14045ea7470"
+  },
+  "output": {
+    "path": "structures/road_structures.json",
+    "bytes": 725468,
+    "sha256": "3cbcb79e7df373e71cb4b999a7839d0a3553492acf7c2724cc83a397dbb0e389"
+  }
+}

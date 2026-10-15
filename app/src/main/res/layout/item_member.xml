@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Figma "Member" row (Client / My Record > Family members): 10 dp status dot, 10 dp gap,
+    Mobile/Label name over a Mobile/Micro description, and a Mobile/Micro state on the right
+    (green "READY" or orange "PRIORITY").
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="10dp"
+    android:gravity="center_vertical"
+    android:minHeight="34dp"
+    android:orientation="horizontal">
+
+    <View
+        android:id="@+id/member_dot"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:background="@drawable/bg_dot"
+        android:backgroundTint="@color/rr_green" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/member_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.RR.Label" />
+
+        <TextView
+            android:id="@+id/member_meta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.RR.Micro" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/member_state"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:textAllCaps="true"
+        android:textAppearance="@style/TextAppearance.RR.Micro"
+        android:textColor="@color/rr_green" />
+</LinearLayout>

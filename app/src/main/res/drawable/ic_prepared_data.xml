@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Exported from the RutaRescue Figma file (Lucide-style outline icon). Tint with app:tint. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M8 1.33333V3.99999"
+        android:strokeColor="#FF24547F"
+        android:strokeWidth="1.33333"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M8 12V14.6667"
+        android:strokeColor="#FF24547F"
+        android:strokeWidth="1.33333"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M3.26672 3.26666L5.13339 5.13333"
+        android:strokeColor="#FF24547F"
+        android:strokeWidth="1.33333"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M10.8667 10.8667L12.7334 12.7333"
+        android:strokeColor="#FF24547F"
+        android:strokeWidth="1.33333"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M8.00004 10.6667C9.4728 10.6667 10.6667 9.47275 10.6667 7.99999C10.6667 6.52724 9.4728 5.33333 8.00004 5.33333C6.52728 5.33333 5.33337 6.52724 5.33337 7.99999C5.33337 9.47275 6.52728 10.6667 8.00004 10.6667Z"
+        android:strokeColor="#FF24547F"
+        android:strokeWidth="1.33333"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

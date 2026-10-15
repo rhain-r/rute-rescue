@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Map pill (Figma "Walking Mode", "Risk zones Mode"): selected navy, otherwise glass. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/rr_navy" android:state_checked="true" />
+    <item android:color="@color/rr_glass" />
+</selector>

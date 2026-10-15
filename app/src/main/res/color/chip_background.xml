@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- List filter pill (Figma "Nearby Filter", "Pending 18 Tab"): selected brand-600, otherwise white. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/rr_navy_light" android:state_checked="true" />
+    <item android:color="@color/rr_surface" />
+</selector>

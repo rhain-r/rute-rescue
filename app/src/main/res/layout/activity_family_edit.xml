@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/family_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/screen_padding"
+        android:paddingEnd="@dimen/screen_padding"
+        android:paddingBottom="32dp">
+
+        <include layout="@layout/view_toolbar" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/family_id_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/family_id"
+            app:helperText="Generated from system.dat (Lab 5 format, e.g. FR-0001)">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/family_id"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:enabled="false" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/family_head_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/head_of_family">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/family_head"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName|textCapWords" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/family_contact_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/contact_number">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/family_contact"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="phone" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/family_address_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/home_address">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/family_address"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPostalAddress|textCapWords" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/family_city_layout"
+            style="@style/Widget.RR.TextInput.Dropdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/city">
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/family_city"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/family_center_layout"
+            style="@style/Widget.RR.TextInput.Dropdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/preferred_center">
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/family_center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:completionThreshold="1"
+                android:inputType="text|textCapWords" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <LinearLayout style="@style/RR.SectionRow">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/family_members"
+                android:textAppearance="@style/TextAppearance.RR.Title" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/family_add_member"
+                style="@style/Widget.RR.Button.Text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/add_member"
+                app:icon="@drawable/ic_add" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/family_members_error"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/rr_red"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/family_members"
+            style="@style/RR.CardColumn"
+            android:padding="4dp" />
+
+        <LinearLayout style="@style/RR.SectionRow">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/trusted_contacts"
+                android:textAppearance="@style/TextAppearance.RR.Title" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/family_add_contact"
+                style="@style/Widget.RR.Button.Text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/add_contact"
+                app:icon="@drawable/ic_add" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/family_contacts"
+            style="@style/RR.CardColumn"
+            android:padding="4dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/family_save"
+            style="@style/Widget.RR.Button.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/save" />
+    </LinearLayout>
+</ScrollView>

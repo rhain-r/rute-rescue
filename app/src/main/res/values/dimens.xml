@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Spacing and sizes measured from the Figma frames (412 x 917 dp mobile frames). -->
+<resources>
+    <!-- "Screen Content": 16 dp padding, 12 dp between blocks (Client / Home uses 14 dp) -->
+    <dimen name="screen_padding">16dp</dimen>
+    <dimen name="section_gap">12dp</dimen>
+    <dimen name="item_gap">12dp</dimen>
+    <dimen name="gap_home">14dp</dimen>
+    <dimen name="item_gap_small">10dp</dimen>
+
+    <!-- Cards: 24 dp corners, 14 dp padding; icon tiles 42 dp -->
+    <dimen name="card_radius">24dp</dimen>
+    <dimen name="card_padding">14dp</dimen>
+    <dimen name="icon_tile">42dp</dimen>
+
+    <!-- Elevation equivalents of the Figma effect styles -->
+    <dimen name="elevation_sm">6dp</dimen>      <!-- Elevation/Sm: 0,6 blur 18, navy 8 % -->
+    <dimen name="elevation_float">10dp</dimen>  <!-- Elevation/Float: 0,12 blur 30, navy 10 % -->
+    <dimen name="elevation_nav">12dp</dimen>    <!-- Elevation/Nav: 0,-8 blur 24, navy 12 % -->
+
+    <!-- Header (74 dp) and bottom navigation (78 dp) -->
+    <dimen name="header_height">74dp</dimen>
+    <dimen name="bottom_nav_height">78dp</dimen>
+    <!-- Scroll content starts below the header and ends above the navigation bar -->
+    <dimen name="content_top_space">90dp</dimen>
+    <dimen name="bottom_nav_space">94dp</dimen>
+</resources>

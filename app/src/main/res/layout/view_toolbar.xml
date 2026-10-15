@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Back-button toolbar for secondary screens (not drawn in Figma). It reuses the Figma map
+    "Back" button (44 dp glass circle, 20 dp chevron) and the Mobile/Section title style.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/RR.Toolbar">
+
+    <ImageButton
+        android:id="@+id/toolbar_back"
+        style="@style/RR.MapButton"
+        android:contentDescription="@string/cd_back"
+        android:src="@drawable/ic_back" />
+
+    <TextView
+        android:id="@+id/toolbar_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:textAppearance="@style/TextAppearance.RR.Section" />
+</LinearLayout>

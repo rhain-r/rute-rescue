@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Figma "LGU / Data & Centers": pinned LGU header, then "Screen Content" (16 dp padding, 12 dp gap):
+    Data Health, "Datasets" + "Upload", dataset rows, "Evacuation centers" + "Manage", center rows,
+    Scope Notice.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.core.widget.NestedScrollView style="@style/RR.TabScroll">
+
+        <LinearLayout style="@style/RR.ScreenColumn">
+
+            <!-- "Data Health": 28 dp corners, padding 16, gap 8, Elevation/Float -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_data_health"
+                android:elevation="@dimen/elevation_float"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:minHeight="24dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/data_kicker"
+                        android:textAppearance="@style/TextAppearance.RR.Eyebrow" />
+
+                    <TextView
+                        android:id="@+id/data_need_review"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="@style/TextAppearance.RR.Eyebrow"
+                        android:textColor="@color/rr_orange" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/data_hero_title"
+                    android:textAppearance="@style/TextAppearance.RR.Title" />
+
+                <TextView
+                    android:id="@+id/data_last_sync"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textAppearance="@style/TextAppearance.RR.Caption" />
+            </LinearLayout>
+
+            <!-- "Datasets" + "Upload" -->
+            <LinearLayout style="@style/RR.SectionRow">
+
+                <TextView
+                    style="@style/RR.SectionTitle"
+                    android:text="@string/datasets" />
+
+                <TextView
+                    android:id="@+id/data_upload"
+                    style="@style/RR.SectionAction"
+                    android:text="@string/upload" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/data_datasets"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <!-- "Evacuation centers" + "Manage" -->
+            <LinearLayout
+                style="@style/RR.SectionRow"
+                android:layout_marginTop="0dp">
+
+                <TextView
+                    style="@style/RR.SectionTitle"
+                    android:text="@string/evacuation_centers" />
+
+                <TextView
+                    android:id="@+id/data_manage"
+                    style="@style/RR.SectionAction"
+                    android:text="@string/manage" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/data_centers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <!-- "Scope Notice": info-soft, 16 dp corners, padding 12, 20 dp shield -->
+            <TextView
+                style="@style/RR.Note.Info"
+                android:text="@string/info_management_only" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <include layout="@layout/view_app_header" />
+</FrameLayout>

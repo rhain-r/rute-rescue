@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Figma "RR / Resident Bottom Nav" and "RR / LGU Bottom Nav" (412 x 78 dp):
+    full-width glass bar, 28 dp top corners, padding 8/8/10/8, four 96 x 58 dp items 4 dp apart,
+    Elevation/Nav. MainShellActivity adds the system navigation-bar height to the bottom padding.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bottom_nav"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_bottom_nav"
+    android:elevation="@dimen/elevation_nav"
+    android:gravity="center_vertical"
+    android:minHeight="@dimen/bottom_nav_height"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="10dp">
+
+    <LinearLayout
+        android:id="@+id/nav_item_0"
+        style="@style/RR.NavItem">
+
+        <ImageView
+            android:id="@+id/nav_icon_0"
+            style="@style/RR.NavIcon" />
+
+        <TextView
+            android:id="@+id/nav_label_0"
+            style="@style/RR.NavLabel" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/nav_item_1"
+        style="@style/RR.NavItem"
+        android:layout_marginStart="4dp">
+
+        <ImageView
+            android:id="@+id/nav_icon_1"
+            style="@style/RR.NavIcon" />
+
+        <TextView
+            android:id="@+id/nav_label_1"
+            style="@style/RR.NavLabel" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/nav_item_2"
+        style="@style/RR.NavItem"
+        android:layout_marginStart="4dp">
+
+        <ImageView
+            android:id="@+id/nav_icon_2"
+            style="@style/RR.NavIcon" />
+
+        <TextView
+            android:id="@+id/nav_label_2"
+            style="@style/RR.NavLabel" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/nav_item_3"
+        style="@style/RR.NavItem"
+        android:layout_marginStart="4dp">
+
+        <ImageView
+            android:id="@+id/nav_icon_3"
+            style="@style/RR.NavIcon" />
+
+        <TextView
+            android:id="@+id/nav_label_3"
+            style="@style/RR.NavLabel" />
+    </LinearLayout>
+</LinearLayout>

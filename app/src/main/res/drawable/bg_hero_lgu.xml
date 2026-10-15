@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma "Operations Status": left-to-right #FFFFFF > #F1FAFC (0.62) > #F1EDFF, 28 dp corners. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient
+        android:angle="0"
+        android:centerColor="#F1FAFC"
+        android:centerX="0.62"
+        android:endColor="#F1EDFF"
+        android:startColor="#FFFFFF"
+        android:type="linear" />
+    <corners android:radius="28dp" />
+</shape>

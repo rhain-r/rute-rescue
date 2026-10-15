@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RutaRescue</string>
+
+    <!-- Header -->
+    <string name="eyebrow_resident">Community safety</string>
+    <string name="eyebrow_lgu">LGU operations</string>
+    <string name="cd_notifications">Notifications</string>
+    <string name="cd_about">About RutaRescue and data sources</string>
+    <string name="cd_back">Back</string>
+
+    <!-- Disclaimers (DOCX sections 1 and 14) -->
+    <string name="disclaimer_short">RutaRescue supports decisions. It does not guarantee a safe route, predict exact floods, or replace emergency services. In an emergency call 911.</string>
+    <string name="safer_label">Safer among available alternatives</string>
+    <string name="capacity_notice">Center availability is LGU-posted; live capacity is not monitored.</string>
+    <string name="info_management_only">Information management only — no dispatch or live center-capacity controls.</string>
+    <string name="prepared_dataset_warning">Prepared dataset — confirm field reports before publishing.</string>
+    <string name="synthetic_proof_notice">For this class demo, attach a synthetic/demo image only. Never upload real IDs, medical documents or other sensitive files.</string>
+
+    <!-- Auth -->
+    <string name="login_title">Welcome to RutaRescue</string>
+    <string name="login_subtitle">Flood preparedness and safer-route support for Metro Manila.</string>
+    <string name="email">E-mail</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="full_name">Full name</string>
+    <string name="city">City / municipality</string>
+    <string name="sign_in">Sign in</string>
+    <string name="create_resident_account">Create a resident account</string>
+    <string name="register_title">Create your resident account</string>
+    <string name="register_note">LGU personnel accounts are created by the LGU administrator. Registering here always creates a Resident account.</string>
+    <string name="register">Register</string>
+    <string name="firebase_missing">Firebase is not configured. Add app/google-services.json from your Firebase project (see README.md), then rebuild.</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_route">Route</string>
+    <string name="nav_centers">Centers</string>
+    <string name="nav_record">Record</string>
+    <string name="nav_overview">Overview</string>
+    <string name="nav_map">Map</string>
+    <string name="nav_reviews">Reviews</string>
+    <string name="nav_data">Data</string>
+    <string name="offline_banner">Offline — showing cached and prepared data. Search and new routes need internet.</string>
+
+    <!-- Home -->
+    <string name="find_safer_route">Find a safer route</string>
+    <string name="search_hint_home">Search location or center</string>
+    <string name="quick_actions">Quick actions</string>
+    <string name="qa_route">Safe route</string>
+    <string name="qa_route_sub">Avoid risk</string>
+    <string name="qa_centers">Centers</string>
+    <string name="qa_centers_sub">Find shelter</string>
+    <string name="qa_family">Family</string>
+    <string name="qa_family_sub">Update record</string>
+    <string name="saved_places">Saved places</string>
+    <string name="nearby_center">Nearby evacuation center</string>
+    <string name="see_all">See all</string>
+    <string name="latest_from_lgu">Latest from your LGU</string>
+    <string name="data_sources">Data sources</string>
+    <string name="no_advisory_eyebrow">No active LGU advisory</string>
+    <string name="no_advisory_body">Prepared Project NOAH flood scenarios are available offline. Check routes before you travel.</string>
+    <string name="no_center_yet">No published center yet. Centers appear here once your LGU verifies and publishes them.</string>
+    <string name="stay_ready">Stay flood-ready today.</string>
+
+    <!-- Safe route -->
+    <string name="search_destination">Search destination</string>
+    <string name="travel_walking">Walking</string>
+    <string name="travel_motorcycle">Motorcycle</string>
+    <string name="travel_vehicle">Vehicle</string>
+    <string name="risk_horizon">Risk horizon</string>
+    <string name="choose_destination">Choose a destination</string>
+    <string name="choose_destination_hint">Search a place, pick a saved place or an evacuation center. RutaRescue compares up to three routes against the selected flood scenario.</string>
+    <string name="cached_routes">Cached routes (work offline)</string>
+    <string name="nearby_centers">Nearby centers</string>
+    <string name="start_guidance">Start safer-route guidance</string>
+    <string name="end_guidance">End guidance</string>
+    <string name="save_place">Save place</string>
+    <string name="clear_route">Clear</string>
+    <string name="alternatives">Alternatives</string>
+    <string name="why_this_ranking">Why this ranking</string>
+    <string name="route_legend">Clear  •  Low  •  Medium  •  High  •  Unverified bridge/structure  •  Closed  •  No data</string>
+    <string name="assessing_routes">Requesting routes and assessing flood risk…</string>
+    <string name="retry">Try again</string>
+    <string name="origin_map_center">Start: map centre (location unavailable)</string>
+    <string name="origin_my_location">Start: your location</string>
+
+    <!-- Centers -->
+    <string name="evacuation_centers">Evacuation centers</string>
+    <string name="map_view">Map view</string>
+    <string name="list_view">List view</string>
+    <string name="search_centers_hint">Search barangay or center</string>
+    <string name="filter_nearby">Nearby</string>
+    <string name="filter_open">Open now</string>
+    <string name="filter_accessible">Accessible</string>
+    <string name="essentials_title">Bring essentials before leaving</string>
+    <string name="essentials_body">IDs, medicine, water, phone charger, and your family safety record.</string>
+    <string name="route_here">Find a safer route here</string>
+    <string name="verification">Verification</string>
+    <string name="accessibility">Accessibility and support</string>
+
+    <!-- My record -->
+    <string name="my_safety_record">My safety record</string>
+    <string name="edit">Edit</string>
+    <string name="family_members">Family members</string>
+    <string name="trusted_contacts">Trusted contacts</string>
+    <string name="no_record_title">No family record yet</string>
+    <string name="no_record_body">Create your family evacuation record so it is ready even offline.</string>
+    <string name="create_record">Create record</string>
+    <string name="ligtas_priority">Ligtas Priority</string>
+    <string name="apply_ligtas">Apply for Ligtas Priority</string>
+    <string name="open_verification_record">Open verification record</string>
+    <string name="view_applications">View applications</string>
+    <string name="lab_files_title">Lab data files</string>
+    <string name="lab_files_open">Import / export family_records.txt</string>
+    <string name="member_review_needed">Imported family size does not match the member list yet — please add member details.</string>
+
+    <!-- Family edit -->
+    <string name="family_record">Family record</string>
+    <string name="family_id">Family ID</string>
+    <string name="head_of_family">Head of family</string>
+    <string name="contact_number">Contact number (09XXXXXXXXX)</string>
+    <string name="home_address">Home address</string>
+    <string name="preferred_center">Preferred evacuation center</string>
+    <string name="add_member">Add member</string>
+    <string name="add_contact">Add trusted contact</string>
+    <string name="save">Save</string>
+    <string name="member_name">Member name</string>
+    <string name="age">Age</string>
+    <string name="pwd">Person with disability</string>
+    <string name="pregnant">Pregnant</string>
+    <string name="support_needs">Support needs (optional)</string>
+    <string name="contact_name">Contact name</string>
+    <string name="remove">Remove</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Legacy files -->
+    <string name="legacy_title">Lab data files</string>
+    <string name="legacy_intro">RutaRescue keeps the Lab 5–7 formats working: family_records.txt (UTF-8, pipe-delimited text) and system.dat (binary counters). Every save also updates both files on this phone.</string>
+    <string name="import_file">Import family_records.txt</string>
+    <string name="export_file">Export my record</string>
+    <string name="reload_files">Re-read local files</string>
+    <string name="use_this_record">Use this record</string>
+
+    <!-- Ligtas -->
+    <string name="ligtas_apply_title">Apply for Ligtas Priority</string>
+    <string name="member_needing_help">Family member needing priority help</string>
+    <string name="need_category">Need category</string>
+    <string name="justification">Justification</string>
+    <string name="pick_demo_image">Choose synthetic/demo image</string>
+    <string name="submit_application">Submit application</string>
+    <string name="my_applications">My Ligtas applications</string>
+    <string name="show_qr">Show verification QR</string>
+    <string name="qr_caption">This QR contains only an opaque application ID — no personal or medical details.</string>
+
+    <!-- LGU -->
+    <string name="operations_overview">Operations overview</string>
+    <string name="today">Today</string>
+    <string name="view_report">View report</string>
+    <string name="open_reviews">Open reviews</string>
+    <string name="active_closures">Active closures</string>
+    <string name="centers_label">Centers</string>
+    <string name="updates_label">Updates</string>
+    <string name="quick_operations">Quick operations</string>
+    <string name="review_ligtas">Review Ligtas applications</string>
+    <string name="publish_advisory">Publish community advisory</string>
+    <string name="publish_advisory_sub">Create a verified resident update</string>
+    <string name="share_update_hint">Share a verified safety update…</string>
+    <string name="add_closure">＋ Risk zone</string>
+    <string name="add_center">＋ Center</string>
+    <string name="publish">Publish</string>
+    <string name="your_advisories">Your advisories</string>
+    <string name="flood_risk_map">Flood-risk map</string>
+    <string name="layer_risk_zones">Risk zones</string>
+    <string name="layer_structures">Routes</string>
+    <string name="layer_centers">Centers</string>
+    <string name="set_structure_status">Set bridge/tunnel status</string>
+    <string name="report_closure_here">Report closure here</string>
+    <string name="tap_map_hint">Tap the map to inspect the NOAH class, nearby bridges/tunnels and closures. Long-press to report a closure.</string>
+    <string name="ligtas_reviews">Ligtas Priority reviews</string>
+    <string name="search_resident_hint">Search resident or member</string>
+    <string name="pending">Pending</string>
+    <string name="approved">Approved</string>
+    <string name="rejected">Rejected</string>
+    <string name="documented_criteria_title">Use documented criteria</string>
+    <string name="documented_criteria_body">Check the synthetic proof, address and household needs. Every decision is logged with reviewer, time and reason.</string>
+    <string name="scan_qr">Scan QR</string>
+    <string name="decision_reason">Reason for your decision</string>
+    <string name="approve">Approve</string>
+    <string name="reject">Reject</string>
+    <string name="data_hero_title">Information stays useful when verified.</string>
+    <string name="datasets">Datasets</string>
+    <string name="upload">Upload</string>
+    <string name="manage">Manage</string>
+    <string name="center_editor">Evacuation center</string>
+    <string name="center_name">Center name</string>
+    <string name="address">Address</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="operating_status">Operating status (LGU-posted)</string>
+    <string name="verification_source">Verification source (e.g. barangay field check, date)</string>
+    <string name="notes">Notes (optional)</string>
+    <string name="save_draft">Save draft</string>
+    <string name="verify_publish">Verify and publish</string>
+    <string name="archive">Archive</string>
+    <string name="advisory_editor">Community advisory</string>
+    <string name="advisory_title">Title</string>
+    <string name="advisory_message">Message</string>
+    <string name="alert_level">Alert level</string>
+    <string name="published_to_residents">Published to residents</string>
+    <string name="dataset_import">Import evacuation centers</string>
+    <string name="dataset_import_intro">Import → validate → preview → publish. Only rows for your city can be published, and you must name how you verified them.</string>
+    <string name="use_legacy_list">Use bundled legacy list (unverified)</string>
+    <string name="choose_csv">Choose CSV file</string>
+    <string name="publish_valid_rows">Publish valid rows</string>
+
+    <!-- About -->
+    <string name="about_title">About and data sources</string>
+    <string name="sign_out">Sign out</string>
+
+    <!-- Figma "Verified LGU Update" actions and the Home data-source card -->
+    <string name="advisory_helpful">Helpful</string>
+    <string name="advisory_helpful_done">Helpful ✓</string>
+    <string name="advisory_save">Save update</string>
+    <string name="advisory_saved">Saved</string>
+    <string name="source_noah">Project NOAH flood scenarios</string>
+    <string name="source_advisories">LGU advisories</string>
+    <string name="source_centers">Evacuation centers</string>
+    <string name="member_ready">Ready</string>
+    <string name="member_priority">Priority</string>
+    <string name="cd_map_settings">Map settings and legend</string>
+    <string name="cd_locate">Recenter on my location</string>
+    <string name="cd_layers">Show or hide the flood layer</string>
+    <string name="cd_more">More options</string>
+    <string name="scenario_5">5-year</string>
+    <string name="scenario_25">25-year</string>
+    <string name="scenario_100">100-year</string>
+    <string name="proof_attached">Proof attached</string>
+    <string name="review_application">Review application →</string>
+    <string name="manage_centers">Manage evacuation centers</string>
+    <string name="manage_add_center">Add a center</string>
+    <string name="manage_import_centers">Import or verify the center list</string>
+    <string name="data_kicker">Data &amp; center records</string>
+    <string name="lift_closure">Lift this closure</string>
+    <string name="map_legend_title">Map legend</string>
+    <string name="lgu_map_legend">Risk zones: the selected prepared Project NOAH scenario (yellow = LOW, orange = MEDIUM, red = HIGH). It is a modelled scenario, not live flooding.\n\nRoutes: bridges and tunnels the route engine checks (violet = unverified, green = verified open, black = closed) and the road closures your LGU reported.\n\nCenters: evacuation centers in your jurisdiction.\n\nTap a point to inspect it. Long-press to report a closure.</string>
+</resources>

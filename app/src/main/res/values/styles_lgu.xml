@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Figma "RR / Metric Card": glass, 24 dp corners, padding 14, gap 4, 108 dp tall in the grid -->
+    <style name="RR.MetricTile">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:minHeight">108dp</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:background">@drawable/bg_card</item>
+        <item name="android:elevation">@dimen/elevation_sm</item>
+        <item name="android:padding">14dp</item>
+    </style>
+
+    <!-- "Label": Mobile/Micro, capitals, secondary text -->
+    <style name="RR.MetricLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Micro</item>
+    </style>
+
+    <!-- "Value": Mobile/Display in brand-800 -->
+    <style name="RR.MetricValue">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Display</item>
+        <item name="android:textColor">@color/rr_navy</item>
+        <item name="android:text">-</item>
+    </style>
+
+    <!-- "Detail": Mobile/Caption in the warning colour -->
+    <style name="RR.MetricSub">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Caption</item>
+        <item name="android:textColor">@color/rr_orange</item>
+    </style>
+
+    <!-- "Composer Actions": Mobile/Label, 18 dp apart; each action sets its Figma colour -->
+    <style name="RR.ComposerAction">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginEnd">18dp</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">4dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Label</item>
+        <item name="android:textColor">@color/rr_navy_light</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+    </style>
+
+    <!-- Compact row text: "Title" Mobile/Label, "Meta" Mobile/Caption, 1 dp apart -->
+    <style name="RR.RowTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Label</item>
+    </style>
+
+    <style name="RR.RowMeta">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:layout_marginTop">1dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.RR.Caption</item>
+    </style>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Active bottom-nav item: navy, 20 dp corners (96 x 58 dp in Figma). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/rr_navy" />
+    <corners android:radius="20dp" />
+</shape>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma icon tile: 42 dp, #E2F7FB (info-soft), 14 dp corners. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/rr_teal_soft" />
+    <corners android:radius="14dp" />
+</shape>

@@ -1,0 +1,603 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Figma "Client / Safe Route": full-screen map; top row with the 44 dp Back button, the 52 dp
+    search field and the 44 dp Map Settings button; Travel Modes pills; the "Prepared risk data" tag;
+    Locate / Layers buttons at the right; and the floating "Safe Route Bottom Sheet"
+    (glass, 30 dp corners, 16 dp from the screen edges and the navigation bar).
+    DOCX additions in the same style: the always-visible Risk Horizon (5/25/100-year) pills, the
+    legend, and the full assessment (metrics, alternatives, explanation) when the sheet is expanded.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <org.maplibre.android.maps.MapView
+        android:id="@+id/route_map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Top controls ("Screen Content" origin: 16 dp from the status bar) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:orientation="vertical"
+        android:paddingStart="14dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="18dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- "Back" -->
+            <ImageButton
+                android:id="@+id/route_back"
+                style="@style/RR.MapButton"
+                android:contentDescription="@string/cd_back"
+                android:src="@drawable/ic_back" />
+
+            <!-- "RR / Search Field": 52 dp, 8 dp from the buttons -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_search"
+                android:elevation="@dimen/elevation_sm"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="14dp"
+                android:paddingEnd="6dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/rr_icon_search" />
+
+                <EditText
+                    android:id="@+id/route_search"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:hint="@string/search_destination"
+                    android:imeOptions="actionSearch"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.RR.Body"
+                    android:textColorHint="@color/rr_text_secondary" />
+
+                <ImageButton
+                    android:id="@+id/route_search_clear"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/clear_route"
+                    android:src="@drawable/ic_close"
+                    android:visibility="gone"
+                    app:tint="@color/rr_text_secondary" />
+            </LinearLayout>
+
+            <!-- "Map Settings": opens the map legend -->
+            <ImageButton
+                android:id="@+id/route_legend_button"
+                style="@style/RR.MapButton"
+                android:contentDescription="@string/cd_map_settings"
+                android:src="@drawable/ic_settings" />
+        </LinearLayout>
+
+        <!-- Destination search results -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/route_results_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="8dp"
+            android:visibility="gone">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/route_results"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxHeight="320dp" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- "Travel Modes": navy when selected, 8 dp apart -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="14dp"
+            android:clipToPadding="false"
+            android:paddingBottom="4dp"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/route_mode_chips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:chipSpacingHorizontal="8dp"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/route_mode_walk"
+                    style="@style/Widget.RR.Chip.Map"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/travel_walking" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/route_mode_moto"
+                    style="@style/Widget.RR.Chip.Map"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/travel_motorcycle" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/route_mode_car"
+                    style="@style/Widget.RR.Chip.Map"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/travel_vehicle" />
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
+
+        <!-- Risk Horizon (DOCX section 7: the selected scenario is always visible) -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="6dp"
+            android:clipToPadding="false"
+            android:paddingBottom="4dp"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/route_scenario_chips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:chipSpacingHorizontal="8dp"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/route_scenario_5"
+                    style="@style/Widget.RR.Chip.Map"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/scenario_5" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/route_scenario_25"
+                    style="@style/Widget.RR.Chip.Map"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/scenario_25" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/route_scenario_100"
+                    style="@style/Widget.RR.Chip.Map"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/scenario_100" />
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
+
+        <!-- "Risk Data Tag": glass pill, 16 dp prepared-data icon, brand-600 Mobile/Micro -->
+        <TextView
+            android:id="@+id/route_data_chip"
+            style="@style/RR.FreshnessChip"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="10dp"
+            android:elevation="@dimen/elevation_sm" />
+
+        <TextView
+            android:id="@+id/route_legend"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="52dp"
+            android:background="@drawable/bg_card"
+            android:elevation="@dimen/elevation_sm"
+            android:padding="14dp"
+            android:textAppearance="@style/TextAppearance.RR.Caption"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- "Map Controls": Locate and Layers, 8 dp apart, 214 dp below the top of the content -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="214dp"
+        android:layout_marginEnd="18dp"
+        android:orientation="vertical">
+
+        <ImageButton
+            android:id="@+id/route_locate"
+            style="@style/RR.MapButton"
+            android:contentDescription="@string/cd_locate"
+            android:src="@drawable/ic_my_location" />
+
+        <ImageButton
+            android:id="@+id/route_layers"
+            style="@style/RR.MapButton"
+            android:layout_marginTop="8dp"
+            android:contentDescription="@string/cd_layers"
+            android:src="@drawable/ic_layers" />
+    </LinearLayout>
+
+    <!--
+        Floating sheet card: 16 dp from the sides and above the 78 dp navigation bar. It grows with
+        its content and scrolls inside once it reaches its maximum height (MaxHeightScrollView).
+    -->
+    <com.rutarescue.ui.common.MaxHeightScrollView
+        android:id="@+id/route_sheet"
+        style="@style/RR.Sheet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="@dimen/bottom_nav_space"
+        android:maxHeight="300dp"
+        android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- "Sheet Handle": 44 x 4 dp -->
+                <View
+                    android:layout_width="44dp"
+                    android:layout_height="4dp"
+                    android:layout_marginStart="1dp"
+                    android:layout_marginBottom="10dp"
+                    android:background="@drawable/bg_drag_handle" />
+
+                <!-- Idle: choose a destination -->
+                <LinearLayout
+                    android:id="@+id/route_state_idle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/choose_destination"
+                        android:textAppearance="@style/TextAppearance.RR.Section" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/choose_destination_hint"
+                        android:textAppearance="@style/TextAppearance.RR.Body"
+                        android:textColor="@color/rr_text_secondary" />
+
+                    <TextView
+                        android:id="@+id/route_saved_title"
+                        style="@style/RR.SectionHeader"
+                        android:text="@string/saved_places"
+                        android:visibility="gone" />
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/route_saved_chips"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:chipSpacingHorizontal="8dp" />
+
+                    <TextView
+                        style="@style/RR.SectionHeader"
+                        android:text="@string/nearby_centers" />
+
+                    <LinearLayout
+                        android:id="@+id/route_center_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
+                    <TextView
+                        android:id="@+id/route_cached_title"
+                        style="@style/RR.SectionHeader"
+                        android:text="@string/cached_routes"
+                        android:visibility="gone" />
+
+                    <LinearLayout
+                        android:id="@+id/route_cached_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+                </LinearLayout>
+
+                <!-- Loading -->
+                <LinearLayout
+                    android:id="@+id/route_state_loading"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="20dp"
+                    android:visibility="gone">
+
+                    <com.google.android.material.progressindicator.CircularProgressIndicator
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:indeterminate="true"
+                        app:indicatorColor="@color/rr_navy" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/assessing_routes"
+                        android:textAppearance="@style/TextAppearance.RR.Body" />
+                </LinearLayout>
+
+                <!-- Error -->
+                <LinearLayout
+                    android:id="@+id/route_state_error"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/route_error_text"
+                        style="@style/RR.Note.Warning" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/route_retry"
+                        style="@style/Widget.RR.Button.Secondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/retry" />
+                </LinearLayout>
+
+                <!-- Result: the Figma sheet first, then the DOCX assessment details -->
+                <LinearLayout
+                    android:id="@+id/route_state_result"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <!-- "Sheet Title": Mobile/Section + status chip, 8 dp apart -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:minHeight="29dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/route_headline"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textAppearance="@style/TextAppearance.RR.Section" />
+
+                        <TextView
+                            android:id="@+id/route_level_badge"
+                            style="@style/RR.Badge"
+                            android:layout_marginStart="8dp" />
+                    </LinearLayout>
+
+                    <!-- "Route": Mobile/Body -->
+                    <TextView
+                        android:id="@+id/route_summary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:textAppearance="@style/TextAppearance.RR.Body" />
+
+                    <!-- "Route Stats": Mobile/Label, 18 dp apart -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/route_stat_distance"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="@style/TextAppearance.RR.Label"
+                            android:textColor="@color/rr_navy_light" />
+
+                        <TextView
+                            android:id="@+id/route_stat_time"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="18dp"
+                            android:textAppearance="@style/TextAppearance.RR.Label"
+                            android:textColor="@color/rr_text_secondary" />
+
+                        <TextView
+                            android:id="@+id/route_stat_risk"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="18dp"
+                            android:layout_weight="1"
+                            android:textAppearance="@style/TextAppearance.RR.Label"
+                            android:textColor="@color/rr_red" />
+                    </LinearLayout>
+
+                    <!-- "RR / Button" primary, 50 dp in this sheet -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/route_start"
+                        style="@style/Widget.RR.Button.Primary"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="10dp"
+                        android:minHeight="50dp"
+                        android:text="@string/start_guidance"
+                        app:icon="@drawable/ic_arrow_right" />
+
+                    <TextView
+                        android:id="@+id/route_origin"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:textAppearance="@style/TextAppearance.RR.Caption" />
+
+                    <!-- Assessment metrics (DOCX section 4) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_info_card"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:id="@+id/route_metric_hazard"
+                            style="@style/RR.Metric" />
+
+                        <TextView
+                            android:id="@+id/route_metric_exposure"
+                            style="@style/RR.Metric" />
+
+                        <TextView
+                            android:id="@+id/route_metric_structures"
+                            style="@style/RR.Metric" />
+
+                        <TextView
+                            android:id="@+id/route_metric_traffic"
+                            style="@style/RR.Metric"
+                            android:layout_marginBottom="0dp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/route_freshness"
+                        style="@style/RR.FreshnessChip"
+                        android:layout_marginTop="10dp" />
+
+                    <TextView
+                        android:id="@+id/route_scenario_note"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:textAppearance="@style/TextAppearance.RR.Caption" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/route_save_place"
+                            style="@style/Widget.RR.Button.Secondary"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="5dp"
+                            android:layout_weight="1"
+                            android:text="@string/save_place"
+                            app:icon="@drawable/ic_pin" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/route_clear"
+                            style="@style/Widget.RR.Button.Secondary"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="5dp"
+                            android:layout_weight="1"
+                            android:text="@string/clear_route"
+                            app:icon="@drawable/ic_close" />
+                    </LinearLayout>
+
+                    <TextView
+                        style="@style/RR.SectionHeader"
+                        android:text="@string/alternatives" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/route_alternatives"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false" />
+
+                    <TextView
+                        style="@style/RR.SectionHeader"
+                        android:text="@string/why_this_ranking" />
+
+                    <TextView
+                        android:id="@+id/route_explanation"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="@style/TextAppearance.RR.Body" />
+
+                    <TextView
+                        android:id="@+id/route_notes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:textAppearance="@style/TextAppearance.RR.Caption" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/disclaimer_short"
+                        android:textAppearance="@style/TextAppearance.RR.Caption" />
+                </LinearLayout>
+
+                <!-- Guidance (text maneuvers and progress; no voice - DOCX non-goal) -->
+                <LinearLayout
+                    android:id="@+id/route_state_guidance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/route_guidance_current"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="@style/TextAppearance.RR.Section" />
+
+                    <TextView
+                        android:id="@+id/route_guidance_progress"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:textAppearance="@style/TextAppearance.RR.Caption" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/route_end_guidance"
+                        style="@style/Widget.RR.Button.Secondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/end_guidance" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/route_maneuvers"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:nestedScrollingEnabled="false" />
+                </LinearLayout>
+            </LinearLayout>
+    </com.rutarescue.ui.common.MaxHeightScrollView>
+</FrameLayout>

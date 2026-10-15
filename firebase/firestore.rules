@@ -1,0 +1,176 @@
+rules_version = '2';
+
+// RutaRescue Cloud Firestore security rules (DOCX section 12).
+//
+// Role restrictions are enforced HERE, not only by hiding screens in the app:
+//  - residents can read/write only their own profile, family record, places and applications;
+//  - LGU personnel exist only in lgu_staff/{uid}, which nobody can write from the app
+//    (an administrator creates them in the Firebase console);
+//  - LGU personnel can only read/write records of their assigned jurisdiction;
+//  - every LGU change must be written together with an audit event in the same batch;
+//  - audit events can never be edited or deleted; records are archived, not deleted.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function staffPath() {
+      return /databases/$(database)/documents/lgu_staff/$(request.auth.uid);
+    }
+
+    function isLgu() {
+      return signedIn() && exists(staffPath());
+    }
+
+    function isLguFor(city) {
+      return isLgu() && get(staffPath()).data.jurisdiction == city;
+    }
+
+    function validCity(city) {
+      return city in ['CALOOCAN', 'LAS_PINAS', 'MAKATI', 'MALABON', 'MANDALUYONG', 'MANILA', 'MARIKINA',
+                      'MUNTINLUPA', 'NAVOTAS', 'PARANAQUE', 'PASAY', 'PASIG', 'PATEROS', 'QUEZON_CITY',
+                      'SAN_JUAN', 'TAGUIG', 'VALENZUELA'];
+    }
+
+    // The same batch must create auditEvents/{auditId} by this user about this record.
+    function audited(auditId, recordId) {
+      let path = /databases/$(database)/documents/auditEvents/$(auditId);
+      return auditId is string
+        && existsAfter(path)
+        && getAfter(path).data.actorUid == request.auth.uid
+        && getAfter(path).data.recordId == recordId;
+    }
+
+    // ------------------------------------------------------------------ people
+
+    match /users/{uid} {
+      allow read: if isSelf(uid);
+      // Public registration can only ever create a RESIDENT.
+      allow create: if isSelf(uid)
+        && request.resource.data.role == 'RESIDENT'
+        && request.resource.data.keys().hasOnly(['displayName', 'email', 'city', 'role', 'createdAt']);
+      allow update: if isSelf(uid)
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.keys().hasOnly(['displayName', 'email', 'city', 'role', 'createdAt']);
+      allow delete: if false;
+
+      match /places/{placeId} {
+        allow read, write: if isSelf(uid);
+      }
+    }
+
+    match /lgu_staff/{uid} {
+      allow read: if isSelf(uid);
+      allow write: if false;
+    }
+
+    match /families/{uid} {
+      allow read: if isSelf(uid);
+      allow create, update: if isSelf(uid)
+        && request.resource.data.ownerUid == uid
+        && request.resource.data.members is list
+        && request.resource.data.members.size() <= 100;
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------ public information, LGU writes
+
+    match /centers/{centerId} {
+      allow read: if signedIn()
+        && (resource.data.published == true || isLguFor(resource.data.city));
+      allow create, update: if isLguFor(request.resource.data.city)
+        && (resource == null || resource.data.city == request.resource.data.city)
+        && !(request.resource.data.published == true && request.resource.data.verified != true)
+        && audited(request.resource.data.lastAuditId, centerId);
+      allow delete: if false;
+    }
+
+    match /advisories/{advisoryId} {
+      allow read: if signedIn()
+        && (resource.data.published == true || isLguFor(resource.data.city));
+      allow create, update: if isLguFor(request.resource.data.city)
+        && (resource == null || resource.data.city == request.resource.data.city)
+        && audited(request.resource.data.lastAuditId, advisoryId);
+      allow delete: if false;
+    }
+
+    match /closures/{closureId} {
+      allow read: if signedIn();
+      allow create, update: if isLguFor(request.resource.data.city)
+        && (resource == null || resource.data.city == request.resource.data.city)
+        && audited(request.resource.data.lastAuditId, closureId);
+      allow delete: if false;
+    }
+
+    match /structureStatus/{structureId} {
+      allow read: if signedIn();
+      allow create, update: if isLguFor(request.resource.data.jurisdiction)
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.status in ['UNVERIFIED', 'VERIFIED_OPEN', 'CLOSED']
+        && audited(request.resource.data.lastAuditId, structureId);
+      allow delete: if false;
+    }
+
+    match /datasetVersions/{versionId} {
+      allow read: if signedIn();
+      allow create, update: if isLguFor(request.resource.data.city)
+        && audited(request.resource.data.lastAuditId, versionId);
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------ Ligtas Priority
+
+    match /ligtasApplications/{appId} {
+      allow read: if signedIn()
+        && (resource.data.ownerUid == request.auth.uid || isLguFor(resource.data.city));
+      // Residents can only submit PENDING applications for themselves.
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.status == 'PENDING'
+        && request.resource.data.reviewerUid == ''
+        && request.resource.data.reviewReason == ''
+        && validCity(request.resource.data.city);
+      // Only LGU staff of the same city decide, once, with a reason and an audit event.
+      allow update: if isLguFor(resource.data.city)
+        && resource.data.status == 'PENDING'
+        && request.resource.data.status in ['APPROVED', 'REJECTED']
+        && request.resource.data.reviewerUid == request.auth.uid
+        && request.resource.data.reviewReason is string
+        && request.resource.data.reviewReason.size() >= 5
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.city == resource.data.city
+        && request.resource.data.memberName == resource.data.memberName
+        && request.resource.data.justification == resource.data.justification
+        && request.resource.data.proofRef == resource.data.proofRef
+        && audited(request.resource.data.lastAuditId, appId);
+      allow delete: if false;
+    }
+
+    // Free-plan fallback storage for the synthetic proof image (see FirestoreInlineProofStorage).
+    match /ligtasProofs/{appId} {
+      allow read: if signedIn()
+        && (resource.data.ownerUid == request.auth.uid || isLguFor(resource.data.city));
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.contentType == 'image/jpeg'
+        && request.resource.data.imageBase64 is string
+        && request.resource.data.imageBase64.size() < 420000;
+      allow update, delete: if false;
+    }
+
+    // ------------------------------------------------------------------ audit trail
+
+    match /auditEvents/{eventId} {
+      allow read: if isLguFor(resource.data.jurisdiction);
+      allow create: if isLguFor(request.resource.data.jurisdiction)
+        && request.resource.data.actorUid == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}

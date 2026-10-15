@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma 44 dp map button: glass circle with the default 1 dp border. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <solid android:color="@color/rr_glass" />
+    <stroke android:width="1dp" android:color="@color/rr_divider" />
+</shape>
