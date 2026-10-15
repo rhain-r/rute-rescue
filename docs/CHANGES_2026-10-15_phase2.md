@@ -1,6 +1,6 @@
 # Change log: Phase 2 build of the approved Phase 1 screens (2026-10-15)
 
-The approved frames are in `docs/design/phase1-ui.html`, and the real app screens are in `docs/design/phase2-app-screens.png`.
+The approved frames are in `docs/design/phase1-ui.html`, and current app screens (no flood layer) are in `docs/demo/screens`.
 Every file below is saved in the project with its complete code.
 Actions: **CREATE** = new file, **REPLACE** = rewritten, **MODIFY** = partly edited.
 
