@@ -71,6 +71,14 @@ public class CenterDetailActivity extends BaseActivity {
         }
         findViewById(R.id.detail_no_features).setVisibility(center.getFeatures().isEmpty() ? View.VISIBLE : View.GONE);
 
+        if (CenterService.isBundled(center)) {
+            // Bundled PLM SSC list: always shown, but nobody has confirmed it yet.
+            ((TextView) findViewById(R.id.detail_verification)).setText(getString(R.string.bundled_center_note,
+                    center.getLandmark().isEmpty() ? center.getAddress() : center.getLandmark()));
+            Badges.freshness(findViewById(R.id.detail_freshness), DataFreshness.PREPARED, 0,
+                    CenterService.BUNDLED_SOURCE);
+            return;
+        }
         String verification = center.getVerification().isVerified()
                 ? "Verified by the LGU against: " + center.getVerification().getSource() + "\nVerified "
                 + Formats.dateTime(center.getVerification().getVerifiedAt())

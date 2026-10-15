@@ -1,10 +1,13 @@
 package com.rutarescue.ui.resident.home;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -13,10 +16,12 @@ import androidx.annotation.Nullable;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.rutarescue.R;
 import com.rutarescue.model.advisory.Advisory;
 import com.rutarescue.model.center.EvacuationCenter;
 import com.rutarescue.model.common.DataFreshness;
+import com.rutarescue.model.contact.Hotline;
 import com.rutarescue.model.common.GeoPoint;
 import com.rutarescue.model.common.SourcedData;
 import com.rutarescue.model.hazard.FloodScenario;
@@ -40,10 +45,14 @@ import java.util.Locale;
 
 /**
  * Resident Home (Figma "Client / Home"): latest LGU advisory, search, quick actions,
- * saved places, the nearest verified center, LGU updates and data-source timestamps.
+ * saved places, the nearest center (LGU-published or from the bundled PLM SSC list), emergency
+ * hotlines, LGU updates and data-source timestamps.
  * Cached, stale, prepared and live information are labelled differently.
  */
 public class HomeFragment extends BaseFragment {
+
+    /** Hotlines shown before "See all" (911, Red Cross, Coast Guard). */
+    private static final int HOTLINES_FOLDED = 3;
 
     private TextView heroEyebrow;
     private TextView greeting;
@@ -53,6 +62,9 @@ public class HomeFragment extends BaseFragment {
     private TextView noCenter;
     private LinearLayout advisoryList;
     private ChipGroup savedChips;
+    private LinearLayout hotlineList;
+    private TextView hotlineToggle;
+    private boolean showAllHotlines;
     private List<EvacuationCenter> centers = new ArrayList<>();
     private GeoPoint origin;
 
@@ -72,6 +84,13 @@ public class HomeFragment extends BaseFragment {
         noCenter = view.findViewById(R.id.home_no_center);
         advisoryList = view.findViewById(R.id.home_advisories);
         savedChips = view.findViewById(R.id.home_saved_chips);
+        hotlineList = view.findViewById(R.id.home_hotlines);
+        hotlineToggle = view.findViewById(R.id.home_hotlines_toggle);
+        hotlineToggle.setOnClickListener(v -> {
+            showAllHotlines = !showAllHotlines;
+            bindHotlines();
+        });
+        bindHotlines();
 
         MainShellActivity shell = (MainShellActivity) requireActivity();
         view.findViewById(R.id.header_bell).setOnClickListener(v -> startActivity(new Intent(requireContext(), InboxActivity.class)));
@@ -148,7 +167,7 @@ public class HomeFragment extends BaseFragment {
     private void onCenters(SourcedData<List<EvacuationCenter>> data) {
         centers = data.getData();
         Badges.freshness(requireView().findViewById(R.id.home_source_centers), data.getFreshness(),
-                data.getRetrievedAt(), "");
+                data.getRetrievedAt(), data.getSource());
         bindNearest();
     }
 
@@ -164,6 +183,49 @@ public class HomeFragment extends BaseFragment {
         noCenter.setVisibility(View.GONE);
         ViewBinders.bindCenter(nearbyCard, nearest, origin);
         nearbyCard.setOnClickListener(v -> startActivity(CenterDetailActivity.intent(requireContext(), nearest.getId())));
+    }
+
+    /** Emergency hotlines card: the first three, or all of them after "See all". */
+    private void bindHotlines() {
+        List<Hotline> all = container().hotlines;
+        hotlineList.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        int shown = showAllHotlines ? all.size() : Math.min(HOTLINES_FOLDED, all.size());
+        for (int i = 0; i < shown; i++) {
+            Hotline hotline = all.get(i);
+            View row = inflater.inflate(R.layout.item_simple_row, hotlineList, false);
+            ((ImageView) row.findViewById(R.id.row_icon)).setImageResource(R.drawable.ic_phone);
+            ((TextView) row.findViewById(R.id.row_title)).setText(hotline.getAgency());
+            ((TextView) row.findViewById(R.id.row_subtitle)).setText(hotline.getNumbersText());
+            row.setOnClickListener(v -> call(hotline));
+            hotlineList.addView(row);
+        }
+        hotlineToggle.setVisibility(all.size() > HOTLINES_FOLDED ? View.VISIBLE : View.GONE);
+        hotlineToggle.setText(showAllHotlines ? R.string.show_less : R.string.see_all);
+    }
+
+    /** One number opens the dialer at once; several numbers ask which one first. */
+    private void call(Hotline hotline) {
+        List<String> numbers = hotline.getNumbers();
+        if (numbers.size() == 1) {
+            dial(numbers.get(0));
+            return;
+        }
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(hotline.getAgency())
+                .setItems(numbers.toArray(new String[0]), (dialog, which) -> dial(numbers.get(which)))
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    /** Opens the phone's dialer with the number filled in; the resident still presses Call. */
+    private void dial(String printedNumber) {
+        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + Hotline.dialDigits(printedNumber)));
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException noDialer) {
+            showMessage(getString(R.string.no_dialer));
+        }
     }
 
     private void onSavedPlaces(List<SavedPlace> places) {

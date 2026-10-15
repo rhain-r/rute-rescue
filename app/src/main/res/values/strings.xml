@@ -60,7 +60,12 @@
     <string name="data_sources">Data sources</string>
     <string name="no_advisory_eyebrow">No active LGU advisory</string>
     <string name="no_advisory_body">Prepared Project NOAH flood scenarios are available offline. Check routes before you travel.</string>
-    <string name="no_center_yet">No published center yet. Centers appear here once your LGU verifies and publishes them.</string>
+    <string name="no_center_yet">No evacuation center to show yet.</string>
+    <string name="bundled_center_note">From the PLM SSC evacuation-center list (Facebook, 24 Jul 2024). Not yet confirmed by your LGU, and the map pin is approximate. Look for: %1$s.</string>
+    <string name="hotlines_title">Emergency hotlines</string>
+    <string name="hotlines_source">From the PLM SSC post, 24 Jul 2024. Tap a line to open your phone\'s dialer.</string>
+    <string name="show_less">Show less</string>
+    <string name="no_dialer">This phone has no dialer app.</string>
     <string name="stay_ready">Stay flood-ready today.</string>
 
     <!-- Safe route -->

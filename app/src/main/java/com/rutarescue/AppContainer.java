@@ -1,6 +1,7 @@
 package com.rutarescue;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -8,6 +9,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
 import com.google.firebase.firestore.PersistentCacheSettings;
 import com.google.firebase.storage.FirebaseStorage;
+import com.rutarescue.model.center.EvacuationCenter;
+import com.rutarescue.model.contact.Hotline;
 import com.rutarescue.network.CachedRouteProvider;
 import com.rutarescue.network.HttpJsonClient;
 import com.rutarescue.network.FallbackRouteProvider;
@@ -15,6 +18,8 @@ import com.rutarescue.network.NominatimSearchProvider;
 import com.rutarescue.network.OsrmRouteProvider;
 import com.rutarescue.network.RouteProvider;
 import com.rutarescue.network.TomTomRouteProvider;
+import com.rutarescue.persistence.BundledCenterReader;
+import com.rutarescue.persistence.HotlineReader;
 import com.rutarescue.persistence.RouteCacheStore;
 import com.rutarescue.repository.AuditRepository;
 import com.rutarescue.repository.ClosureRepository;
@@ -51,7 +56,13 @@ import com.rutarescue.service.RouteService;
 import com.rutarescue.service.SessionManager;
 import com.rutarescue.util.AppExecutors;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Creates every service and repository once and wires them together ("manual dependency
@@ -60,6 +71,8 @@ import java.io.File;
  * "controllers call use cases rather than Firebase or HTTP clients directly").
  */
 public final class AppContainer {
+
+    private static final String TAG = "AppContainer";
 
     public final AppExecutors executors = new AppExecutors();
     public final ConnectivityMonitor connectivity;
@@ -72,6 +85,8 @@ public final class AppContainer {
     public final AdvisoryMarks advisoryMarks;
     /** Map layers sheet choices, remembered on this phone. */
     public final MapLayerPreferences mapLayers;
+    /** Emergency hotlines bundled with the app (PLM SSC post, 24 Jul 2024; labels corrected). */
+    public final List<Hotline> hotlines;
 
     private final boolean firebaseReady;
     private final RouteCacheStore routeCache;
@@ -95,6 +110,7 @@ public final class AppContainer {
         structures = new AssetStructureRepository(app.getAssets());
         advisoryMarks = new AdvisoryMarks(app);
         mapLayers = new MapLayerPreferences(app);
+        hotlines = readHotlines(app);
         hasTomTomKey = !BuildConfig.TOMTOM_API_KEY.isEmpty();
 
         // google-services.json is private configuration; without it Firebase is not initialised.
@@ -127,7 +143,7 @@ public final class AppContainer {
             familyService = new FamilyService(new FirestoreFamilyRepository(db, freshness, connectivity), executors,
                     new File(app.getFilesDir(), "data").toPath());
             FirestoreCenterRepository centers = new FirestoreCenterRepository(db, freshness, connectivity);
-            centerService = new CenterService(centers);
+            centerService = new CenterService(centers, readBundledCenters(app));
             advisoryService = new AdvisoryService(new FirestoreAdvisoryRepository(db, freshness, connectivity));
             ProofStorage proofs = BuildConfig.USE_FIREBASE_STORAGE
                     ? new FirebaseProofStorage(storage)
@@ -162,6 +178,27 @@ public final class AppContainer {
         if (familyService != null) familyService.clearLocalCopy();
         executors.io().execute(routeCache::clear);
         advisoryMarks.clear();
+    }
+
+    /** The PLM SSC centers bundled with the app; an unreadable file gives an empty list. */
+    private static List<EvacuationCenter> readBundledCenters(Context app) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                app.getAssets().open(BundledCenterReader.ASSET), StandardCharsets.UTF_8))) {
+            return new BundledCenterReader().read(reader);
+        } catch (IOException e) {
+            Log.w(TAG, "Bundled center list not readable", e);
+            return new ArrayList<>();
+        }
+    }
+
+    private static List<Hotline> readHotlines(Context app) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                app.getAssets().open(HotlineReader.ASSET), StandardCharsets.UTF_8))) {
+            return new HotlineReader().read(reader);
+        } catch (IOException e) {
+            Log.w(TAG, "Hotline list not readable", e);
+            return new ArrayList<>();
+        }
     }
 
     public boolean isFirebaseReady() { return firebaseReady; }

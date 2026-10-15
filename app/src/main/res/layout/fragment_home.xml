@@ -236,6 +236,45 @@
                 android:text="@string/no_center_yet"
                 android:textAppearance="@style/TextAppearance.RR.Caption" />
 
+            <!-- "Emergency hotlines" + "See all" (PLM SSC post, 24 Jul 2024); a row opens the dialer -->
+            <LinearLayout
+                style="@style/RR.SectionRow"
+                android:layout_marginBottom="@dimen/gap_home">
+
+                <TextView
+                    style="@style/RR.SectionTitle"
+                    android:text="@string/hotlines_title" />
+
+                <TextView
+                    android:id="@+id/home_hotlines_toggle"
+                    style="@style/RR.SectionAction"
+                    android:text="@string/see_all" />
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/RR.CardColumn"
+                android:layout_marginBottom="@dimen/gap_home"
+                android:paddingStart="0dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="0dp"
+                android:paddingBottom="12dp">
+
+                <LinearLayout
+                    android:id="@+id/home_hotlines"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="@string/hotlines_source"
+                    android:textAppearance="@style/TextAppearance.RR.Caption" />
+            </LinearLayout>
+
             <!-- "Verified LGU Update" cards -->
             <LinearLayout
                 android:id="@+id/home_advisories"

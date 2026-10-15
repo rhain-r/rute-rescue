@@ -6,9 +6,11 @@ import com.rutarescue.model.center.CenterCapacity;
 import com.rutarescue.model.center.CenterStatus;
 import com.rutarescue.model.center.EvacuationCenter;
 import com.rutarescue.model.common.AuditEvent;
+import com.rutarescue.model.common.DataFreshness;
 import com.rutarescue.model.common.GeoPoint;
 import com.rutarescue.model.common.SourcedData;
 import com.rutarescue.model.user.LguProfile;
+import com.rutarescue.persistence.BundledCenterReader;
 import com.rutarescue.repository.Callback;
 import com.rutarescue.repository.CenterRepository;
 import com.rutarescue.repository.CenterSnapshot;
@@ -17,6 +19,7 @@ import com.rutarescue.util.GeoMath;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -30,22 +33,76 @@ public final class CenterService {
     /** "Nearby" means within 10 km of the resident (the legacy app used 5 km). */
     public static final double NEARBY_METERS = 10_000;
 
-    private final CenterRepository repository;
+    /** Shown on the "Evacuation centers" source chip when only the bundled list is available. */
+    public static final String BUNDLED_SOURCE = "PLM SSC list, 24 Jul 2024";
 
-    public CenterService(CenterRepository repository) {
+    private final CenterRepository repository;
+    /** The PLM SSC list bundled with the app (unverified), so residents always see centers. */
+    private final List<EvacuationCenter> bundled;
+
+    public CenterService(CenterRepository repository, List<EvacuationCenter> bundled) {
         this.repository = repository;
+        this.bundled = bundled == null ? new ArrayList<>() : new ArrayList<>(bundled);
     }
 
+    /**
+     * Residents' centers: the ones the LGU published plus the bundled PLM SSC list. If the server
+     * cannot answer, the bundled list is still shown (labelled "Prepared") instead of an error.
+     */
     public ListenerHandle listenPublished(Callback<SourcedData<List<EvacuationCenter>>> callback) {
-        return repository.listenPublished(callback);
+        return repository.listenPublished(new Callback<SourcedData<List<EvacuationCenter>>>() {
+            @Override
+            public void onSuccess(SourcedData<List<EvacuationCenter>> data) {
+                callback.onSuccess(new SourcedData<>(withBundled(data.getData(), bundled), data.getFreshness(),
+                        data.getRetrievedAt(), data.getSource()));
+            }
+
+            @Override
+            public void onError(Exception error) {
+                callback.onSuccess(new SourcedData<>(withBundled(new ArrayList<>(), bundled), DataFreshness.PREPARED,
+                        0, BUNDLED_SOURCE));
+            }
+        });
     }
 
     public ListenerHandle listenForManager(LguProfile lgu, Callback<SourcedData<List<EvacuationCenter>>> callback) {
         return repository.listenForCity(lgu.getJurisdiction(), callback);
     }
 
+    /** Bundled centers are found on the phone; the others are read from the server. */
     public void get(String id, Callback<EvacuationCenter> callback) {
+        for (EvacuationCenter center : bundled) {
+            if (center.getId().equals(id)) {
+                callback.onSuccess(center);
+                return;
+            }
+        }
         repository.get(id, callback);
+    }
+
+    /**
+     * LGU-published centers plus every bundled center the LGU has not published yet. A bundled
+     * center counts as published when an LGU center in the same city has the same name
+     * (ignoring capital letters and extra spaces), so the same place never shows twice.
+     */
+    public static List<EvacuationCenter> withBundled(List<EvacuationCenter> published, List<EvacuationCenter> bundled) {
+        List<EvacuationCenter> result = new ArrayList<>(published);
+        Set<String> publishedKeys = new HashSet<>();
+        for (EvacuationCenter center : published) publishedKeys.add(sameCenterKey(center));
+        for (EvacuationCenter center : bundled) {
+            if (!publishedKeys.contains(sameCenterKey(center))) result.add(center);
+        }
+        return result;
+    }
+
+    /** True for a center from the bundled PLM SSC list (not yet confirmed by the LGU). */
+    public static boolean isBundled(EvacuationCenter center) {
+        return center.getId() != null && center.getId().startsWith(BundledCenterReader.ID_PREFIX);
+    }
+
+    private static String sameCenterKey(EvacuationCenter center) {
+        String name = center.getName().strip().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+        return center.getCity().code() + "|" + name;
     }
 
     /** Follows one center for the capacity screen (with the "Pending sync" flag). */

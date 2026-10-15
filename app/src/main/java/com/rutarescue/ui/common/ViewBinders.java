@@ -33,7 +33,9 @@ public final class ViewBinders {
             meta.append(Formats.distance(CenterService.distance(center, origin))).append(" • ");
         }
         meta.append(center.getStatus().getLabel());
-        if (center.getVerification().isVerified()) {
+        if (CenterService.isBundled(center)) {
+            meta.append(" • PLM SSC list, not yet confirmed by LGU");
+        } else if (center.getVerification().isVerified()) {
             meta.append(" • LGU updated ").append(Formats.relative(center.getVerification().getVerifiedAt(),
                     System.currentTimeMillis()));
         } else {
