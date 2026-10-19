@@ -182,7 +182,34 @@ The PLM SSC post did not cover the second group, so their LGU accounts should pu
 | `app/src/main/java/com/rutarescue/ui/resident/route/SafeRouteFragment.java` | MODIFY | Locate uses `centerOn` at 16.5 (first fix at 15); instant re-centre; `movedSinceLocate` stops a late fix from pulling the map back. |
 | `app/src/main/java/com/rutarescue/ui/lgu/hazardmap/LguHazardMapFragment.java`, `res/layout/fragment_lgu_hazard_map.xml` | MODIFY | Same for the LGU map (`lgu_map_top` id on the header). |
 
-## 10. Checks
+## 10. "You" dot: drawn at once, on the handle's line, a little higher
+
+**Feedback.** The resident was "not in the middle" and "too low". The dot should sit on the same vertical line as the card's "–" handle, a bit above the middle.
+
+**Causes.**
+- When the location arrived before the map was ready, the Route tab centred on the middle of the *whole* map, which is half covered by the card. It also never drew the dot until Locate was pressed.
+- Guidance followed the resident the same whole-map way.
+
+**Fix.**
+- `centerOn` puts the point on the screen's centre line (under the "–" handle), two-fifths of the way down the visible map, instead of halfway (`YOU_FROM_TOP = 0.4`).
+- Opening the Route tab uses `centerOn` and draws the dot straight away.
+- Guidance follows the resident between the turn card and the time card.
+
+| File path | Action | Purpose |
+|---|---|---|
+| `app/src/main/java/com/rutarescue/ui/map/MapController.java` | MODIFY | `YOU_FROM_TOP` lift in `centerOn`. |
+| `app/src/main/java/com/rutarescue/ui/resident/route/SafeRouteFragment.java` | MODIFY | Map-ready draws the dot and uses `centerOn`; guidance uses `centerOn`. |
+
+**Checked on the emulator** (screen 1080 x 2400; dot x = 540 = the handle's line in every case):
+
+| State | Dot y | Target y (two-fifths down the visible map) |
+|---|---|---|
+| Opening the Route tab | 780 | 782 |
+| Locate, idle | 780 | 782 |
+| Locate, route open | 659 | 666 |
+| Locate, card slid down | 1160 | 1159 |
+
+## 11. Checks
 
 - **Unit tests:** 182 app unit tests pass (168 before; 5 new for the train map, 6 for nearest centers and 3 for the city fallback).
 - **Device check** (Pixel_7, test builds only; the release APK is not rebuilt):
@@ -208,3 +235,4 @@ The PLM SSC post did not cover the second group, so their LGU accounts should pu
 
   With a 25-second-old fix, the map moved within 1.5 s.
 - **Test-tool note:** taps sent right after a `uiautomator dump` were sometimes lost. Without dumps every tap reached the app, so device checks should use screenshots instead.
+- **Signed APK:** `apk/RutaRescue-1.2.apk` was rebuilt with the "you" dot fix (section 10). It keeps version 1.2 (versionCode 3) because the fix belongs to that release; its v2 signature verifies with the RutaRescue certificate.

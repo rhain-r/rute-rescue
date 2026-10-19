@@ -216,8 +216,10 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
             ready.setOnUserMove(this::onMapGesture);
             // Open on the resident: their location if it is already known (it can arrive before the
             // map is ready), otherwise their sign-up city.
+            // The location can arrive before the map is ready: draw the "you" dot now too.
+            if (origin != null) ready.showMarkers(origin, destination == null ? null : destination.getLocation(), null);
             if (pendingDestination == null && comparison == null) {
-                ready.moveTo(referencePoint(), origin != null ? 14 : 13);
+                ready.centerOn(referencePoint(), origin != null ? FIRST_FIX_ZOOM : 13, topControls, sheet);
             }
             updateStructureListener();
             if (pendingDestination != null) {
@@ -1180,7 +1182,8 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
                 Formats.distance(remaining), guidedRole.getLabel() + " route",
                 Formats.clock(System.currentTimeMillis() + secondsLeft * 1000)));
         map.showMarkers(position, guidedRoute.getCandidate().getPoints().get(guidedRoute.getCandidate().getPoints().size() - 1), null);
-        map.moveTo(position, 16);
+        // Follow the resident in the visible part of the map, between the turn card and the time card.
+        map.centerOn(position, 16, guideCard, sheet);
     }
 
     /** The arrow points right by default: left turns turn it round, straight on points it up. */

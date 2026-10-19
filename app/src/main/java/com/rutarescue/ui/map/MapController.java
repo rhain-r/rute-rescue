@@ -629,10 +629,15 @@ public final class MapController {
         if (map != null) map.animateCamera(CameraUpdateFactory.newLatLngZoom(toLatLng(point), zoom));
     }
 
+    /** Where "you" sit in the visible map: two-fifths of the way down, a little above its middle. */
+    private static final double YOU_FROM_TOP = 0.4;
+
     /**
-     * Puts the point in the middle of the part of the map the resident can actually see: below the
-     * controls on top (topCover) and above the card at the bottom (bottomCover, wherever it is now,
-     * even slid down). Zooms in to at least minZoom, but never zooms out if already closer.
+     * Puts the point in the part of the map the resident can actually see: below the controls on
+     * top (topCover) and above the card at the bottom (bottomCover, wherever it is now, even slid
+     * down). It lands on the screen's centre line (under the card's "–" handle), two-fifths of the
+     * way down that visible part, so it never looks pushed against the card. Zooms in to at least
+     * minZoom, but never zooms out if already closer.
      */
     public void centerOn(GeoPoint point, double minZoom, View topCover, View bottomCover) {
         if (map == null) return;
@@ -650,9 +655,13 @@ public final class MapController {
             bottomCover.getLocationInWindow(at); // includes the card's slide (translation)
             bottom = Math.max(0, mapAt[1] + mapView.getHeight() - at[1]);
         }
+        // The camera centres the point inside the padded area; extra bottom padding lifts it from
+        // the middle of the visible band (0.5) to YOU_FROM_TOP of the way down.
+        int visible = Math.max(0, mapView.getHeight() - top - bottom);
+        int lift = (int) Math.round(visible * (1 - 2 * YOU_FROM_TOP));
         double zoom = Math.max(minZoom, map.getCameraPosition().zoom);
         map.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
-                .target(toLatLng(point)).zoom(zoom).padding(0, top, 0, bottom).build()), 600);
+                .target(toLatLng(point)).zoom(zoom).padding(0, top, 0, bottom + lift).build()), 600);
     }
 
     public void fitTo(List<GeoPoint> points, int paddingPx) {
