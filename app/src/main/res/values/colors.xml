@@ -42,6 +42,7 @@
     <!-- Not in the Figma palette: used only for "unverified bridge" route segments and badges. -->
     <color name="rr_violet">#7C5CC4</color>
     <color name="rr_violet_soft">#EFEAFB</color>
+    <color name="rr_navy_soft">#E6EEF6</color>       <!-- soft tile behind the navy train icon -->
 
     <!-- Official NOAH legend (DOCX section 7) -->
     <color name="hazard_low">#F5C842</color>

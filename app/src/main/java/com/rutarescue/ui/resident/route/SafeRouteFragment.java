@@ -1,6 +1,7 @@
 package com.rutarescue.ui.resident.route;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.location.LocationListener;
@@ -10,7 +11,9 @@ import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -20,6 +23,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.ColorRes;
@@ -103,11 +107,38 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
     /** Share of the screen the sheet may use while routes are compared (nav bar hidden). */
     private static final float RESULT_SHEET_SHARE = 0.60f;
     private static final float DEFAULT_SHEET_SHARE = 0.55f;
+    /** Evacuation centers listed in the search screen before the resident types. */
+    private static final int NEAREST_LIMIT = 10;
+    /** Matching evacuation centers listed while typing (online places are added after them). */
+    private static final int MATCH_LIMIT = 20;
+    private static final long SHEET_SLIDE_MS = 220;
+    /** Zoom after pressing Locate: street level, with nearby street names readable. */
+    private static final double LOCATE_ZOOM = 16.5;
+    /** Zoom when the first location fix arrives and no route is shown. */
+    private static final double FIRST_FIX_ZOOM = 15;
 
     private MapController map;
     private MaxHeightScrollView sheet; // the floating Figma sheet card (scrolls inside when long)
     private EditText searchInput;
-    private View resultsCard;
+    private View searchPanel; // full-screen search over the map
+    private TextView searchHeader, searchEmpty;
+    private View locateButton;
+    private boolean searchMode;
+    private boolean sheetCollapsed; // route card slid down so the map gets the screen
+    /** The resident zoomed or panned since the routes were drawn: keep their view of the map. */
+    private boolean mapMovedByUser;
+    /** The resident moved the map after pressing Locate: a late GPS fix must not pull it back. */
+    private boolean movedSinceLocate;
+    /**
+     * System Back steps back inside the Route tab, like the on-screen back arrow: search screen ->
+     * map, route -> "Choose a destination". Enabled only while there is such a step to take.
+     */
+    private final OnBackPressedCallback routeBack = new OnBackPressedCallback(false) {
+        @Override
+        public void handleOnBackPressed() {
+            stepBack();
+        }
+    };
     private View topControls, guideCard, modeRow;
     private TextView floodTag, toast;
     private SimpleListAdapter<Locatable> resultsAdapter;
@@ -162,7 +193,11 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
         stateResult = view.findViewById(R.id.route_state_result);
         stateGuidance = view.findViewById(R.id.route_state_guidance);
         searchInput = view.findViewById(R.id.route_search);
-        resultsCard = view.findViewById(R.id.route_results_card);
+        searchPanel = view.findViewById(R.id.route_search_panel);
+        searchHeader = view.findViewById(R.id.route_search_header);
+        searchEmpty = view.findViewById(R.id.route_search_empty);
+        locateButton = view.findViewById(R.id.route_locate);
+        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), routeBack);
         topControls = view.findViewById(R.id.route_top);
         guideCard = view.findViewById(R.id.route_guide_card);
         modeRow = view.findViewById(R.id.route_mode_row);
@@ -178,7 +213,12 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
         map.onCreate(state, ready -> {
             ready.applyLayers(layers, container().hazards, container().executors);
             ready.showCenters(centers);
-            ready.setOnMapClick(point -> hideResults());
+            ready.setOnUserMove(this::onMapGesture);
+            // Open on the resident: their location if it is already known (it can arrive before the
+            // map is ready), otherwise their sign-up city.
+            if (pendingDestination == null && comparison == null) {
+                ready.moveTo(referencePoint(), origin != null ? 14 : 13);
+            }
             updateStructureListener();
             if (pendingDestination != null) {
                 Locatable target = pendingDestination;
@@ -193,6 +233,7 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
         setUpModes(view);
         setUpButtons(view);
         setUpLists(view);
+        setUpSheetDrag(view);
 
         track(container().centers().listenPublished(ui(this::onCenters)));
         UserProfile profile = profile();
@@ -212,15 +253,23 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
                     place instanceof EvacuationCenter ? R.drawable.ic_center : R.drawable.ic_pin);
             ((TextView) row.findViewById(R.id.row_title)).setText(place.getDisplayName());
             ((TextView) row.findViewById(R.id.row_subtitle)).setText(place instanceof EvacuationCenter
-                    ? "Evacuation center • " + place.getSubtitle() : place.getSubtitle());
+                    ? CenterService.summary((EvacuationCenter) place, origin) : place.getSubtitle());
             row.setOnClickListener(v -> setDestination(place));
         });
         results.setAdapter(resultsAdapter);
 
         View clear = view.findViewById(R.id.route_search_clear);
         clear.setOnClickListener(v -> {
+            if (!searchMode && destination != null) {
+                clearRoute(); // the X next to a destination removes it: back to "Choose a destination"
+                return;
+            }
             searchInput.setText("");
-            hideResults();
+            if (searchMode) showNearestCenters();
+        });
+        // Tapping the search box opens the full-screen search (the map is covered while typing).
+        searchInput.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) enterSearchMode();
         });
         searchInput.addTextChangedListener(new TextWatcher() {
             @Override
@@ -236,6 +285,10 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
                 clear.setVisibility(text.length() > 0 ? View.VISIBLE : View.GONE);
                 if (pendingSearch != null) handler.removeCallbacks(pendingSearch);
                 if (!searchInput.hasFocus()) return;
+                if (text.toString().strip().length() < 2) {
+                    showNearestCenters(); // nothing to search yet: back to the nearest centers
+                    return;
+                }
                 pendingSearch = () -> search(text.toString(), false);
                 handler.postDelayed(pendingSearch, SEARCH_DEBOUNCE_MS);
             }
@@ -283,8 +336,11 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
 
     private void setUpButtons(View view) {
         // Figma "Back": Safe Route is a tab, so Back returns to Home.
-        view.findViewById(R.id.route_back).setOnClickListener(v -> ((MainShellActivity) requireActivity()).selectTab(0));
-        view.findViewById(R.id.route_locate).setOnClickListener(v -> locate(true));
+        // Back arrow: one step back inside the Route tab; Home only from "Choose a destination".
+        view.findViewById(R.id.route_back).setOnClickListener(v -> {
+            if (!stepBack()) ((MainShellActivity) requireActivity()).selectTab(0);
+        });
+        locateButton.setOnClickListener(v -> locate(true));
         view.findViewById(R.id.route_layers).setOnClickListener(v -> openLayers());
         floodTag.setOnClickListener(v -> openLayers());
         // Long-press: the flood tag names a prepared NOAH scenario, not today's weather.
@@ -319,9 +375,9 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
         destination = target;
         // Drop focus first and cancel a queued search, or the text change re-opens the results.
         if (pendingSearch != null) handler.removeCallbacks(pendingSearch);
+        exitSearchMode();
         searchInput.clearFocus();
         searchInput.setText(target.getDisplayName());
-        hideResults();
         hideKeyboard();
         requestRoutes();
     }
@@ -331,6 +387,14 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
         searchInput.requestFocus();
         InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.showSoftInput(searchInput, InputMethodManager.SHOW_IMPLICIT);
+    }
+
+    /** Leaving the tab closes the search screen and hands Back to the other tabs. */
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (hidden) exitSearchMode();
+        updateBackHandling();
     }
 
     /** The shell shows the navigation bar on every tab change; hide it again if routes are open. */
@@ -404,18 +468,32 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
 
     private void onCenters(SourcedData<List<EvacuationCenter>> data) {
         centers = data.getData();
+        if (searchMode && Dialogs.text(searchInput).strip().length() < 2) showNearestCenters();
         if (map.isReady()) map.showCenters(centers);
-        LinearLayout list = requireView().findViewById(R.id.route_center_list);
+        bindNearbyCenters();
+    }
+
+    /**
+     * "Nearby centers" on the Choose a destination card: the four closest to the resident. It is
+     * rebuilt whenever the centers OR the location arrive (whichever comes last), so it is never
+     * left in alphabetical order. Without a location it lists the centers closest to the resident's
+     * sign-up city hall (any of the 17 cities), and the heading says so.
+     */
+    private void bindNearbyCenters() {
+        View view = getView();
+        if (view == null) return;
+        GeoPoint from = referencePoint();
+        ((TextView) view.findViewById(R.id.route_nearby_title)).setText(nearbyHeading(R.string.nearby_centers));
+        LinearLayout list = view.findViewById(R.id.route_center_list);
         list.removeAllViews();
-        List<EvacuationCenter> nearby = CenterService.filter(centers, "", false, false, false, origin);
+        List<EvacuationCenter> nearby = CenterService.filter(centers, "", false, false, false, from);
         LayoutInflater inflater = LayoutInflater.from(requireContext());
         for (int i = 0; i < Math.min(4, nearby.size()); i++) {
             EvacuationCenter center = nearby.get(i);
             View row = inflater.inflate(R.layout.item_simple_row, list, false);
             ((ImageView) row.findViewById(R.id.row_icon)).setImageResource(R.drawable.ic_center);
             ((TextView) row.findViewById(R.id.row_title)).setText(center.getName());
-            ((TextView) row.findViewById(R.id.row_subtitle)).setText((origin == null ? ""
-                    : Formats.distance(CenterService.distance(center, origin)) + " • ") + center.getStatus().getLabel());
+            ((TextView) row.findViewById(R.id.row_subtitle)).setText(CenterService.summary(center, origin));
             row.setOnClickListener(v -> setDestination(center));
             list.addView(row);
         }
@@ -479,12 +557,13 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
     private void search(String query, boolean submitted) {
         String text = query == null ? "" : query.strip();
         if (text.length() < 2) {
-            hideResults();
+            showNearestCenters();
             return;
         }
-        // Local matches work offline: published evacuation centers.
+        // Local matches work offline: published and bundled evacuation centers, nearest first.
         List<Locatable> matches = new ArrayList<>(CenterService.filter(centers, text, false, false, false, origin));
-        if (matches.size() > 4) matches = new ArrayList<>(matches.subList(0, 4));
+        if (matches.size() > MATCH_LIMIT) matches = new ArrayList<>(matches.subList(0, MATCH_LIMIT));
+        searchHeader.setText(R.string.search_matches);
         showResults(matches);
         if (!submitted && !container().routes().allowsSearchAsYouType()) return;
         final List<Locatable> local = matches;
@@ -499,11 +578,195 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
 
     private void showResults(List<Locatable> places) {
         resultsAdapter.submit(places);
-        resultsCard.setVisibility(places.isEmpty() ? View.GONE : View.VISIBLE);
+        searchEmpty.setVisibility(places.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
-    private void hideResults() {
-        if (resultsCard != null) resultsCard.setVisibility(View.GONE);
+    /** Search screen before typing: the closest evacuation centers (to the sign-up city without a location). */
+    private void showNearestCenters() {
+        if (!searchMode) return;
+        List<Locatable> nearest = new ArrayList<>(CenterService.filter(centers, "", false, false, false, referencePoint()));
+        if (nearest.size() > NEAREST_LIMIT) nearest = new ArrayList<>(nearest.subList(0, NEAREST_LIMIT));
+        searchHeader.setText(nearbyHeading(R.string.nearest_centers));
+        showResults(nearest);
+    }
+
+    /**
+     * Where "nearby" is measured from: the phone's location when known; otherwise the city hall of
+     * the city the resident signed up with (so a Mandaluyong resident sees Mandaluyong centers, not
+     * Manila ones); otherwise the map centre.
+     */
+    private GeoPoint referencePoint() {
+        if (origin != null) return origin;
+        UserProfile profile = profile();
+        if (profile != null && profile.getCity() != null) return profile.getCity().getHallLocation();
+        return map != null && map.isReady() ? map.cameraCenter() : MapController.METRO_MANILA_CENTER;
+    }
+
+    /** "Nearby centers" with a location; "Centers in and near Mandaluyong" without one. */
+    private String nearbyHeading(int withLocation) {
+        if (origin != null) return getString(withLocation);
+        UserProfile profile = profile();
+        return profile != null && profile.getCity() != null
+                ? getString(R.string.centers_in_city, profile.getCity().getDisplayName())
+                : getString(R.string.centers_near_map);
+    }
+
+    /**
+     * Full-screen search: covers the map (and hides the travel pills, flood tag, Locate button
+     * and route card) so nothing overlaps while the resident types.
+     */
+    private void enterSearchMode() {
+        if (searchMode || guiding) return;
+        searchMode = true;
+        updateBackHandling();
+        // Start the list just below the search row (where the travel pills were).
+        searchPanel.setPadding(searchPanel.getPaddingLeft(), topControls.getTop() + modeRow.getTop(),
+                searchPanel.getPaddingRight(), 0);
+        modeRow.setVisibility(View.GONE);
+        locateButton.setVisibility(View.GONE);
+        sheet.setVisibility(View.GONE);
+        searchPanel.setVisibility(View.VISIBLE);
+        String text = Dialogs.text(searchInput).strip();
+        if (text.length() >= 2 && (destination == null || !text.equals(destination.getDisplayName()))) {
+            search(text, false);
+        } else {
+            showNearestCenters();
+            // The box still shows the current destination: select it so typing replaces it.
+            if (!text.isEmpty()) searchInput.post(searchInput::selectAll);
+        }
+    }
+
+    /**
+     * One step back inside the Route tab: the search screen closes, or a shown route goes back to
+     * "Choose a destination". Returns false when there is no step left (the caller goes Home).
+     * During guidance the route stays; "End" stops guidance.
+     */
+    private boolean stepBack() {
+        if (searchMode) {
+            exitSearchMode();
+            return true;
+        }
+        if (destination != null && !guiding) {
+            clearRoute();
+            return true;
+        }
+        return false;
+    }
+
+    /** System Back is ours only while this tab is shown and has a step to go back. */
+    private void updateBackHandling() {
+        routeBack.setEnabled(!isHidden() && (searchMode || (destination != null && !guiding)));
+    }
+
+    /** Back to the map: the search screen closes and the map controls return. */
+    private void exitSearchMode() {
+        if (!searchMode) return;
+        searchMode = false;
+        updateBackHandling();
+        if (pendingSearch != null) handler.removeCallbacks(pendingSearch);
+        searchPanel.setVisibility(View.GONE);
+        modeRow.setVisibility(View.VISIBLE);
+        locateButton.setVisibility(View.VISIBLE);
+        sheet.setVisibility(View.VISIBLE);
+        searchInput.clearFocus();
+        hideKeyboard();
+        if (destination != null && !Dialogs.text(searchInput).equals(destination.getDisplayName())) {
+            searchInput.setText(destination.getDisplayName());
+        }
+    }
+
+    // ------------------------------------------------------------------ sliding route card
+
+    /**
+     * With routes shown, the card can slide down (drag its handle or title down, or tap the handle)
+     * until only the "–" handle is left, so the map gets the screen; dragging the handle up or
+     * tapping it brings the routes back.
+     * Works for every destination, because every evacuation center opens this same result card.
+     */
+    @SuppressLint("ClickableViewAccessibility") // the handle and title also have click listeners
+    private void setUpSheetDrag(View view) {
+        int touchSlop = ViewConfiguration.get(requireContext()).getScaledTouchSlop();
+        View.OnTouchListener drag = new View.OnTouchListener() {
+            private float downY;
+            private float startTranslation;
+            private boolean dragging;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (stateResult.getVisibility() != View.VISIBLE) return false;
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        downY = event.getRawY();
+                        startTranslation = sheet.getTranslationY();
+                        dragging = false;
+                        sheet.animate().cancel();
+                        v.getParent().requestDisallowInterceptTouchEvent(true); // drag the card, not its list
+                        return true;
+                    case MotionEvent.ACTION_MOVE:
+                        float dy = event.getRawY() - downY;
+                        if (!dragging && Math.abs(dy) < touchSlop) return true;
+                        if (!dragging && !sheetCollapsed) sheet.scrollTo(0, 0);
+                        dragging = true;
+                        sheet.setTranslationY(Math.max(0f, Math.min(collapsedOffset(), startTranslation + dy)));
+                        return true;
+                    case MotionEvent.ACTION_UP:
+                        if (dragging) setSheetCollapsed(event.getRawY() > downY); // settle where the finger went
+                        else v.performClick();
+                        return true;
+                    case MotionEvent.ACTION_CANCEL:
+                        setSheetCollapsed(sheetCollapsed);
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        };
+        View handle = view.findViewById(R.id.route_sheet_handle);
+        handle.setOnTouchListener(drag);
+        handle.setOnClickListener(v -> setSheetCollapsed(!sheetCollapsed));
+        for (int id : new int[]{R.id.route_title, R.id.route_caption}) {
+            View header = view.findViewById(id);
+            header.setOnTouchListener(drag);
+            header.setOnClickListener(v -> {
+                if (sheetCollapsed) setSheetCollapsed(false);
+            });
+        }
+    }
+
+    /**
+     * How far the card slides down: everything except the "–" handle, which stays just above the
+     * bottom edge to show the routes can be pulled back up. Measured to the bottom of the screen
+     * (not of the card), so no part of the title or route cards peeks out below the handle.
+     */
+    private float collapsedOffset() {
+        View handle = requireView().findViewById(R.id.route_sheet_handle);
+        View parent = (View) sheet.getParent();
+        int peek = sheet.getChildAt(0).getTop() + handle.getBottom(); // card top to handle bottom
+        return Math.max(0, parent.getHeight() - sheet.getTop() - peek);
+    }
+
+    private void setSheetCollapsed(boolean collapsed) {
+        sheetCollapsed = collapsed && stateResult.getVisibility() == View.VISIBLE;
+        if (sheetCollapsed) sheet.scrollTo(0, 0);
+        sheet.animate().translationY(sheetCollapsed ? collapsedOffset() : 0f).setDuration(SHEET_SLIDE_MS)
+                .withEndAction(() -> {
+                    // Re-frame the routes for the new space, unless the resident is looking
+                    // somewhere on purpose (then the map stays exactly where they put it).
+                    if (!mapMovedByUser) fitRoutesToMap();
+                }).start();
+    }
+
+    /**
+     * Zooming or panning the map while the routes are shown slides the card down to its handle,
+     * so the map is free to explore. The card only comes back when the resident pulls or taps the
+     * handle; nothing else moves it up or down.
+     */
+    private void onMapGesture() {
+        mapMovedByUser = true;
+        movedSinceLocate = true;
+        if (!searchMode && !sheetCollapsed && stateResult.getVisibility() == View.VISIBLE) {
+            setSheetCollapsed(true);
+        }
     }
 
     // ------------------------------------------------------------------ location
@@ -519,11 +782,20 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
             }
             return;
         }
+        if (recenter) {
+            movedSinceLocate = false;
+            // Respond at once from the last known position; a fresh GPS fix can take a few seconds.
+            if (origin != null && map.isReady()) map.centerOn(origin, LOCATE_ZOOM, topControls, sheet);
+        }
         container().location.getCurrent(UiCallback.of(this, point -> {
             origin = point;
+            bindNearbyCenters(); // the list may have been built before the location was known
+            if (searchMode && Dialogs.text(searchInput).strip().length() < 2) showNearestCenters();
             if (map.isReady()) {
                 map.showMarkers(origin, destination == null ? null : destination.getLocation(), null);
-                if (recenter || comparison == null) map.moveTo(origin, 14);
+                // Locate button: the resident in the middle of the visible map, zoomed in closer.
+                if (recenter && !movedSinceLocate) map.centerOn(origin, LOCATE_ZOOM, topControls, sheet);
+                else if (comparison == null) map.centerOn(origin, FIRST_FIX_ZOOM, topControls, sheet);
             }
         }, error -> {
             if (recenter) showMessage(UiMessages.describe(error));
@@ -570,19 +842,25 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
         }
         map.showRoutes(ranked, selectedIndex, colors, pills);
         map.showMarkers(comparison.getOrigin(), comparison.getDestination(), null);
-        // Frame the route in the visible map: below the top controls, left of the map buttons,
-        // above the floating sheet. Posted so the sheet already has its final height.
-        sheet.post(() -> {
-            View root = getView();
-            if (root == null || comparison == null || map == null || !map.isReady()) return;
-            float density = getResources().getDisplayMetrics().density;
-            int pad = (int) (16 * density);
-            int top = topControls.getTop() + modeRow.getBottom() + pad;
-            int bottom = root.getHeight() - sheet.getTop() + pad;
-            List<GeoPoint> all = new ArrayList<>();
-            for (RouteAssessment route : comparison.getRanked()) all.addAll(route.getCandidate().getPoints());
-            map.fitTo(all, pad, top, (int) (64 * density), bottom);
-        });
+        mapMovedByUser = false;
+        // Posted so the sheet already has its final height.
+        sheet.post(this::fitRoutesToMap);
+    }
+
+    /**
+     * Frames the routes in the visible map: below the top controls, left of the map buttons and
+     * above the route card (where it is now, so a slid-down card gives the map more room).
+     */
+    private void fitRoutesToMap() {
+        View root = getView();
+        if (root == null || comparison == null || map == null || !map.isReady() || guiding) return;
+        float density = getResources().getDisplayMetrics().density;
+        int pad = (int) (16 * density);
+        int top = topControls.getTop() + modeRow.getBottom() + pad;
+        int bottom = root.getHeight() - (sheet.getTop() + Math.round(sheet.getTranslationY())) + pad;
+        List<GeoPoint> all = new ArrayList<>();
+        for (RouteAssessment route : comparison.getRanked()) all.addAll(route.getCandidate().getPoints());
+        map.fitTo(all, pad, top, (int) (64 * density), bottom);
     }
 
     private RouteRole roleAt(int index) {
@@ -978,6 +1256,11 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
         for (View state : new View[]{stateIdle, stateLoading, stateError, stateResult, stateGuidance}) {
             state.setVisibility(state == visible ? View.VISIBLE : View.GONE);
         }
+        // Every new state starts with the route card fully shown.
+        sheet.animate().cancel();
+        sheet.setTranslationY(0f);
+        sheetCollapsed = false;
+        updateBackHandling();
         boolean guidance = visible == stateGuidance;
         topControls.setVisibility(guidance ? View.GONE : View.VISIBLE);
         guideCard.setVisibility(guidance ? View.VISIBLE : View.GONE);

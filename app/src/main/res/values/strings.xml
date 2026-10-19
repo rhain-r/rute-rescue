@@ -273,6 +273,8 @@
     <string name="legend_medium">Medium</string>
     <string name="legend_high">High (over 1.5 m)</string>
     <string name="sheet_layer_centers">Evacuation centers</string>
+    <string name="sheet_layer_transit">Train lines (LRT, MRT)</string>
+    <string name="layer_transit_caption">LRT-1, LRT-2, MRT-3 and their stations</string>
     <string name="layer_centers_caption">LGU-verified only</string>
     <string name="sheet_layer_structures">Bridges and tunnels</string>
     <string name="layer_structures_caption">Purple means not yet verified</string>
@@ -336,4 +338,15 @@
     <string name="tip_advisories_body">Your LGU posts these for what is happening now: rain and typhoon warnings, alert levels and evacuation calls. Check the time on each one. The coloured risk zones on the map are different: prepared Project NOAH flood maps that do not change with the weather.</string>
     <string name="cd_about_risk_zones">About risk zones</string>
     <string name="cd_about_advisories">About LGU advisories</string>
+
+    <!-- Safe Route: full-screen search and the sliding route card -->
+    <string name="nearest_centers">Nearest evacuation centers</string>
+    <string name="all_centers">Evacuation centers</string>
+    <string name="centers_near_map">Centers near the map centre</string>
+    <string name="centers_in_city">Centers in and near %1$s</string>
+    <string name="finding_nearest_center">Finding the evacuation center nearest to you…</string>
+    <string name="nearest_needs_location">Turn on location to see the evacuation center nearest to you.</string>
+    <string name="search_matches">Matching places</string>
+    <string name="search_no_match">No matching evacuation center. Press Search on the keyboard to look up any place.</string>
+    <string name="cd_sheet_handle">Show or hide the route list</string>
 </resources>

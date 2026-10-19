@@ -23,6 +23,7 @@ public class MapLayerSettingsTest {
         assertTrue(settings.isCentersVisible());
         assertTrue(settings.isStructuresVisible());
         assertFalse(settings.isTrafficVisible());
+        assertFalse("Train lines start off so the map stays clean", settings.isTransitVisible());
     }
 
     @Test
@@ -51,6 +52,21 @@ public class MapLayerSettingsTest {
         assertTrue(loaded.isFloodVisible(FloodScenario.TWENTY_FIVE_YEAR));
         assertFalse(loaded.isCentersVisible());
         assertTrue(loaded.isTrafficVisible());
+    }
+
+    @Test
+    public void trainLinesSurviveSavingAndLoading() {
+        MapLayerSettings settings = MapLayerSettings.defaults();
+        settings.setTransitVisible(true);
+        assertTrue(MapLayerSettings.decode(settings.encode()).isTransitVisible());
+    }
+
+    @Test
+    public void choicesSavedBeforeTrainLinesExistedStillLoad() {
+        MapLayerSettings old = MapLayerSettings.decode("base=SATELLITE;floods=FIVE_YEAR;centers=1;structures=0;traffic=1");
+        assertEquals(BaseMap.SATELLITE, old.getBaseMap());
+        assertFalse(old.isStructuresVisible());
+        assertFalse(old.isTransitVisible());
     }
 
     @Test

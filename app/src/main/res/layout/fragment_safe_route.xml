@@ -21,6 +21,48 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!--
+        Full-screen search: covers the map while the search box is in use, so nothing overlaps
+        the travel pills or the flood tag. Lists the nearest evacuation centers until the
+        resident types, then the matches. Its top padding (below the search row) is set in code.
+    -->
+    <LinearLayout
+        android:id="@+id/route_search_panel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/rr_background"
+        android:clickable="true"
+        android:focusable="false"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/route_search_header"
+            style="@style/RR.GroupLabel"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:text="@string/nearest_centers" />
+
+        <TextView
+            android:id="@+id/route_search_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/search_no_match"
+            android:textAppearance="@style/TextAppearance.RR.Body"
+            android:textColor="@color/rr_text_secondary"
+            android:visibility="gone" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/route_results"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="@dimen/bottom_nav_space" />
+    </LinearLayout>
+
     <!-- Top controls ("Screen Content" origin: 12 dp from the status bar) -->
     <LinearLayout
         android:id="@+id/route_top"
@@ -102,22 +144,6 @@
                 android:contentDescription="@string/cd_route_layers"
                 android:src="@drawable/ic_layers_two" />
         </LinearLayout>
-
-        <!-- Destination search results -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/route_results_card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_marginTop="8dp"
-            android:visibility="gone">
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/route_results"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:maxHeight="320dp" />
-        </com.google.android.material.card.MaterialCardView>
 
         <!-- "Travel Modes" + flood tag (Phase 1: icon pills; the chosen one shows its label) -->
         <LinearLayout
@@ -306,13 +332,23 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- "Sheet Handle": 44 x 4 dp -->
-            <View
-                android:layout_width="44dp"
-                android:layout_height="4dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="10dp"
-                android:background="@drawable/bg_drag_handle" />
+            <!-- "Sheet Handle": 44 x 4 dp in a 32 dp touch strip. With routes shown, drag it (or
+                 the title) down and the card slides away until only this handle is left; drag it
+                 up or tap it to bring the routes back. -->
+            <FrameLayout
+                android:id="@+id/route_sheet_handle"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:layout_marginTop="-10dp"
+                android:contentDescription="@string/cd_sheet_handle"
+                android:focusable="true">
+
+                <View
+                    android:layout_width="44dp"
+                    android:layout_height="4dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_drag_handle" />
+            </FrameLayout>
 
             <!-- Idle: choose a destination -->
             <LinearLayout
@@ -348,6 +384,7 @@
                     app:chipSpacingHorizontal="8dp" />
 
                 <TextView
+                    android:id="@+id/route_nearby_title"
                     style="@style/RR.SectionHeader"
                     android:text="@string/nearby_centers" />
 

@@ -3,11 +3,13 @@ package com.rutarescue.ui.map;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.View;
 
 import androidx.core.content.res.ResourcesCompat;
 
@@ -26,7 +28,9 @@ import com.rutarescue.model.structure.StructureStatus;
 import com.rutarescue.repository.HazardRepository;
 import com.rutarescue.util.AppExecutors;
 import com.rutarescue.util.GeoMath;
+import com.rutarescue.util.SafeLog;
 
+import org.maplibre.android.camera.CameraPosition;
 import org.maplibre.android.camera.CameraUpdateFactory;
 import org.maplibre.android.geometry.LatLng;
 import org.maplibre.android.geometry.LatLngBounds;
@@ -48,7 +52,12 @@ import org.maplibre.geojson.FeatureCollection;
 import org.maplibre.geojson.LineString;
 import org.maplibre.geojson.Point;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -84,6 +93,11 @@ public final class MapController {
     private static final String SRC_CENTERS = "rr-centers";
     private static final String SRC_MARKERS = "rr-markers";
     private static final String SRC_ROUTE_LABELS = "rr-route-labels";
+    private static final String SRC_TRANSIT = "rr-transit";
+    /** Bundled LRT/MRT lines and stations (OpenStreetMap, see data/sources/osm-rail-2026-10-19). */
+    private static final String TRANSIT_ASSET = "transit/metro_manila_rail.geojson";
+    private static final String[] TRANSIT_LAYERS = {"rr-transit-casing", "rr-transit-lines", "rr-transit-stations",
+            "rr-transit-labels"};
 
     /** Drawn first to last, so the smaller, more frequent flood sits on top. */
     private static final FloodScenario[] FLOOD_DRAW_ORDER = {
@@ -100,6 +114,10 @@ public final class MapController {
     private boolean floodsShown = true;
     private PointListener clickListener;
     private PointListener longClickListener;
+    /** Runs when the resident starts zooming or panning (not when the app moves the camera). */
+    private Runnable userMoveListener;
+    /** The train map was read (or is being read) from the app's assets. */
+    private boolean transitRequested;
 
     public MapController(MapView mapView, String tomTomKey) {
         this.mapView = mapView;
@@ -125,6 +143,13 @@ public final class MapController {
                     if (longClickListener != null) longClickListener.onPoint(toGeo(latLng));
                     return longClickListener != null;
                 });
+                map.addOnCameraMoveStartedListener(reason -> {
+                    // Only finger gestures (pinch, double-tap, drag), never the app's own camera moves.
+                    if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE
+                            && userMoveListener != null) {
+                        userMoveListener.run();
+                    }
+                });
                 ready.onReady(this);
             });
         });
@@ -143,6 +168,37 @@ public final class MapController {
                                 PropertyFactory.visibility(Property.NONE)));
             }
         }
+
+        // Train lines for commuters: white casing + line colour, station dots, then station names.
+        style.addSource(new GeoJsonSource(SRC_TRANSIT, FeatureCollection.fromFeatures(new ArrayList<>())));
+        Expression isLine = Expression.eq(Expression.get("kind"), Expression.literal("line"));
+        Expression isStation = Expression.eq(Expression.get("kind"), Expression.literal("station"));
+        style.addLayer(new LineLayer("rr-transit-casing", SRC_TRANSIT).withFilter(isLine).withProperties(
+                PropertyFactory.lineColor("#FFFFFF"),
+                PropertyFactory.lineWidth(Expression.interpolate(Expression.linear(), Expression.zoom(),
+                        Expression.stop(10, 4f), Expression.stop(15, 10f))),
+                PropertyFactory.lineCap(Property.LINE_CAP_ROUND), PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
+                PropertyFactory.visibility(Property.NONE)));
+        style.addLayer(new LineLayer("rr-transit-lines", SRC_TRANSIT).withFilter(isLine).withProperties(
+                PropertyFactory.lineColor(Expression.toColor(Expression.get("colour"))),
+                PropertyFactory.lineWidth(Expression.interpolate(Expression.linear(), Expression.zoom(),
+                        Expression.stop(10, 2.5f), Expression.stop(15, 6f))),
+                PropertyFactory.lineCap(Property.LINE_CAP_ROUND), PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
+                PropertyFactory.visibility(Property.NONE)));
+        style.addLayer(new CircleLayer("rr-transit-stations", SRC_TRANSIT).withFilter(isStation).withProperties(
+                PropertyFactory.circleColor("#FFFFFF"),
+                PropertyFactory.circleRadius(Expression.interpolate(Expression.linear(), Expression.zoom(),
+                        Expression.stop(10, 2.5f), Expression.stop(15, 6f))),
+                PropertyFactory.circleStrokeColor(Expression.toColor(Expression.get("colour"))),
+                PropertyFactory.circleStrokeWidth(2.5f),
+                PropertyFactory.visibility(Property.NONE)));
+        // Station names from street-ish zoom; a name that would overlap another is hidden.
+        SymbolLayer stationNames = new SymbolLayer("rr-transit-labels", SRC_TRANSIT).withFilter(isStation).withProperties(
+                PropertyFactory.iconImage(Expression.get("label")), PropertyFactory.iconAnchor(Property.ICON_ANCHOR_LEFT),
+                PropertyFactory.iconOffset(new Float[]{8f, 0f}), PropertyFactory.iconAllowOverlap(false),
+                PropertyFactory.visibility(Property.NONE));
+        stationNames.setMinZoom(13f);
+        style.addLayer(stationNames);
 
         style.addSource(new GeoJsonSource(SRC_STRUCTURES, FeatureCollection.fromFeatures(new ArrayList<>())));
         // Thin and faint at city zoom (5,000+ bridges), clearer when zoomed in to street level.
@@ -301,6 +357,85 @@ public final class MapController {
         setCentersVisible(settings.isCentersVisible());
         setStructuresVisible(settings.isStructuresVisible());
         setTrafficVisible(settings.isTrafficVisible());
+        setTransitVisible(settings.isTransitVisible(), executors);
+    }
+
+    /**
+     * Shows or hides the train lines. The bundled map (about 26 KB) is read once, off the UI
+     * thread, the first time the switch is turned on; station names are drawn as small images
+     * because the offline map style has no fonts.
+     */
+    public void setTransitVisible(boolean visible, AppExecutors executors) {
+        for (String layer : TRANSIT_LAYERS) setVisible(layer, visible);
+        if (!visible || transitRequested || !isReady()) return;
+        transitRequested = true;
+        Context context = mapView.getContext();
+        executors.io().execute(() -> {
+            try (InputStream in = context.getAssets().open(TRANSIT_ASSET)) {
+                FeatureCollection rail = FeatureCollection.fromJson(new String(readAll(in), StandardCharsets.UTF_8));
+                HashMap<String, Bitmap> labels = new HashMap<>();
+                List<Feature> features = rail.features() == null ? new ArrayList<>() : rail.features();
+                for (Feature feature : features) {
+                    if (!"station".equals(feature.getStringProperty("kind"))) continue;
+                    String name = feature.getStringProperty("name");
+                    String id = "rr-station-" + feature.getStringProperty("line") + "-" + name;
+                    feature.addStringProperty("label", id);
+                    labels.put(id, stationLabel(context, name, feature.getStringProperty("colour")));
+                }
+                executors.main().execute(() -> {
+                    if (!isReady()) return;
+                    style.addImages(labels);
+                    GeoJsonSource source = style.getSourceAs(SRC_TRANSIT);
+                    if (source != null) source.setGeoJson(FeatureCollection.fromFeatures(features));
+                });
+            } catch (IOException | RuntimeException error) {
+                SafeLog.w("RR-Map", "Could not load the train map", error);
+                executors.main().execute(() -> transitRequested = false); // try again next time
+            }
+        });
+    }
+
+    private static byte[] readAll(InputStream in) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8 * 1024];
+        int read;
+        while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
+        return out.toByteArray();
+    }
+
+    /** A station name on a white pill with a dot in the line's colour (no map fonts offline). */
+    private static Bitmap stationLabel(Context context, String name, String colour) {
+        float density = context.getResources().getDisplayMetrics().density;
+        Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        textPaint.setTypeface(ResourcesCompat.getFont(context, R.font.karla_semibold));
+        textPaint.setTextSize(11 * density);
+        textPaint.setColor(0xFF162235);
+        float dot = 6 * density;
+        float width = textPaint.measureText(name) + dot + 18 * density;
+        float height = 20 * density;
+        Bitmap bitmap = Bitmap.createBitmap((int) Math.ceil(width + 2 * density), (int) Math.ceil(height + 2 * density),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        RectF box = new RectF(density, density, width + density, height + density);
+        Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        fill.setColor(0xF2FFFFFF);
+        canvas.drawRoundRect(box, height / 2, height / 2, fill);
+        Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
+        stroke.setStyle(Paint.Style.STROKE);
+        stroke.setStrokeWidth(density);
+        stroke.setColor(0xFFE8EAED);
+        canvas.drawRoundRect(box, height / 2, height / 2, stroke);
+        Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        try {
+            dotPaint.setColor(Color.parseColor(colour));
+        } catch (IllegalArgumentException | NullPointerException unknownColour) {
+            dotPaint.setColor(0xFF24547F);
+        }
+        canvas.drawCircle(box.left + 7 * density + dot / 2, box.centerY(), dot / 2, dotPaint);
+        Paint.FontMetrics metrics = textPaint.getFontMetrics();
+        float baseline = box.centerY() - (metrics.ascent + metrics.descent) / 2;
+        canvas.drawText(name, box.left + 11 * density + dot, baseline, textPaint);
+        return bitmap;
     }
 
     /** Shows or hides the TomTom live-traffic overlay (does nothing without a TomTom key). */
@@ -494,6 +629,32 @@ public final class MapController {
         if (map != null) map.animateCamera(CameraUpdateFactory.newLatLngZoom(toLatLng(point), zoom));
     }
 
+    /**
+     * Puts the point in the middle of the part of the map the resident can actually see: below the
+     * controls on top (topCover) and above the card at the bottom (bottomCover, wherever it is now,
+     * even slid down). Zooms in to at least minZoom, but never zooms out if already closer.
+     */
+    public void centerOn(GeoPoint point, double minZoom, View topCover, View bottomCover) {
+        if (map == null) return;
+        int[] mapAt = new int[2];
+        mapView.getLocationInWindow(mapAt);
+        int top = 0;
+        int bottom = 0;
+        if (topCover != null && topCover.getVisibility() == View.VISIBLE) {
+            int[] at = new int[2];
+            topCover.getLocationInWindow(at);
+            top = Math.max(0, at[1] + topCover.getHeight() - mapAt[1]);
+        }
+        if (bottomCover != null && bottomCover.getVisibility() == View.VISIBLE) {
+            int[] at = new int[2];
+            bottomCover.getLocationInWindow(at); // includes the card's slide (translation)
+            bottom = Math.max(0, mapAt[1] + mapView.getHeight() - at[1]);
+        }
+        double zoom = Math.max(minZoom, map.getCameraPosition().zoom);
+        map.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
+                .target(toLatLng(point)).zoom(zoom).padding(0, top, 0, bottom).build()), 600);
+    }
+
     public void fitTo(List<GeoPoint> points, int paddingPx) {
         fitTo(points, paddingPx, paddingPx, paddingPx, paddingPx);
     }
@@ -524,6 +685,11 @@ public final class MapController {
 
     public void setOnMapLongClick(PointListener listener) {
         longClickListener = listener;
+    }
+
+    /** Called when the resident starts zooming or panning the map with a finger. */
+    public void setOnUserMove(Runnable listener) {
+        userMoveListener = listener;
     }
 
     // ------------------------------------------------------------------ helpers

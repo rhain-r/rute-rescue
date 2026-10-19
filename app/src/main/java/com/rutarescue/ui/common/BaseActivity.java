@@ -27,9 +27,15 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     /** Pads the root view so content is not hidden behind the status/navigation bars. */
     protected void applySystemBarInsets(View root) {
+        // Keep the layout's own padding (e.g. the 16 dp screen sides of activity_list) and add the
+        // status/navigation bars on top of it; replacing it put list content against the screen edge.
+        int left = root.getPaddingLeft();
+        int top = root.getPaddingTop();
+        int right = root.getPaddingRight();
+        int bottom = root.getPaddingBottom();
         ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.ime());
-            view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            view.setPadding(left + bars.left, top + bars.top, right + bars.right, bottom + bars.bottom);
             return WindowInsetsCompat.CONSUMED;
         });
     }

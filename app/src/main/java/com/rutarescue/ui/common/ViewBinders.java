@@ -10,6 +10,7 @@ import com.rutarescue.R;
 import com.rutarescue.RutaRescueApp;
 import com.rutarescue.model.advisory.Advisory;
 import com.rutarescue.model.advisory.AlertLevel;
+import com.rutarescue.model.center.CenterStatus;
 import com.rutarescue.model.center.EvacuationCenter;
 import com.rutarescue.model.common.GeoPoint;
 import com.rutarescue.service.AdvisoryMarks;
@@ -32,7 +33,8 @@ public final class ViewBinders {
         if (origin != null) {
             meta.append(Formats.distance(CenterService.distance(center, origin))).append(" • ");
         }
-        meta.append(center.getStatus().getLabel());
+        meta.append(center.getStatus() == CenterStatus.NOT_REPORTED
+                ? center.getCity().getDisplayName() + " • no status posted yet" : center.getStatus().getLabel());
         String headcount = center.getCapacity().shortSummary();
         if (!headcount.isEmpty()) meta.append(" • ").append(headcount);
         if (CenterService.isBundled(center)) {

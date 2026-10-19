@@ -6,7 +6,7 @@ import java.util.EnumSet;
 
 /**
  * What the map shows (Phase 1 "Map layers" sheet): one base map, any of the three NOAH flood
- * scenarios, and the evacuation-center, bridge/tunnel and traffic overlays.
+ * scenarios, and the evacuation-center, bridge/tunnel, traffic and train-line overlays.
  *
  * Routes are checked against the largest flood scenario that is switched on, so the map and
  * the route assessment never disagree; with every flood switched off they use the DOCX default
@@ -19,6 +19,8 @@ public final class MapLayerSettings {
     private boolean centersVisible = true;
     private boolean structuresVisible = true;
     private boolean trafficVisible = false;
+    /** LRT-1, LRT-2 and MRT-3 lines and stations for train commuters (off until switched on). */
+    private boolean transitVisible = false;
 
     public static MapLayerSettings defaults() {
         return new MapLayerSettings();
@@ -37,7 +39,7 @@ public final class MapLayerSettings {
         return largest == null ? FloodScenario.DEFAULT : largest;
     }
 
-    /** One line such as "base=STANDARD;floods=FIVE_YEAR,HUNDRED_YEAR;centers=1;structures=1;traffic=0". */
+    /** One line such as "base=STANDARD;floods=FIVE_YEAR,HUNDRED_YEAR;centers=1;structures=1;traffic=0;transit=0". */
     public String encode() {
         StringBuilder floodNames = new StringBuilder();
         for (FloodScenario scenario : floods) {
@@ -45,7 +47,8 @@ public final class MapLayerSettings {
             floodNames.append(scenario.name());
         }
         return "base=" + baseMap.name() + ";floods=" + floodNames + ";centers=" + flag(centersVisible)
-                + ";structures=" + flag(structuresVisible) + ";traffic=" + flag(trafficVisible);
+                + ";structures=" + flag(structuresVisible) + ";traffic=" + flag(trafficVisible)
+                + ";transit=" + flag(transitVisible);
     }
 
     /** Reads a line written by encode(); anything damaged gives the defaults. */
@@ -77,6 +80,9 @@ public final class MapLayerSettings {
                 case "traffic":
                     settings.trafficVisible = "1".equals(value);
                     break;
+                case "transit":
+                    settings.transitVisible = "1".equals(value);
+                    break;
                 default:
                     break;
             }
@@ -100,4 +106,6 @@ public final class MapLayerSettings {
     public void setStructuresVisible(boolean visible) { structuresVisible = visible; }
     public boolean isTrafficVisible() { return trafficVisible; }
     public void setTrafficVisible(boolean visible) { trafficVisible = visible; }
+    public boolean isTransitVisible() { return transitVisible; }
+    public void setTransitVisible(boolean visible) { transitVisible = visible; }
 }

@@ -30,7 +30,9 @@ public class BundledCenterReaderTest {
         try (BufferedReader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
             centers = new BundledCenterReader().read(reader);
         }
-        assertEquals(91, centers.size());
+        // 91 matched pins, minus "Vista Mall" (labelled Manila, pinned in Taguig) and "San Roque de
+        // Navotas" (pinned in San Juan), removed on 2026-10-19 until their real locations are confirmed.
+        assertEquals(89, centers.size());
         Set<String> ids = new HashSet<>();
         for (EvacuationCenter center : centers) {
             assertTrue(center.getId().startsWith(BundledCenterReader.ID_PREFIX));

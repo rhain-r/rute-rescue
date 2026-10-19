@@ -138,6 +138,10 @@ public class MapLayersSheet extends BottomSheetDialogFragment {
                 getString(hasTraffic ? R.string.layer_traffic_caption : R.string.layer_traffic_no_key),
                 hasTraffic ? trafficState : null, settings.isTrafficVisible() && hasTraffic, hasTraffic,
                 checked -> settings.setTrafficVisible(checked));
+        // Train commuters: LRT-1, LRT-2 and MRT-3 lines and stations (bundled, works offline).
+        addRow(overlays, R.drawable.ic_train, R.color.rr_navy_soft, R.color.rr_navy_light,
+                getString(R.string.sheet_layer_transit), getString(R.string.layer_transit_caption), null,
+                settings.isTransitVisible(), true, checked -> settings.setTransitVisible(checked));
     }
 
     private void bindBaseMaps(LinearLayout container) {

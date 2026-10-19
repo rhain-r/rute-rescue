@@ -198,7 +198,8 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
         if (map == null || !map.isReady()) return;
         if (container().location.hasPermission()) {
             container().location.getCurrent(UiCallback.of(this, point -> {
-                if (map != null) map.moveTo(point, 15);
+                // In the middle of the visible map (between the header and the sheet), zoomed in.
+                if (map != null) map.centerOn(point, 16.5, requireView().findViewById(R.id.lgu_map_top), sheet);
             }, error -> showError(error)));
         } else {
             map.moveTo(MapController.METRO_MANILA_CENTER, 12);

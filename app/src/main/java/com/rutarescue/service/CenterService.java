@@ -15,6 +15,7 @@ import com.rutarescue.repository.Callback;
 import com.rutarescue.repository.CenterRepository;
 import com.rutarescue.repository.CenterSnapshot;
 import com.rutarescue.repository.ListenerHandle;
+import com.rutarescue.util.Formats;
 import com.rutarescue.util.GeoMath;
 
 import java.util.ArrayList;
@@ -153,17 +154,38 @@ public final class CenterService {
         return result;
     }
 
+    /**
+     * One short line for lists of centers: the distance (when the resident's location is known),
+     * then the posted status, or the city and "no status posted yet" when no LGU has posted one.
+     * E.g. "0.8 km • Near capacity" or "489 m • Manila • no status posted yet".
+     */
+    public static String summary(EvacuationCenter center, GeoPoint origin) {
+        StringBuilder text = new StringBuilder();
+        if (origin != null) text.append(Formats.distance(distance(center, origin))).append(" • ");
+        if (center.getStatus() == CenterStatus.NOT_REPORTED) {
+            text.append(center.getCity().getDisplayName()).append(" • no status posted yet");
+        } else {
+            text.append(center.getStatus().getLabel());
+        }
+        return text.toString();
+    }
+
     public static double distance(EvacuationCenter center, GeoPoint origin) {
         return GeoMath.distanceMeters(center.getLocation(), origin);
     }
 
+    /**
+     * The closest center that can still take people (not closed, full or unavailable), or null when
+     * the resident's location is not known yet: without it, no center can honestly be called nearest.
+     */
     public static EvacuationCenter nearest(List<EvacuationCenter> centers, GeoPoint origin) {
+        if (origin == null) return null;
         EvacuationCenter best = null;
         double bestDistance = Double.MAX_VALUE;
         for (EvacuationCenter center : centers) {
             CenterStatus status = center.getStatus();
             if (status == CenterStatus.CLOSED || status == CenterStatus.FULL || status == CenterStatus.UNAVAILABLE) continue;
-            double d = origin == null ? 0 : distance(center, origin);
+            double d = distance(center, origin);
             if (d < bestDistance) {
                 best = center;
                 bestDistance = d;

@@ -180,10 +180,20 @@ public class HomeFragment extends BaseFragment {
 
     private void bindNearest() {
         if (getView() == null) return;
-        EvacuationCenter nearest = CenterService.nearest(centers, origin);
+        // Measured from the phone's location; until it is known, from the resident's sign-up city
+        // hall, so every city (not just Manila) gets its own nearest center. Distances are shown
+        // only for a real location.
+        UserProfile profile = profile();
+        GeoPoint from = origin != null ? origin
+                : profile != null && profile.getCity() != null ? profile.getCity().getHallLocation() : null;
+        EvacuationCenter nearest = CenterService.nearest(centers, from);
         if (nearest == null) {
+            // Never show a "nearby" center that is not: wait for the location (or ask for it).
             nearbyCard.setVisibility(View.GONE);
             noCenter.setVisibility(View.VISIBLE);
+            noCenter.setText(from != null ? R.string.no_center_yet
+                    : container().location.hasPermission() ? R.string.finding_nearest_center
+                    : R.string.nearest_needs_location);
             return;
         }
         nearbyCard.setVisibility(View.VISIBLE);

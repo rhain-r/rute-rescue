@@ -11,7 +11,7 @@ public enum CenterStatus {
     FULL("Full"),
     CLOSED("Closed"),
     UNAVAILABLE("Unavailable"),
-    NOT_REPORTED("Status not reported");
+    NOT_REPORTED("No status posted yet");
 
     /** The five choices on the status pills (NOT_REPORTED is only the starting value). */
     public static final CenterStatus[] CHOICES = {OPEN, NEAR_CAPACITY, FULL, CLOSED, UNAVAILABLE};

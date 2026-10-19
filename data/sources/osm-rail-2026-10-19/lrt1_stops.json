@@ -1,0 +1,877 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-10-19T14:23:50Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 34012374,
+  "lat": 14.5389519,
+  "lon": 121.0005884,
+  "tags": {
+    "light_rail": "yes",
+    "name": "EDSA",
+    "name:th": "เอดซา",
+    "name:zh": "乙沙",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL07"
+  }
+},
+{
+  "type": "node",
+  "id": 4475471872,
+  "lat": 14.5345586,
+  "lon": 120.9985974,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Baclaran",
+    "name:th": "บากลารัน",
+    "name:zh": "墨拉兰",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL06"
+  }
+},
+{
+  "type": "node",
+  "id": 4475471873,
+  "lat": 14.5339131,
+  "lon": 120.9980502,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Baclaran",
+    "name:th": "บากลารัน",
+    "name:zh": "墨拉兰",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL06"
+  }
+},
+{
+  "type": "node",
+  "id": 4475471874,
+  "lat": 14.5540537,
+  "lon": 120.9971444,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Gil Puyat",
+    "name:ja": "ヒル・プヤット",
+    "name:th": "กิล ปูยัต",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL09"
+  }
+},
+{
+  "type": "node",
+  "id": 4475471875,
+  "lat": 14.5476842,
+  "lon": 120.9986126,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Libertad",
+    "name:th": "ลิเบร์ตัด",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL08"
+  }
+},
+{
+  "type": "node",
+  "id": 5191404470,
+  "lat": 14.6574220,
+  "lon": 121.0035172,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Balintawak",
+    "name:th": "บาลินตาวัก",
+    "name:zh": "描林沓瓦",
+    "name:zh-Hant": "描林沓瓦",
+    "name:zh-Latn": "Miáolíndáwǎ",
+    "public_transport": "stop_position",
+    "railway": "stop"
+  }
+},
+{
+  "type": "node",
+  "id": 5191404471,
+  "lat": 14.6538339,
+  "lon": 120.9838478,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Yamaha Monumento",
+    "name:th": "ยามาฮา โมนูเมนโต",
+    "public_transport": "stop_position",
+    "railway": "stop"
+  }
+},
+{
+  "type": "node",
+  "id": 5191404472,
+  "lat": 14.6444250,
+  "lon": 120.9835345,
+  "tags": {
+    "light_rail": "yes",
+    "name": "5th Avenue",
+    "name:th": "ถนนหมายเลข 5",
+    "name:zh": "第五大道",
+    "public_transport": "stop_position",
+    "railway": "stop"
+  }
+},
+{
+  "type": "node",
+  "id": 5191404473,
+  "lat": 14.6360258,
+  "lon": 120.9822637,
+  "tags": {
+    "light_rail": "yes",
+    "name": "R. Papa",
+    "name:th": "อาร์ ปาปา",
+    "name:zh": "R·巴巴",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL22"
+  }
+},
+{
+  "type": "node",
+  "id": 5191404474,
+  "lat": 14.6306068,
+  "lon": 120.9814205,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Abad Santos",
+    "name:ja": "アバド・サントス",
+    "name:nan": "A-biâu Sian-tǒ͘-si",
+    "name:th": "อาบัด ซานโตส",
+    "name:zh": "亞描・仙杜斯",
+    "name:zh-Hans": "亚描・仙杜斯",
+    "name:zh-Latn-pinyin": "Yàmiáo Xiāndùsī",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL21"
+  }
+},
+{
+  "type": "node",
+  "id": 5191404476,
+  "lat": 14.6227653,
+  "lon": 120.9828816,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Blumentritt",
+    "name:ja": "ブルメントリット",
+    "name:nan": "Bú-bín-ti̍t",
+    "name:th": "บลูเมนทริตต์",
+    "name:zh": "武敏直",
+    "name:zh-Latn-pinyin": "Wǔmǐnzhí",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL20"
+  }
+},
+{
+  "type": "node",
+  "id": 5191404477,
+  "lat": 14.6167021,
+  "lon": 120.9827150,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Tayuman",
+    "name:ja": "タユマン",
+    "name:nan": "Ta̍uh-iû-bān",
+    "name:th": "ตายูมัน",
+    "name:zh": "沓尤曼",
+    "name:zh-Latn-pinyin": "Dáyóumàn",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL19"
+  }
+},
+{
+  "type": "node",
+  "id": 5191404478,
+  "lat": 14.6111115,
+  "lon": 120.9824548,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Bambang",
+    "name:ja": "バンバン",
+    "name:nan": "Pang-pang",
+    "name:th": "บัมบัง",
+    "name:zh": "邦邦",
+    "name:zh-Hans": "邦邦",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL18"
+  }
+},
+{
+  "type": "node",
+  "id": 5191404479,
+  "lat": 14.6053452,
+  "lon": 120.9820123,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Doroteo Jose",
+    "name:th": "โดโรทิโอ โฮเซ",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL17"
+  }
+},
+{
+  "type": "node",
+  "id": 5191404480,
+  "lat": 14.5990277,
+  "lon": 120.9813220,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Carriedo",
+    "name:ja": "カリエド",
+    "name:nan": "Ka-lia̍t-tō",
+    "name:th": "คาเรียโด",
+    "name:zh": "加列道",
+    "name:zh-Latn-pinyin": "Jiālièdào",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL16"
+  }
+},
+{
+  "type": "node",
+  "id": 5191404483,
+  "lat": 14.5826229,
+  "lon": 120.9845465,
+  "tags": {
+    "light_rail": "yes",
+    "name": "/",
+    "name:ja": "U.N.・アベニュー",
+    "name:nan": "Liân-ha̍p-kok",
+    "name:th": "สหประชาชาติ",
+    "name:zh": "聯合國",
+    "name:zh-Hans": "联合国",
+    "name:zh-Latn-pinyin": "Liánhéguó",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL13"
+  }
+},
+{
+  "type": "node",
+  "id": 5191404484,
+  "lat": 14.5765792,
+  "lon": 120.9879986,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Pedro Gil",
+    "name:ja": "ペドロ・ヒル",
+    "name:nan": "Pe̍h-tiak-lo̍h Gī",
+    "name:th": "เปโดร กิล",
+    "name:zh": "帛德洛義",
+    "name:zh-Hans": "帛德洛义",
+    "name:zh-Latn-pinyin": "Bódéluò Yì",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL12"
+  }
+},
+{
+  "type": "node",
+  "id": 5191404485,
+  "lat": 14.5702149,
+  "lon": 120.9915606,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Quirino",
+    "name:ja": "キリノ",
+    "name:nan": "Ki-lîn-hio̍h",
+    "name:th": "คีรีโน",
+    "name:zh": "基仁诺",
+    "name:zh-Hans": "基仁诺",
+    "name:zh-Latn-pinyin": "Jīrénnuò",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL11"
+  }
+},
+{
+  "type": "node",
+  "id": 5191404486,
+  "lat": 14.5634605,
+  "lon": 120.9947373,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Vito Cruz",
+    "name:ja": "ビト・クルス",
+    "name:th": "วีโต ครูซ",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL10"
+  }
+},
+{
+  "type": "node",
+  "id": 5397289145,
+  "lat": 14.6576217,
+  "lon": 121.0206881,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Fernando Poe Jr.",
+    "name:th": "เฟร์นันโด โพ จูเนียร์",
+    "name:zh": "費爾南多·坡二世",
+    "name:zh-Hans": "费尔南多·坡二世",
+    "name:zh-Hant": "費爾南多·坡二世",
+    "name:zh-Latn": "Fèi'ěrnánduō Pō èrshì",
+    "network": "LRTA",
+    "old_name": "Roosevelt",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop"
+  }
+},
+{
+  "type": "node",
+  "id": 5521709877,
+  "lat": 14.5308113,
+  "lon": 120.9928929,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Redemptorist–Aseana",
+    "name:ja": "レデンプトリスト・アシアナ",
+    "name:th": "เรดัมทอริสต์–อาซีอานา",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL05"
+  }
+},
+{
+  "type": "node",
+  "id": 5527137132,
+  "lat": 14.5389506,
+  "lon": 121.0006234,
+  "tags": {
+    "light_rail": "yes",
+    "name": "EDSA",
+    "name:th": "เอดซา",
+    "name:zh": "乙沙",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL07"
+  }
+},
+{
+  "type": "node",
+  "id": 5866984085,
+  "lat": 14.5082950,
+  "lon": 120.9912761,
+  "tags": {
+    "alt_name": "Asia World",
+    "light_rail": "yes",
+    "name": "PITX",
+    "name:th": "พีไอทีเอกซ์",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL24"
+  }
+},
+{
+  "type": "node",
+  "id": 5940196988,
+  "lat": 14.5083045,
+  "lon": 120.9912399,
+  "tags": {
+    "alt_name": "Asia World",
+    "light_rail": "yes",
+    "name": "PITX",
+    "name:th": "พีไอทีเอกซ์",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL24"
+  }
+},
+{
+  "type": "node",
+  "id": 6357368900,
+  "lat": 14.5297366,
+  "lon": 120.9929852,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Redemptorist–Aseana",
+    "name:ja": "レデンプトリスト・アシアナ",
+    "name:th": "เรดัมทอริสต์–อาซีอานา",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL05"
+  }
+},
+{
+  "type": "node",
+  "id": 7330612086,
+  "lat": 14.5924468,
+  "lon": 120.9817054,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Central Terminal",
+    "name:th": "เซ็นทรัลเทอร์มินัล",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL15"
+  }
+},
+{
+  "type": "node",
+  "id": 7330612087,
+  "lat": 14.5931393,
+  "lon": 120.9815326,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Central Terminal",
+    "name:th": "เซ็นทรัลเทอร์มินัล",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL15"
+  }
+},
+{
+  "type": "node",
+  "id": 7461224923,
+  "lat": 14.5179918,
+  "lon": 120.9929165,
+  "tags": {
+    "light_rail": "yes",
+    "name": "MIA Road",
+    "name:th": "ถนนมีอา",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL04"
+  }
+},
+{
+  "type": "node",
+  "id": 7465533967,
+  "lat": 14.4989392,
+  "lon": 120.9943550,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Ninoy Aquino Avenue",
+    "name:ja": "ニノイ・アキノ・アベニュー",
+    "name:th": "นินอย อากีโนอเวนิว",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL25"
+  }
+},
+{
+  "type": "node",
+  "id": 7569408464,
+  "lat": 14.6053428,
+  "lon": 120.9820475,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Doroteo Jose",
+    "name:th": "โดโรทิโอ โฮเซ",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL17"
+  }
+},
+{
+  "type": "node",
+  "id": 7569408465,
+  "lat": 14.6111091,
+  "lon": 120.9824899,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Bambang",
+    "name:ja": "バンバン",
+    "name:nan": "Pang-pang",
+    "name:th": "บัมบัง",
+    "name:zh": "邦邦",
+    "name:zh-Hans": "邦邦",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL18"
+  }
+},
+{
+  "type": "node",
+  "id": 7569408466,
+  "lat": 14.6167013,
+  "lon": 120.9827503,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Tayuman",
+    "name:ja": "タユマン",
+    "name:nan": "Ta̍uh-iû-bān",
+    "name:th": "ตายูมัน",
+    "name:zh": "沓尤曼",
+    "name:zh-Latn-pinyin": "Dáyóumàn",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL19"
+  }
+},
+{
+  "type": "node",
+  "id": 7569408467,
+  "lat": 14.6227642,
+  "lon": 120.9829169,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Blumentritt",
+    "name:ja": "ブルメントリット",
+    "name:nan": "Bú-bín-ti̍t",
+    "name:th": "บลูเมนทริตต์",
+    "name:zh": "武敏直",
+    "name:zh-Latn-pinyin": "Wǔmǐnzhí",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL20"
+  }
+},
+{
+  "type": "node",
+  "id": 7569408470,
+  "lat": 14.6306216,
+  "lon": 120.9814620,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Abad Santos",
+    "name:ja": "アバド・サントス",
+    "name:nan": "A-biâu Sian-tǒ͘-si",
+    "name:th": "อาบัด ซานโตส",
+    "name:zh": "亞描・仙杜斯",
+    "name:zh-Hans": "亚描・仙杜斯",
+    "name:zh-Latn-pinyin": "Yàmiáo Xiāndùsī",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL21"
+  }
+},
+{
+  "type": "node",
+  "id": 7569408477,
+  "lat": 14.6360105,
+  "lon": 120.9823082,
+  "tags": {
+    "light_rail": "yes",
+    "name": "R. Papa",
+    "name:th": "อาร์ ปาปา",
+    "name:zh": "R·巴巴",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL22"
+  }
+},
+{
+  "type": "node",
+  "id": 7569408478,
+  "lat": 14.6444188,
+  "lon": 120.9835822,
+  "tags": {
+    "light_rail": "yes",
+    "name": "5th Avenue",
+    "name:th": "ถนนหมายเลข 5",
+    "name:zh": "第五大道",
+    "public_transport": "stop_position",
+    "railway": "stop"
+  }
+},
+{
+  "type": "node",
+  "id": 7569408480,
+  "lat": 14.6546493,
+  "lon": 120.9839225,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Yamaha Monumento",
+    "name:th": "ยามาฮา โมนูเมนโต",
+    "public_transport": "stop_position",
+    "railway": "stop"
+  }
+},
+{
+  "type": "node",
+  "id": 7569423003,
+  "lat": 14.6573992,
+  "lon": 121.0043728,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Balintawak",
+    "name:th": "บาลินตาวัก",
+    "name:zh": "描林沓瓦",
+    "name:zh-Hant": "描林沓瓦",
+    "name:zh-Latn": "Miáolíndáwǎ",
+    "public_transport": "stop_position",
+    "railway": "stop"
+  }
+},
+{
+  "type": "node",
+  "id": 7569423013,
+  "lat": 14.6574551,
+  "lon": 121.0215856,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Fernando Poe Jr.",
+    "name:th": "เฟร์นันโด โพ จูเนียร์",
+    "name:zh": "費爾南多·坡二世",
+    "name:zh-Hans": "费尔南多·坡二世",
+    "name:zh-Hant": "費爾南多·坡二世",
+    "name:zh-Latn": "Fèi'ěrnánduō Pō èrshì",
+    "network": "LRTA",
+    "old_name": "Roosevelt",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop"
+  }
+},
+{
+  "type": "node",
+  "id": 9371316870,
+  "lat": 14.5188770,
+  "lon": 120.9930583,
+  "tags": {
+    "light_rail": "yes",
+    "name": "MIA Road",
+    "name:th": "ถนนมีอา",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL04"
+  }
+},
+{
+  "type": "node",
+  "id": 10053766604,
+  "lat": 14.5826319,
+  "lon": 120.9845814,
+  "tags": {
+    "light_rail": "yes",
+    "name": "/",
+    "name:ja": "U.N.・アベニュー",
+    "name:nan": "Liân-ha̍p-kok",
+    "name:th": "สหประชาชาติ",
+    "name:zh": "聯合國",
+    "name:zh-Hans": "联合国",
+    "name:zh-Latn-pinyin": "Liánhéguó",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL14"
+  }
+},
+{
+  "type": "node",
+  "id": 10053766605,
+  "lat": 14.5765892,
+  "lon": 120.9880262,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Pedro Gil",
+    "name:ja": "ペドロ・ヒル",
+    "name:nan": "Pe̍h-tiak-lo̍h Gī",
+    "name:th": "เปโดร กิล",
+    "name:zh": "帛德洛義",
+    "name:zh-Hans": "帛德洛义",
+    "name:zh-Latn-pinyin": "Bódéluò Yì",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL12"
+  }
+},
+{
+  "type": "node",
+  "id": 10053766606,
+  "lat": 14.5702329,
+  "lon": 120.9915904,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Quirino",
+    "name:ja": "キリノ",
+    "name:nan": "Ki-lîn-hio̍h",
+    "name:th": "คีรีโน",
+    "name:zh-Hans": "基仁诺",
+    "name:zh-Latn-pinyin": "Jīrénnuò",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL11"
+  }
+},
+{
+  "type": "node",
+  "id": 10053766607,
+  "lat": 14.5634708,
+  "lon": 120.9947705,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Vito Cruz",
+    "name:ja": "ビト・クルス",
+    "name:th": "วีโต ครูซ",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL10"
+  }
+},
+{
+  "type": "node",
+  "id": 10053766608,
+  "lat": 14.5540601,
+  "lon": 120.9971788,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Gil Puyat",
+    "name:ja": "ヒル・プヤット",
+    "name:th": "กิล ปูยัต",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL09"
+  }
+},
+{
+  "type": "node",
+  "id": 10053766609,
+  "lat": 14.5476902,
+  "lon": 120.9986474,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Libertad",
+    "name:th": "ลิเบร์ตัด",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL08"
+  }
+},
+{
+  "type": "node",
+  "id": 12345180246,
+  "lat": 14.4989399,
+  "lon": 120.9943902,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Ninoy Aquino Avenue",
+    "name:ja": "ニノイ・アキノ・アベニュー",
+    "name:th": "นินอย อากีโนอเวนิว",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL25"
+  }
+},
+{
+  "type": "node",
+  "id": 12345180247,
+  "lat": 14.4852493,
+  "lon": 120.9893969,
+  "tags": {
+    "alt_name": "Sucat",
+    "light_rail": "yes",
+    "name": "Dr. Santos",
+    "name:ja": "ドクター・サントス",
+    "name:th": "ดร.ซานโตส",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL26"
+  }
+},
+{
+  "type": "node",
+  "id": 12345180248,
+  "lat": 14.4852335,
+  "lon": 120.9894335,
+  "tags": {
+    "alt_name": "Sucat",
+    "light_rail": "yes",
+    "name": "Dr. Santos",
+    "name:ja": "ドクター・サントス",
+    "name:th": "ดร.ซานโตส",
+    "network": "Manila LRT",
+    "operator": "Light Rail Manila Corporation",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL26"
+  }
+},
+{
+  "type": "node",
+  "id": 13791320538,
+  "lat": 14.5995648,
+  "lon": 120.9814387,
+  "tags": {
+    "light_rail": "yes",
+    "name": "Carriedo",
+    "name:ja": "カリエド",
+    "name:nan": "Ka-lia̍t-tō",
+    "name:th": "คาเรียโด",
+    "name:zh": "加列道",
+    "name:zh-Latn-pinyin": "Jiālièdào",
+    "network": "Manila LRT",
+    "public_transport": "stop_position",
+    "railway": "stop",
+    "ref": "GL16"
+  }
+}
+
+  ]
+}
