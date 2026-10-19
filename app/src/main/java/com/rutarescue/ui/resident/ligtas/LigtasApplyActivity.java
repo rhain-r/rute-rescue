@@ -32,8 +32,15 @@ import java.util.List;
 /**
  * Ligtas Priority application (DOCX section 4): choose the family member and need
  * category, write a justification and attach a SYNTHETIC/DEMO image only.
+ *
+ * The bundled "SYNTHETIC DEMO PROOF" image is attached when the screen opens, so the
+ * application can be tested on any phone without a real document. "Choose image" replaces
+ * it, and "Use demo proof" puts it back.
  */
 public class LigtasApplyActivity extends BaseActivity {
+
+    /** The synthetic proof image shipped inside the APK (app/src/main/assets/demo). */
+    static final String DEMO_PROOF_ASSET = "demo/demo-proof.png";
 
     private FamilyRecord family;
     private FamilyMember member;
@@ -43,6 +50,11 @@ public class LigtasApplyActivity extends BaseActivity {
 
     private final ActivityResultLauncher<PickVisualMediaRequest> pickImage = registerForActivityResult(
             new ActivityResultContracts.PickVisualMedia(), this::onImagePicked);
+
+    /** Reads and shrinks one proof image (on a background thread). */
+    private interface ProofReader {
+        byte[] read() throws IOException;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +72,9 @@ public class LigtasApplyActivity extends BaseActivity {
 
         findViewById(R.id.apply_pick).setOnClickListener(v -> pickImage.launch(new PickVisualMediaRequest.Builder()
                 .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE).build()));
+        findViewById(R.id.apply_use_demo).setOnClickListener(v -> attachDemoProof());
         findViewById(R.id.apply_submit).setOnClickListener(v -> submit());
+        attachDemoProof(); // ready to submit without a real document
 
         container().family().load(profile.getUid(), ui(data -> {
             family = data.getData();
@@ -94,20 +108,32 @@ public class LigtasApplyActivity extends BaseActivity {
         }
     }
 
+    /** Attaches the bundled "SYNTHETIC DEMO PROOF" image. */
+    private void attachDemoProof() {
+        prepareProof(() -> ImageCompressor.compressAsset(getAssets(), DEMO_PROOF_ASSET),
+                getString(R.string.demo_proof_attached));
+    }
+
     private void onImagePicked(Uri uri) {
         if (uri == null) return;
+        prepareProof(() -> ImageCompressor.compress(getContentResolver(), uri),
+                getString(R.string.picked_proof_attached));
+    }
+
+    /** Shrinks the image off the UI thread, then shows it as the attached proof. */
+    private void prepareProof(ProofReader reader, String label) {
         TextView info = findViewById(R.id.apply_image_info);
         info.setText("Preparing image…");
         container().executors.io().execute(() -> {
             try {
-                byte[] bytes = ImageCompressor.compress(getContentResolver(), uri);
+                byte[] bytes = reader.read();
                 container().executors.main().execute(() -> {
                     if (isFinishing()) return;
                     proofJpeg = bytes;
                     ImageView preview = findViewById(R.id.apply_preview);
                     preview.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
                     preview.setVisibility(View.VISIBLE);
-                    info.setText("Demo image ready (" + bytes.length / 1024 + " KB). Synthetic images only.");
+                    info.setText(label + " (" + Math.max(1, bytes.length / 1024) + " KB)");
                 });
             } catch (IOException e) {
                 container().executors.main().execute(() -> info.setText(e.getMessage()));

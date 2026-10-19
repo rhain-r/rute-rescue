@@ -15,6 +15,15 @@ build/
 # this computer and the TomTom key (without it, routes use free OpenStreetMap routing).
 local.properties
 
+# Release signing key for the signed APK (its passwords are in local.properties).
+# Never commit it; back it up, because updates to the installed app need the same key.
+/keystore/
+*.jks
+*.keystore
+
+# Built APKs handed to testers
+/apk/
+
 # app/google-services.json IS committed (team decision, 2026-10-15) so a downloaded copy can
 # sign in: it is the Firebase app config that ships inside every APK, not a password, and
 # firebase/firestore.rules decide who may read or change data. See the exception further down.

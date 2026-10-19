@@ -1,0 +1,126 @@
+{
+  "title": "Metro Manila city and municipal emergency hotlines",
+  "checked": "2026-10-19",
+  "note": "One entry per LGU, shown first on Home for the resident's sign-up city, above the national hotlines. Numbers come from the newest official or LGU-quoted source found on the date above; LGUs change numbers, so re-check before each release. Old 7-digit Metro Manila landlines are written with the 8 prefix that has been required since October 2019.",
+  "cities": [
+    {
+      "city": "CALOOCAN",
+      "agency": "Caloocan 24/7 Emergency Hotline",
+      "numbers": ["(02) 888-25664", "0908-812-5664"],
+      "source": "Manila Bulletin, 8 Nov 2025, Caloocan LGU advisory (888-ALONG)",
+      "url": "https://mb.com.ph/2025/11/08/caloocan-city-placed-under-red-alert-status-for-effects-of-storm-uwan"
+    },
+    {
+      "city": "LAS_PINAS",
+      "agency": "Las Piñas City DRRM Office",
+      "numbers": ["(02) 8552-7694", "(02) 8872-4744"],
+      "source": "Las Piñas City website, undated typhoon advisory (printed as 552-7694 / 872-4744); weakest source in this file",
+      "url": "https://laspinascity.gov.ph/news-and-events/news/173/index.html"
+    },
+    {
+      "city": "MAKATI",
+      "agency": "Makati Command Center",
+      "numbers": ["168"],
+      "source": "Inquirer, Dec 2024, Makati City statement (also the Makatizen App SOS button)",
+      "url": "https://newsinfo.inquirer.net/2011937/abby-binay-orders-tight-security-in-makati-for-christmas"
+    },
+    {
+      "city": "MALABON",
+      "agency": "Malabon Command Center (DRRMO)",
+      "numbers": ["(02) 8921-6009", "(02) 8921-6029", "0942-372-9891"],
+      "source": "DILG-NCR iDRRM LGU profile; same numbers in the Inquirer hotline directory",
+      "url": "https://idrrm.ncr.dilg.gov.ph/lgu-profile/24"
+    },
+    {
+      "city": "MANDALUYONG",
+      "agency": "Mandaluyong City DRRM Office",
+      "numbers": ["(02) 8533-2225", "(02) 8533-1897"],
+      "source": "Mandaluyong City website, CDRRMO office page",
+      "url": "https://mandaluyong.gov.ph/"
+    },
+    {
+      "city": "MANILA",
+      "agency": "Manila DRRM Office (MCDRRMO)",
+      "numbers": ["(02) 8527-0972", "0961-062-0660"],
+      "source": "Manila Bulletin, 8 Nov 2025, Manila LGU advisory",
+      "url": "https://mb.com.ph/2025/11/08/manila-placed-under-red-alert-status-due-to-ts-uwan"
+    },
+    {
+      "city": "MARIKINA",
+      "agency": "Marikina Rescue 161 (CDRRMO)",
+      "numbers": ["161", "(02) 8646-2436"],
+      "source": "Rescue 161 is run by the Marikina CDRRMO (Inquirer 2013); landline in the GMA News list, 24 Jul 2024",
+      "url": "https://gmanetwork.com/news/lifestyle/content/914593/super-typhoon-carina-a-list-of-hotlines-for-emergency-rescue/story"
+    },
+    {
+      "city": "MUNTINLUPA",
+      "agency": "Muntinlupa Emergency Hotline (Command Center)",
+      "numbers": ["137-175"],
+      "source": "Manila Bulletin, 15 Sep 2020 launch by the city; still cited by the city in 2025",
+      "url": "https://mb.com.ph/2020/09/15/muntinlupa-govt-launches-hotline-for-emergency-response/"
+    },
+    {
+      "city": "NAVOTAS",
+      "agency": "Navotas City DRRM Office",
+      "numbers": ["0925-551-4528", "(02) 8281-1111 loc. 429"],
+      "source": "DILG-NCR iDRRM LGU profile (landline 281-1111 loc. 429/407)",
+      "url": "https://idrrm.ncr.dilg.gov.ph/lgu-profile/25"
+    },
+    {
+      "city": "PARANAQUE",
+      "agency": "Parañaque Hotline (8820-PQUE)",
+      "numbers": ["(02) 8820-7783"],
+      "source": "Manila Bulletin, 9 Nov 2025, Parañaque LGU advisory",
+      "url": "https://mb.com.ph/2025/11/09/paranaque-govt-on-full-alert-amid-uwan"
+    },
+    {
+      "city": "PASAY",
+      "agency": "Pasay City DRRM Office",
+      "numbers": ["0905-493-9111", "(02) 888-72729 loc. 1371"],
+      "source": "Manila Bulletin, Jul and Nov 2024, Pasay LGU advisories (trunkline 888-PASAY loc. 1371-1373)",
+      "url": "https://mb.com.ph/2024/11/17/article-2825"
+    },
+    {
+      "city": "PASIG",
+      "agency": "Pasig City Operations Center (DRRMO)",
+      "numbers": ["(02) 8643-0000"],
+      "source": "Pasig City statements 2020-2021 (Inquirer); same line on the DILG-NCR iDRRM profile",
+      "url": "https://idrrm.ncr.dilg.gov.ph/lgu-profile/22"
+    },
+    {
+      "city": "PATEROS",
+      "agency": "Pateros MDRRMO",
+      "numbers": ["(02) 8642-5159", "0995-130-0075"],
+      "source": "DILG-NCR iDRRM LGU profile; landline also in the GMA News list, 24 Jul 2024",
+      "url": "https://idrrm.ncr.dilg.gov.ph/lgu-profile/36"
+    },
+    {
+      "city": "QUEZON_CITY",
+      "agency": "QC Helpline 122 (press 1 for emergencies)",
+      "numbers": ["122"],
+      "source": "Quezon City government website, QC Helpline 122 program page",
+      "url": "https://quezoncity.gov.ph/program/qc-helpline-122/"
+    },
+    {
+      "city": "SAN_JUAN",
+      "agency": "San Juan City DRRM Office",
+      "numbers": ["(02) 8238-4333"],
+      "source": "GMA News list, 24 Jul 2024; same line in the Inquirer list, 2020",
+      "url": "https://gmanetwork.com/news/lifestyle/content/914593/super-typhoon-carina-a-list-of-hotlines-for-emergency-rescue/story"
+    },
+    {
+      "city": "TAGUIG",
+      "agency": "Taguig Command Center",
+      "numbers": ["(02) 8789-3200", "0917-550-3727"],
+      "source": "Inquirer, Jul 2024, Taguig City statement; mobile in the GMA News list, 24 Jul 2024",
+      "url": "https://newsinfo.inquirer.net/?p=1958254"
+    },
+    {
+      "city": "VALENZUELA",
+      "agency": "Valenzuela City DRRM Office (Rescue)",
+      "numbers": ["(02) 8292-1405", "0915-259-8376"],
+      "source": "Valenzuela City website, CDRRMO page; mobile in the GMA News list, 24 Jul 2024",
+      "url": "https://valenzuela.gov.ph/valenzuela-city-disaster-risk-reduction-and-management-office/"
+    }
+  ]
+}

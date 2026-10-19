@@ -47,13 +47,13 @@ import java.util.Locale;
 /**
  * Resident Home (Figma "Client / Home"): latest LGU advisory, search, quick actions,
  * saved places, the nearest center (LGU-published or from the bundled PLM SSC list), emergency
- * hotlines, LGU updates and data-source timestamps.
+ * hotlines (the resident's city first, then national), LGU updates and data-source timestamps.
  * Cached, stale, prepared and live information are labelled differently.
  */
 public class HomeFragment extends BaseFragment {
 
-    /** Hotlines shown before "See all" (911, Red Cross, Coast Guard). */
-    private static final int HOTLINES_FOLDED = 3;
+    /** National hotlines shown under the city's own before "See all" (911 and the Red Cross). */
+    private static final int NATIONAL_FOLDED = 2;
 
     private TextView heroEyebrow;
     private TextView greeting;
@@ -192,12 +192,23 @@ public class HomeFragment extends BaseFragment {
         nearbyCard.setOnClickListener(v -> startActivity(CenterDetailActivity.intent(requireContext(), nearest.getId())));
     }
 
-    /** Emergency hotlines card: the first three, or all of them after "See all". */
+    /**
+     * Emergency hotlines card: the hotline of the resident's own city (the city chosen at sign-up)
+     * first, then the national lines. Folded, it shows the city lines plus 911 and the Red Cross;
+     * "See all" shows every national line too.
+     */
     private void bindHotlines() {
-        List<Hotline> all = container().hotlines;
+        UserProfile profile = profile();
+        List<Hotline> cityLines = profile == null || profile.getCity() == null ? null
+                : container().cityHotlines.get(profile.getCity());
+        List<Hotline> all = new ArrayList<>();
+        if (cityLines != null) all.addAll(cityLines);
+        all.addAll(container().hotlines);
+        int folded = (cityLines == null ? 0 : cityLines.size()) + NATIONAL_FOLDED;
+
         hotlineList.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(requireContext());
-        int shown = showAllHotlines ? all.size() : Math.min(HOTLINES_FOLDED, all.size());
+        int shown = showAllHotlines ? all.size() : Math.min(folded, all.size());
         for (int i = 0; i < shown; i++) {
             Hotline hotline = all.get(i);
             View row = inflater.inflate(R.layout.item_simple_row, hotlineList, false);
@@ -207,7 +218,7 @@ public class HomeFragment extends BaseFragment {
             row.setOnClickListener(v -> call(hotline));
             hotlineList.addView(row);
         }
-        hotlineToggle.setVisibility(all.size() > HOTLINES_FOLDED ? View.VISIBLE : View.GONE);
+        hotlineToggle.setVisibility(all.size() > folded ? View.VISIBLE : View.GONE);
         hotlineToggle.setText(showAllHotlines ? R.string.show_less : R.string.see_all);
     }
 

@@ -80,6 +80,16 @@
             android:text="@string/pick_demo_image"
             app:icon="@drawable/ic_upload" />
 
+        <!-- Puts the bundled SYNTHETIC DEMO PROOF image back (it is attached when the screen opens) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/apply_use_demo"
+            style="@style/Widget.RR.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/use_demo_proof"
+            app:icon="@drawable/ic_file" />
+
         <ImageView
             android:id="@+id/apply_preview"
             android:layout_width="match_parent"
@@ -87,7 +97,7 @@
             android:layout_marginTop="12dp"
             android:background="@drawable/bg_qr_frame"
             android:contentDescription="Selected demo proof image"
-            android:scaleType="centerCrop"
+            android:scaleType="fitCenter"
             android:visibility="gone" />
 
         <TextView

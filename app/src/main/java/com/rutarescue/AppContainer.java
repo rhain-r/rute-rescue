@@ -10,6 +10,7 @@ import com.google.firebase.firestore.FirebaseFirestoreSettings;
 import com.google.firebase.firestore.PersistentCacheSettings;
 import com.google.firebase.storage.FirebaseStorage;
 import com.rutarescue.model.center.EvacuationCenter;
+import com.rutarescue.model.common.MetroManilaCity;
 import com.rutarescue.model.contact.Hotline;
 import com.rutarescue.network.CachedRouteProvider;
 import com.rutarescue.network.HttpJsonClient;
@@ -19,6 +20,7 @@ import com.rutarescue.network.OsrmRouteProvider;
 import com.rutarescue.network.RouteProvider;
 import com.rutarescue.network.TomTomRouteProvider;
 import com.rutarescue.persistence.BundledCenterReader;
+import com.rutarescue.persistence.CityHotlineReader;
 import com.rutarescue.persistence.HotlineReader;
 import com.rutarescue.persistence.RouteCacheStore;
 import com.rutarescue.repository.AuditRepository;
@@ -62,7 +64,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Creates every service and repository once and wires them together ("manual dependency
@@ -85,8 +89,10 @@ public final class AppContainer {
     public final AdvisoryMarks advisoryMarks;
     /** Map layers sheet choices, remembered on this phone. */
     public final MapLayerPreferences mapLayers;
-    /** Emergency hotlines bundled with the app (PLM SSC post, 24 Jul 2024; labels corrected). */
+    /** National emergency hotlines bundled with the app (PLM SSC post, 24 Jul 2024; labels corrected). */
     public final List<Hotline> hotlines;
+    /** Each city's own emergency hotline (official or LGU-quoted sources, checked 2026-10-19). */
+    public final Map<MetroManilaCity, List<Hotline>> cityHotlines;
 
     private final boolean firebaseReady;
     private final RouteCacheStore routeCache;
@@ -111,6 +117,7 @@ public final class AppContainer {
         advisoryMarks = new AdvisoryMarks(app);
         mapLayers = new MapLayerPreferences(app);
         hotlines = readHotlines(app);
+        cityHotlines = readCityHotlines(app);
         hasTomTomKey = !BuildConfig.TOMTOM_API_KEY.isEmpty();
 
         // google-services.json is private configuration; without it Firebase is not initialised.
@@ -198,6 +205,16 @@ public final class AppContainer {
         } catch (IOException e) {
             Log.w(TAG, "Hotline list not readable", e);
             return new ArrayList<>();
+        }
+    }
+
+    private static Map<MetroManilaCity, List<Hotline>> readCityHotlines(Context app) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                app.getAssets().open(CityHotlineReader.ASSET), StandardCharsets.UTF_8))) {
+            return new CityHotlineReader().read(reader);
+        } catch (IOException e) {
+            Log.w(TAG, "City hotline list not readable", e);
+            return new EnumMap<>(MetroManilaCity.class);
         }
     }
 

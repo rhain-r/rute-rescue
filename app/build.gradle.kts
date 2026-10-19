@@ -38,8 +38,8 @@ android {
         applicationId = "com.oop.rutarescue"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -53,10 +53,29 @@ android {
         buildConfig = true
     }
 
+    // Signed release APK (same as Android Studio's "Generate Signed Bundle / APK").
+    // The keystore and its passwords stay out of git: RELEASE_STORE_FILE, RELEASE_KEY_ALIAS,
+    // RELEASE_STORE_PASSWORD and RELEASE_KEY_PASSWORD live in local.properties. Without them
+    // (a fresh clone) the release build is simply left unsigned.
+    val releaseStoreFile = localValue("RELEASE_STORE_FILE")
+    signingConfigs {
+        if (releaseStoreFile.isNotEmpty()) {
+            create("release") {
+                storeFile = rootProject.file(releaseStoreFile)
+                storePassword = localValue("RELEASE_STORE_PASSWORD")
+                keyAlias = localValue("RELEASE_KEY_ALIAS")
+                keyPassword = localValue("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             optimization {
                 enable = false
+            }
+            if (releaseStoreFile.isNotEmpty()) {
+                signingConfig = signingConfigs.getByName("release")
             }
         }
     }

@@ -69,7 +69,6 @@
     <string name="capacity_none_bundled">Your LGU posts the headcount here once it confirms this center.</string>
     <string name="capacity_none">Your LGU has not posted a headcount for this center yet.</string>
     <string name="hotlines_title">Emergency hotlines</string>
-    <string name="hotlines_source">From the PLM SSC post, 24 Jul 2024. Tap a line to open your phone\'s dialer.</string>
     <string name="show_less">Show less</string>
     <string name="no_dialer">This phone has no dialer app.</string>
     <string name="stay_ready">Stay flood-ready today.</string>
@@ -162,6 +161,9 @@
     <string name="need_category">Need category</string>
     <string name="justification">Justification</string>
     <string name="pick_demo_image">Choose synthetic/demo image</string>
+    <string name="use_demo_proof">Use the demo proof</string>
+    <string name="demo_proof_attached">Demo proof attached: the bundled SYNTHETIC DEMO PROOF image, not a real document</string>
+    <string name="picked_proof_attached">Your chosen image is attached. Synthetic or demo images only</string>
     <string name="submit_application">Submit application</string>
     <string name="my_applications">My Ligtas applications</string>
     <string name="show_qr">Show verification QR</string>
