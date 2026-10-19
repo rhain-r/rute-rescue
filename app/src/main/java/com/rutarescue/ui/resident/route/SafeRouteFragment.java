@@ -25,6 +25,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.TooltipCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -286,6 +287,8 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
         view.findViewById(R.id.route_locate).setOnClickListener(v -> locate(true));
         view.findViewById(R.id.route_layers).setOnClickListener(v -> openLayers());
         floodTag.setOnClickListener(v -> openLayers());
+        // Long-press: the flood tag names a prepared NOAH scenario, not today's weather.
+        TooltipCompat.setTooltipText(floodTag, getString(R.string.tip_risk_zones_title));
         view.findViewById(R.id.route_retry).setOnClickListener(v -> requestRoutes());
         view.findViewById(R.id.route_clear).setOnClickListener(v -> clearRoute());
         view.findViewById(R.id.route_save_place).setOnClickListener(v -> savePlace());

@@ -26,7 +26,6 @@ import com.rutarescue.model.structure.StructureStatus;
 import com.rutarescue.repository.HazardRepository;
 import com.rutarescue.util.AppExecutors;
 import com.rutarescue.util.GeoMath;
-import com.rutarescue.util.SafeLog;
 
 import org.maplibre.android.camera.CameraUpdateFactory;
 import org.maplibre.android.geometry.LatLng;
@@ -49,7 +48,6 @@ import org.maplibre.geojson.FeatureCollection;
 import org.maplibre.geojson.LineString;
 import org.maplibre.geojson.Point;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -80,8 +78,6 @@ public final class MapController {
     /** Just below the Figma "Map Controls" (Locate + Layers end at about 310 dp). */
     private static final int ATTRIBUTION_TOP_DP = 318;
 
-    private static final String TAG = "RR-Map";
-
     private static final String SRC_STRUCTURES = "rr-structures";
     private static final String SRC_CLOSURES = "rr-closures";
     private static final String SRC_ROUTES = "rr-routes";
@@ -98,8 +94,8 @@ public final class MapController {
     private final String tomTomKey;
     private MapLibreMap map;
     private Style style;
-    /** Scenarios whose GeoJSON was requested (loading or loaded). */
-    private final EnumSet<FloodScenario> requestedFloods = EnumSet.noneOf(FloodScenario.class);
+    /** Reads each scenario's GeoJSON once, off the UI thread (created on the first showFloods). */
+    private FloodOverlayLoader floodLoader;
     private final EnumSet<FloodScenario> visibleFloods = EnumSet.noneOf(FloodScenario.class);
     private boolean floodsShown = true;
     private PointListener clickListener;
@@ -235,7 +231,8 @@ public final class MapController {
 
     /**
      * Shows any mix of NOAH scenarios (Phase 1 "Map layers" switches). Each bundled GeoJSON
-     * (5-7 MB) is read once on a background thread and handed to MapLibre on the UI thread.
+     * (5-7 MB) is read once on a background thread (FloodOverlayLoader) and handed to MapLibre
+     * on the UI thread; MapLibre then parses it on its own worker thread.
      * With more than one scenario the fills are lighter so the layers stay readable.
      */
     public void showFloods(Set<FloodScenario> scenarios, HazardRepository hazards, AppExecutors executors) {
@@ -243,26 +240,17 @@ public final class MapController {
         visibleFloods.clear();
         visibleFloods.addAll(scenarios);
         refreshFloodLayers();
+        if (floodLoader == null) floodLoader = new FloodOverlayLoader(hazards, executors, this::applyOverlay);
         for (FloodScenario scenario : scenarios) {
-            if (!requestedFloods.contains(scenario)) loadFlood(scenario, hazards, executors);
+            floodLoader.request(scenario);
         }
     }
 
-    private void loadFlood(FloodScenario scenario, HazardRepository hazards, AppExecutors executors) {
-        requestedFloods.add(scenario);
-        executors.io().execute(() -> {
-            try {
-                String geoJson = hazards.loadGeoJsonBlocking(scenario);
-                executors.main().execute(() -> {
-                    if (!isReady()) return;
-                    GeoJsonSource source = style.getSourceAs(hazardSource(scenario));
-                    if (source != null) source.setGeoJson(geoJson);
-                });
-            } catch (IOException error) {
-                SafeLog.w(TAG, "Could not load the " + scenario.getLabel() + " overlay", error);
-                executors.main().execute(() -> requestedFloods.remove(scenario));
-            }
-        });
+    /** Puts a loaded overlay into its map source (UI thread). */
+    private void applyOverlay(FloodScenario scenario, String geoJson) {
+        if (!isReady()) return;
+        GeoJsonSource source = style.getSourceAs(hazardSource(scenario));
+        if (source != null) source.setGeoJson(geoJson);
     }
 
     /** Hides or shows every chosen flood scenario at once (LGU "Risk zones" pill). */

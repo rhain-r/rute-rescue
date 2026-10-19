@@ -1,7 +1,5 @@
 package com.rutarescue.repository.local;
 
-import android.content.res.AssetManager;
-
 import com.rutarescue.exception.MalformedDataException;
 import com.rutarescue.model.hazard.FloodScenario;
 import com.rutarescue.persistence.PreparedDataManifest;
@@ -20,26 +18,38 @@ import java.security.NoSuchAlgorithmException;
 import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Reads the prepared NOAH hazard grids bundled in assets/flood_data. Each grid is checked
  * against the SHA-256 hash recorded in manifest.json before use (DOCX section 7 gate
  * "Derived files match manifest hashes"), then kept in memory.
+ *
+ * Thread safety (no UI freeze under heavy use): each scenario has its own lock, so loading the
+ * 100-year grid never makes a lookup on the already-loaded 5-year grid wait. Many screens asking
+ * for the same scenario at once still read and hash the file only once.
  */
 public final class AssetHazardRepository implements HazardRepository {
 
     private static final String TAG = "RR-Hazard";
 
-    private final AssetManager assets;
-    private final Map<FloodScenario, HazardGrid> cache = new EnumMap<>(FloodScenario.class);
+    private final AssetSource assets;
+    /** Loaded grids; a ConcurrentHashMap so readers never need a lock. */
+    private final Map<FloodScenario, HazardGrid> cache = new ConcurrentHashMap<>();
+    /** One lock per scenario: only threads asking for the SAME scenario wait for its first load. */
+    private final Map<FloodScenario, Object> loadLocks = new EnumMap<>(FloodScenario.class);
     private final PreparedDataManifest manifest;
 
-    public AssetHazardRepository(AssetManager assets) {
+    /** @param assets usually {@code context.getAssets()::open} */
+    public AssetHazardRepository(AssetSource assets) {
         this.assets = assets;
         this.manifest = readManifest(assets);
+        for (FloodScenario scenario : FloodScenario.values()) {
+            loadLocks.put(scenario, new Object());
+        }
     }
 
-    private static PreparedDataManifest readManifest(AssetManager assets) {
+    private static PreparedDataManifest readManifest(AssetSource assets) {
         try (InputStream in = assets.open("flood_data/manifest.json")) {
             return PreparedDataManifest.read(in);
         } catch (IOException missing) {
@@ -49,10 +59,21 @@ public final class AssetHazardRepository implements HazardRepository {
     }
 
     @Override
-    public synchronized HazardLookup loadBlocking(FloodScenario scenario) throws IOException {
+    public HazardLookup loadBlocking(FloodScenario scenario) throws IOException {
         HazardGrid cached = cache.get(scenario);
-        if (cached != null) return cached;
+        if (cached != null) return cached; // fast path: already loaded, no waiting at all
 
+        synchronized (loadLocks.get(scenario)) {
+            cached = cache.get(scenario);
+            if (cached != null) return cached; // another thread loaded it while this one waited
+            HazardGrid grid = readGrid(scenario);
+            cache.put(scenario, grid);
+            return grid;
+        }
+    }
+
+    /** Reads, hash-checks and decodes one grid file (about 0.5 MB compressed). */
+    private HazardGrid readGrid(FloodScenario scenario) throws IOException {
         byte[] bytes;
         try (InputStream in = assets.open(scenario.getGridAssetPath())) {
             bytes = readAll(in);
@@ -62,9 +83,7 @@ public final class AssetHazardRepository implements HazardRepository {
             throw new MalformedDataException("The prepared " + scenario.getLabel()
                     + " hazard grid does not match its manifest hash. Re-run :tools:dataprep:prepareHazards.");
         }
-        HazardGrid grid = HazardGrid.read(new ByteArrayInputStream(bytes), scenario, manifest.versionOf(scenario));
-        cache.put(scenario, grid);
-        return grid;
+        return HazardGrid.read(new ByteArrayInputStream(bytes), scenario, manifest.versionOf(scenario));
     }
 
     @Override

@@ -32,6 +32,7 @@ import com.rutarescue.service.CenterService;
 import com.rutarescue.ui.about.AboutActivity;
 import com.rutarescue.ui.common.Badges;
 import com.rutarescue.ui.common.BaseFragment;
+import com.rutarescue.ui.common.InfoTooltip;
 import com.rutarescue.ui.common.UiCallback;
 import com.rutarescue.ui.common.ViewBinders;
 import com.rutarescue.ui.resident.centers.CenterDetailActivity;
@@ -109,6 +110,12 @@ public class HomeFragment extends BaseFragment {
 
         bindNoahSource(view.findViewById(R.id.home_source_noah));
         showHero(null, null);
+        // Info tooltips so the prepared risk zones are not read as a weather update (and vice versa)
+        InfoTooltip.attach(view.findViewById(R.id.home_hero_info), R.string.tip_advisories_title, R.string.tip_advisories_body);
+        InfoTooltip.attach(view.findViewById(R.id.home_source_advisories_info), R.string.tip_advisories_title,
+                R.string.tip_advisories_body);
+        InfoTooltip.attach(view.findViewById(R.id.home_source_noah_info), R.string.tip_risk_zones_title,
+                R.string.tip_risk_zones_body);
 
         track(container().advisories().listenPublished(ui(this::onAdvisories)));
         track(container().centers().listenPublished(ui(this::onCenters)));

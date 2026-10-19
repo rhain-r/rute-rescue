@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.TooltipCompat;
 import androidx.core.widget.NestedScrollView;
 
 import com.google.android.material.chip.Chip;
@@ -23,18 +24,20 @@ import com.rutarescue.model.center.EvacuationCenter;
 import com.rutarescue.model.common.GeoPoint;
 import com.rutarescue.model.hazard.FloodScenario;
 import com.rutarescue.model.hazard.HazardClass;
+import com.rutarescue.model.hazard.PointHazard;
 import com.rutarescue.model.map.MapLayerSettings;
 import com.rutarescue.model.route.RoadClosure;
 import com.rutarescue.model.structure.RoadStructureRecord;
 import com.rutarescue.model.structure.StructureStatus;
 import com.rutarescue.model.user.LguProfile;
 import com.rutarescue.repository.StructureStatusRepository;
-import com.rutarescue.risk.HazardLookup;
 import com.rutarescue.risk.StructureIndex;
+import com.rutarescue.service.HazardQueryService;
 import com.rutarescue.service.MapLayerPreferences;
 import com.rutarescue.ui.common.Badges;
 import com.rutarescue.ui.common.BaseFragment;
 import com.rutarescue.ui.common.Dialogs;
+import com.rutarescue.ui.common.InfoTooltip;
 import com.rutarescue.ui.common.UiCallback;
 import com.rutarescue.ui.map.MapController;
 import com.rutarescue.ui.map.MapLayersSheet;
@@ -62,6 +65,8 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
     private static final double SAME_STRUCTURE_DEGREES = 20;
 
     private MapController map;
+    /** Tap-to-inspect lookups: off the UI thread, newest tap wins. */
+    private HazardQueryService hazardQueries;
     private FloodScenario scenario = FloodScenario.DEFAULT;
     private MapLayerSettings layers;
     private boolean syncingPills; // true while the pills are updated from the Map layers sheet
@@ -79,6 +84,7 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle state) {
         lgu = container().session().requireLgu();
+        hazardQueries = new HazardQueryService(container().hazards, container().executors);
         sheet = view.findViewById(R.id.lgu_map_sheet);
         ((TextView) view.findViewById(R.id.lgu_closures_title)).setText("Active closures • "
                 + lgu.getJurisdiction().getDisplayName());
@@ -108,6 +114,10 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
         Chip centers = view.findViewById(R.id.lgu_layer_centers);
         syncPills(view);
         zones.setOnCheckedChangeListener((b, checked) -> map.setHazardVisible(checked));
+        // Info tooltips: the risk zones are prepared NOAH scenarios, not a weather update.
+        InfoTooltip.attach(view.findViewById(R.id.lgu_map_info), R.string.tip_risk_zones_title,
+                R.string.tip_risk_zones_body);
+        TooltipCompat.setTooltipText(zones, getString(R.string.tip_risk_zones_title));
         // "Routes" layer: bridges/tunnels, LGU closures and (with a TomTom key) live traffic.
         structures.setOnCheckedChangeListener((b, checked) -> {
             if (syncingPills) return;
@@ -256,27 +266,11 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
         map.showMarkers(null, null, point);
         ((TextView) view.findViewById(R.id.lgu_sel_title)).setText("Selected point • " + point);
 
-        container().executors.io().execute(() -> {
-            HazardClass hazard;
-            boolean covered;
-            try {
-                HazardLookup lookup = container().hazards.loadBlocking(scenario);
-                covered = lookup.covers(point.getLatitude(), point.getLongitude());
-                hazard = lookup.classify(point.getLatitude(), point.getLongitude());
-            } catch (Exception e) {
-                hazard = HazardClass.NONE;
-                covered = false;
-            }
-            final HazardClass finalHazard = hazard;
-            final boolean finalCovered = covered;
-            container().executors.main().execute(() -> {
-                if (getView() == null) return;
-                ((TextView) requireView().findViewById(R.id.lgu_sel_hazard)).setText(finalCovered
-                        ? "NOAH " + scenario.getLabel() + ": " + finalHazard.getLabel() + " (" + finalHazard.getDepthRange() + ")"
-                        : "Outside prepared NOAH coverage");
-                Badges.hazard(requireView().findViewById(R.id.lgu_sel_hazard_badge), finalHazard);
-            });
-        });
+        // Background lookup; fast repeated taps or scenario switches only ever show the newest answer.
+        hazardQueries.inspect(point, scenario, UiCallback.of(this, this::showPointHazard, error -> {
+            ((TextView) requireView().findViewById(R.id.lgu_sel_hazard)).setText("Could not read the prepared NOAH data");
+            Badges.hazard(requireView().findViewById(R.id.lgu_sel_hazard_badge), HazardClass.NONE);
+        }));
 
         RoadStructureRecord structure = structureIndex == null ? null : structureIndex.nearest(point, 30);
         TextView structureText = view.findViewById(R.id.lgu_sel_structure);
@@ -304,6 +298,12 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
         lift.setOnClickListener(v -> Dialogs.input(requireContext(), "Lift closure", "Reason (kept in the audit trail)", "",
                 reason -> container().datasets().liftClosure(lgu, closure, reason, ui(ignored -> showMessage("Closure lifted")))));
         sheet.post(() -> sheet.smoothScrollTo(0, 0));
+    }
+
+    /** The answer names its own scenario, so the label always matches the class shown. */
+    private void showPointHazard(PointHazard answer) {
+        ((TextView) requireView().findViewById(R.id.lgu_sel_hazard)).setText(answer.describe());
+        Badges.hazard(requireView().findViewById(R.id.lgu_sel_hazard_badge), answer.getHazardClass());
     }
 
     private RoadClosure closureAt(GeoPoint point) {
@@ -408,6 +408,7 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
 
     @Override
     public void onDestroyView() {
+        if (hazardQueries != null) hazardQueries.cancel();
         if (map != null) map.onDestroy();
         map = null;
         super.onDestroyView();

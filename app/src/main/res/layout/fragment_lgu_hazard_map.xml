@@ -62,9 +62,10 @@
                     app:tint="@color/rr_navy_light" />
 
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
+                    android:layout_weight="1"
                     android:orientation="vertical">
 
                     <TextView
@@ -81,6 +82,13 @@
                         android:maxLines="1"
                         android:textAppearance="@style/TextAppearance.RR.Micro" />
                 </LinearLayout>
+
+                <!-- Info tooltip: the risk zones are prepared scenarios, not live weather -->
+                <ImageButton
+                    android:id="@+id/lgu_map_info"
+                    style="@style/RR.InfoButton"
+                    android:layout_marginEnd="-6dp"
+                    android:contentDescription="@string/cd_about_risk_zones" />
             </LinearLayout>
 
             <ImageButton

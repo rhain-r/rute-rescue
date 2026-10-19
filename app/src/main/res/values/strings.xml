@@ -326,4 +326,12 @@
     <string name="capacity_source_hint">Source of this count (e.g. barangay field check)</string>
     <string name="capacity_saved">Capacity saved</string>
     <string name="capacity_saved_offline">Saved on this phone. It uploads when you are back online.</string>
+
+    <!-- Info tooltips: keep the prepared NOAH risk zones apart from live LGU / weather updates -->
+    <string name="tip_risk_zones_title">Risk zones are not live weather</string>
+    <string name="tip_risk_zones_body">The coloured areas are prepared Project NOAH flood maps. They show where water could reach in a 5-, 25- or 100-year rain, so they look the same on sunny and stormy days. For today\'s rain, alert levels and evacuation calls, check the LGU advisories.</string>
+    <string name="tip_advisories_title">LGU advisories are current updates</string>
+    <string name="tip_advisories_body">Your LGU posts these for what is happening now: rain and typhoon warnings, alert levels and evacuation calls. Check the time on each one. The coloured risk zones on the map are different: prepared Project NOAH flood maps that do not change with the weather.</string>
+    <string name="cd_about_risk_zones">About risk zones</string>
+    <string name="cd_about_advisories">About LGU advisories</string>
 </resources>

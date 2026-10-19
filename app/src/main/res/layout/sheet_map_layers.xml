@@ -98,6 +98,16 @@
                 android:drawableStart="@drawable/ic_prepared_data"
                 android:text="@string/layers_prepared"
                 android:textColor="@color/rr_text_secondary" />
+
+            <!-- Info tooltip: the risk zones are prepared scenarios, not live weather -->
+            <ImageButton
+                android:id="@+id/layers_flood_info"
+                style="@style/RR.InfoButton"
+                android:layout_marginStart="2dp"
+                android:layout_marginTop="-5dp"
+                android:layout_marginEnd="-7dp"
+                android:layout_marginBottom="-5dp"
+                android:contentDescription="@string/cd_about_risk_zones" />
         </LinearLayout>
 
         <LinearLayout

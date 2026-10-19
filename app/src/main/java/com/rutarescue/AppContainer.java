@@ -106,7 +106,7 @@ public final class AppContainer {
         connectivity = new ConnectivityMonitor(app);
         freshness = new FreshnessService(app);
         location = new LocationHelper(app);
-        hazards = new AssetHazardRepository(app.getAssets());
+        hazards = new AssetHazardRepository(app.getAssets()::open);
         structures = new AssetStructureRepository(app.getAssets());
         advisoryMarks = new AdvisoryMarks(app);
         mapLayers = new MapLayerPreferences(app);

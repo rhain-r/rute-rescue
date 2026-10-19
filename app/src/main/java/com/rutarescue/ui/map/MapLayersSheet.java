@@ -24,6 +24,7 @@ import com.rutarescue.R;
 import com.rutarescue.model.hazard.FloodScenario;
 import com.rutarescue.model.map.BaseMap;
 import com.rutarescue.model.map.MapLayerSettings;
+import com.rutarescue.ui.common.InfoTooltip;
 
 /**
  * Phase 1 "Map layers" sheet. The resident chooses one base map and switches each flood
@@ -87,6 +88,11 @@ public class MapLayersSheet extends BottomSheetDialogFragment {
             bind(view);
             notifyChanged();
         });
+        // The "Prepared, not live" chip and its "i" both explain that risk zones are not weather.
+        InfoTooltip.attach(view.findViewById(R.id.layers_flood_info), R.string.tip_risk_zones_title,
+                R.string.tip_risk_zones_body);
+        InfoTooltip.attach(view.findViewById(R.id.layers_prepared_chip), R.string.tip_risk_zones_title,
+                R.string.tip_risk_zones_body);
         bind(view);
     }
 
