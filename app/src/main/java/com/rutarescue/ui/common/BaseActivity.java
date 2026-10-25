@@ -36,8 +36,12 @@ public abstract class BaseActivity extends AppCompatActivity {
         ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.ime());
             view.setPadding(left + bars.left, top + bars.top, right + bars.right, bottom + bars.bottom);
+            // The keyboard just opened (or changed size): keep the box being typed in above it.
+            if (insets.isVisible(WindowInsetsCompat.Type.ime())) KeyboardScroll.revealSoon(view);
             return WindowInsetsCompat.CONSUMED;
         });
+        // Moving to another box while the keyboard is open scrolls that one into view too.
+        root.getViewTreeObserver().addOnGlobalFocusChangeListener((oldFocus, newFocus) -> KeyboardScroll.revealSoon(root));
     }
 
     protected void showMessage(String message) {

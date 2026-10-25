@@ -41,7 +41,7 @@ Real screens from the Android emulator, using made-up demo data (one resident na
 
 - **Problem:** Floods cut off roads, and residents rarely know which route to an evacuation center is least exposed.
 - **Idea:** The app checks each route against official flood-hazard maps and ranks the options by risk.
-- **Users:** Residents plan routes and keep a family record, while LGU staff publish advisories and verify data.
+- **Users:** Residents plan routes and keep a family record, moderators run one evacuation center each, and the LGU announces and approves.
 
 ## What residents can do
 
@@ -51,15 +51,25 @@ Real screens from the Android emulator, using made-up demo data (one resident na
 - Check each center's latest headcount posted by the LGU.
 - Call emergency hotlines straight from Home.
 - Apply for Ligtas Priority assistance and show its status as a QR code.
+- See the city's alert level and the newest advisories first on Home.
+- Get a priority ID with a QR code at sign-up as a senior citizen, person with disability or pregnant resident.
+- Change the password, notifications and sync from Settings.
 
-## What LGU staff can do
+## What moderators can do
 
-- Publish flood advisories.
+- Run one evacuation center and keep its headcount, status and facilities up to date.
+- See every center of the city with how full it is.
+- Send advisories about their center to the LGU and rewrite one the LGU declined.
+- Scan a resident's priority ID and mark missing documents.
 - Review Ligtas Priority applications.
-- Report road closures on the map.
-- Confirm whether bridges and tunnels are open.
-- Import and verify evacuation-center data.
-- Post each center's capacity and headcount.
+
+## What the LGU can do
+
+- Set the city's alert level.
+- Accept or decline the moderators' advisories and publish its own.
+- Report road closures and confirm whether bridges and tunnels are open.
+- Add, import, verify and publish evacuation centers.
+- Approve staff sign-ups and choose the center each moderator runs.
 
 ---
 
@@ -73,7 +83,8 @@ Real screens from the Android emulator, using made-up demo data (one resident na
 
 - `AuthService` signs the user in with Firebase Auth.
 - `SessionManager` loads the user's profile and role from Firestore.
-- `MainShellActivity` shows the resident tabs or the LGU tabs based on that role.
+- `MainShellActivity` shows the resident, moderator or LGU tabs based on that role.
+- `ModeratorProfile` and `LguProfile` answer every "may I?" question, such as `canManageCenter()` or `canSetAlertLevel()`.
 
 ### Family record
 
@@ -111,10 +122,18 @@ Real screens from the Android emulator, using made-up demo data (one resident na
 - `CenterCapacity` refuses a headcount above 120% of capacity and gives residents a line like "212 of 300 people · 71%".
 - `HotlineReader` loads the nine emergency hotlines, and `Hotline.dialDigits()` turns a printed number into what the phone dials.
 
-### Ligtas Priority
+### Ligtas Priority and priority IDs
 
 - `LigtasService.submit()` stores the application with its synthetic proof image.
-- `LigtasService.decide()` saves the LGU decision and its `AuditEvent` together in one Firestore batch.
+- `LigtasService.decide()` saves the moderator's decision and its `AuditEvent` together in one Firestore batch.
+- `PriorityIdService.issue()` creates a priority ID whose QR holds only a random code.
+- `PriorityCard.recordCheck()` stores the moderator's OK or Missing for each checklist item.
+
+### Advisories and the alert level
+
+- `CityAlertService.set()` lets only the city's LGU change its alert level.
+- `Advisory` moves a moderator's update from Pending to Approved or Declined, and a declined one can never be published.
+- `SafeRouteFragment` plans routes again when the LGU posts or lifts a road closure.
 
 ### Offline and sync
 
@@ -144,8 +163,8 @@ app/src/main/res/layout/   XML views
 | OOP concept | Where it shows |
 |---|---|
 | Encapsulation | `FamilyRecord` and `LigtasApplication` change only through validated methods. |
-| Inheritance | `ResidentProfile` and `LguProfile` extend `UserProfile`. |
-| Polymorphism | Five `RiskRule` classes score a route in their own way. |
+| Inheritance | `ModeratorProfile` and `LguProfile` extend `StaffProfile`, which extends `UserProfile`. |
+| Polymorphism | Each staff profile answers the permission checks its own way, and five `RiskRule` classes score a route their own way. |
 | Abstraction | `RouteProvider` hides whether TomTom, OpenStreetMap or the cache answers. |
 
 | Lab | Concept | File |
@@ -153,6 +172,14 @@ app/src/main/res/layout/   XML views
 | Lab 5 | Record IDs and a binary `system.dat` | `RecordValidator`, `SystemStateStore` |
 | Lab 6 | A pipe-delimited `family_records.txt` with custom exceptions | `FamilyTextFileStore`, `InvalidFamilyRecordException` |
 | Lab 7 | Name formatting, phone rules, duplicate IDs and safe saves | `NameFormatter`, `PhoneNumber`, `AtomicFileWriter` |
+
+---
+
+## More documentation
+
+- [Roles, requirements, use cases, OOP and MVC](docs/ARCHITECTURE_roles_oop_mvc.md)
+- [Plain-language walkthrough](docs/WALKTHROUGH.md)
+- [Latest change log](docs/CHANGES_2026-10-22_role-workflows.md)
 
 ---
 
@@ -168,7 +195,7 @@ app/src/main/res/layout/   XML views
 | Place search | OpenStreetMap Nominatim |
 | Flood data | UP NOAH 5-, 25- and 100-year flood maps |
 | Design | Built to match the team's Figma file exactly |
-| Tests | 156 unit tests and 11 database security-rule tests |
+| Tests | 237 unit tests and 20 database security-rule tests |
 
 ## Bundled data
 
@@ -189,7 +216,7 @@ app/src/main/res/layout/   XML views
 - The TomTom key stays in each computer's `local.properties` and is never uploaded.
 - Every LGU change writes a permanent audit record.
 - Ligtas Priority uses sample images only, never real IDs or medical files.
-- QR codes hold only an application number.
+- QR codes hold only an application number or a random priority-ID code.
 - Signing out wipes the family file and cached routes from a shared phone.
 - No personal data or keys are written to the logs.
 

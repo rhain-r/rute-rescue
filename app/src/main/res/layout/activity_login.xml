@@ -40,6 +40,19 @@
             android:textAppearance="@style/TextAppearance.RR.Body"
             android:textColor="@color/rr_text_secondary" />
 
+        <!-- 2026-10-21: shown only in a test build that signs in to the local test server -->
+        <TextView
+            android:id="@+id/login_test_server"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_notice"
+            android:padding="14dp"
+            android:text="@string/login_test_server"
+            android:textAppearance="@style/TextAppearance.RR.Body"
+            android:textColor="@color/rr_orange"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/login_firebase_warning"
             android:layout_width="match_parent"
@@ -63,7 +76,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:autofillHints="emailAddress"
-                android:inputType="textEmailAddress" />
+                android:inputType="textEmailAddress"
+                android:imeOptions="actionNext"
+                android:nextFocusForward="@+id/login_password"
+                android:nextFocusDown="@+id/login_password" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -80,7 +96,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:autofillHints="password"
-                android:inputType="textPassword" />
+                android:inputType="textPassword"
+                android:imeOptions="actionDone" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.progressindicator.LinearProgressIndicator
@@ -100,12 +117,27 @@
             android:text="@string/sign_in" />
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/login_forgot"
+            style="@style/Widget.RR.Button.Text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/forgot_password" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/login_register"
             style="@style/Widget.RR.Button.Text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/create_resident_account" />
+
+        <!-- 2026-10-20: city staff ask for a Moderator or LGU account (approved by the city's LGU) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/login_staff"
+            style="@style/Widget.RR.Button.Text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/staff_sign_up" />
 
         <TextView
             android:layout_width="match_parent"

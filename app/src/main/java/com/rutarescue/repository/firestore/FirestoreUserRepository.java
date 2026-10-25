@@ -3,7 +3,9 @@ package com.rutarescue.repository.firestore;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.rutarescue.model.common.MetroManilaCity;
-import com.rutarescue.model.user.LguProfile;
+import com.rutarescue.exception.ProfileNotFoundException;
+import com.rutarescue.exception.StaffPendingException;
+import com.rutarescue.model.user.StaffProfile;
 import com.rutarescue.model.user.ResidentProfile;
 import com.rutarescue.model.user.UserProfile;
 import com.rutarescue.repository.Callback;
@@ -13,10 +15,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Profiles live in two collections:
- *   lgu_staff/{uid} - created ONLY by an administrator in the Firebase console
- *   users/{uid}     - created by resident self-registration, role is always RESIDENT
- * The security rules make sure a resident can never write lgu_staff or change their role.
+ * Profiles live in three collections:
+ *   lgu_staff/{uid}     - approved staff (role MODERATOR or LGU; no role = LGU). Created by the
+ *                         city's LGU when it approves a sign-up, or by an administrator in the console
+ *   staffRequests/{uid} - a staff sign-up still waiting for (or refused by) the city's LGU
+ *   users/{uid}         - created by resident self-registration, role is always RESIDENT
+ * The security rules make sure nobody can make themselves staff or change their role.
  */
 public final class FirestoreUserRepository implements UserRepository {
 
@@ -33,28 +37,42 @@ public final class FirestoreUserRepository implements UserRepository {
                     if (lguDoc.exists()) {
                         deliverLgu(uid, lguDoc, callback);
                     } else {
-                        loadResident(uid, callback);
+                        checkStaffRequest(uid, callback);
                     }
                 })
                 .addOnFailureListener(callback::onError);
     }
 
     private void deliverLgu(String uid, DocumentSnapshot doc, Callback<UserProfile> callback) {
-        MetroManilaCity jurisdiction = MetroManilaCity.fromCode(FirestoreMappers.str(doc, "jurisdiction"));
-        if (jurisdiction == null) {
+        StaffProfile staff = FirestoreStaffRepository.staff(doc);
+        if (staff == null) {
             callback.onError(new IllegalStateException(
-                    "This LGU account has no valid jurisdiction. Ask the administrator to set lgu_staff/" + uid + ".jurisdiction."));
+                    "This staff account has no valid city. Ask the administrator to set lgu_staff/" + uid + ".jurisdiction."));
             return;
         }
-        callback.onSuccess(new LguProfile(uid, FirestoreMappers.str(doc, "displayName"),
-                FirestoreMappers.str(doc, "email"), jurisdiction, FirestoreMappers.str(doc, "position")));
+        callback.onSuccess(staff);
+    }
+
+    /** No staff record: a staff sign-up waiting for approval, or else a resident. */
+    private void checkStaffRequest(String uid, Callback<UserProfile> callback) {
+        db.collection(FirestoreStaffRepository.REQUESTS).document(uid).get()
+                .addOnSuccessListener(requestDoc -> {
+                    if (requestDoc.exists()) {
+                        callback.onError(new StaffPendingException(FirestoreStaffRepository.request(requestDoc)));
+                    } else {
+                        loadResident(uid, callback);
+                    }
+                })
+                // A database still on the older rules cannot read staff requests: residents must still
+                // be able to sign in, so carry on with the resident profile.
+                .addOnFailureListener(error -> loadResident(uid, callback));
     }
 
     private void loadResident(String uid, Callback<UserProfile> callback) {
         db.collection("users").document(uid).get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists()) {
-                        callback.onError(new IllegalStateException("No RutaRescue profile was found for this account."));
+                        callback.onError(new ProfileNotFoundException());
                         return;
                     }
                     callback.onSuccess(new ResidentProfile(uid, FirestoreMappers.str(doc, "displayName"),

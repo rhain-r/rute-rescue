@@ -26,11 +26,11 @@ import com.rutarescue.R;
 import com.rutarescue.model.common.SourcedData;
 import com.rutarescue.model.ligtas.ApplicationStatus;
 import com.rutarescue.model.ligtas.LigtasApplication;
-import com.rutarescue.model.user.LguProfile;
-import com.rutarescue.ui.about.AboutActivity;
+import com.rutarescue.model.user.StaffProfile;
 import com.rutarescue.ui.common.Badges;
 import com.rutarescue.ui.common.BaseFragment;
 import com.rutarescue.ui.common.SimpleListAdapter;
+import com.rutarescue.ui.moderator.QrCheck;
 import com.rutarescue.ui.resident.home.InboxActivity;
 import com.rutarescue.util.Formats;
 
@@ -39,26 +39,22 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Ligtas Priority reviews (Figma "LGU / Ligtas Reviews"): Pending / Approved / Rejected
- * tabs for the officer's jurisdiction only, search, and QR verification of approved
- * applications.
+ * Ligtas Priority reviews (Figma "LGU / Ligtas Reviews"), the moderator's tab: Pending / Needs
+ * documents / Approved / Rejected for the moderator's own city only, search, and QR
+ * verification of approved applications. Since 2026-10-22 the same scanner (or a typed code)
+ * opens a resident's priority ID and its document checklist.
  */
 public class LguReviewsFragment extends BaseFragment {
 
-    private LguProfile lgu;
+    private StaffProfile staff;
     private SimpleListAdapter<LigtasApplication> adapter;
     private List<LigtasApplication> all = new ArrayList<>();
     private ApplicationStatus tab = ApplicationStatus.PENDING;
     private EditText search;
 
+    /** One scanner for both QR kinds (2026-10-22): a Ligtas application or a resident's priority ID. */
     private final ActivityResultLauncher<ScanOptions> scanner = registerForActivityResult(new ScanContract(), result -> {
-        if (result.getContents() == null) return;
-        String id = LigtasApplication.parseQrPayload(result.getContents());
-        if (id == null) {
-            showMessage("This is not a RutaRescue Ligtas QR code.");
-        } else {
-            startActivity(ReviewDetailActivity.intent(requireContext(), id, true));
-        }
+        if (result.getContents() != null) open(result.getContents());
     });
 
     @Nullable
@@ -69,10 +65,10 @@ public class LguReviewsFragment extends BaseFragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle state) {
-        lgu = container().session().requireLgu();
-        ((TextView) view.findViewById(R.id.header_eyebrow)).setText(R.string.eyebrow_lgu);
+        staff = container().session().requireStaff();
+        ((TextView) view.findViewById(R.id.header_eyebrow)).setText(staff.canDecideLigtas()
+                ? R.string.role_moderator_eyebrow : R.string.eyebrow_lgu);
         view.findViewById(R.id.header_bell).setOnClickListener(v -> startActivity(new Intent(requireContext(), InboxActivity.class)));
-        view.findViewById(R.id.header_logo).setOnClickListener(v -> startActivity(new Intent(requireContext(), AboutActivity.class)));
 
         RecyclerView list = view.findViewById(R.id.reviews_list);
         list.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -84,7 +80,8 @@ public class LguReviewsFragment extends BaseFragment {
             if (ids.isEmpty()) return;
             int id = ids.get(0);
             tab = id == R.id.reviews_tab_approved ? ApplicationStatus.APPROVED
-                    : id == R.id.reviews_tab_rejected ? ApplicationStatus.REJECTED : ApplicationStatus.PENDING;
+                    : id == R.id.reviews_tab_rejected ? ApplicationStatus.REJECTED
+                    : id == R.id.reviews_tab_documents ? ApplicationStatus.NEEDS_DOCUMENTS : ApplicationStatus.PENDING;
             applyFilter();
         });
         search = view.findViewById(R.id.reviews_search);
@@ -102,29 +99,32 @@ public class LguReviewsFragment extends BaseFragment {
                 applyFilter();
             }
         });
-        view.findViewById(R.id.reviews_scan).setOnClickListener(v -> {
-            ScanOptions options = new ScanOptions();
-            options.setDesiredBarcodeFormats(ScanOptions.QR_CODE);
-            options.setPrompt("Scan a resident's Ligtas verification QR");
-            options.setBeepEnabled(false);
-            options.setOrientationLocked(false);
-            scanner.launch(options);
-        });
+        view.findViewById(R.id.reviews_priority_check).setOnClickListener(v -> QrCheck.choose(requireContext(),
+                () -> scanner.launch(QrCheck.scanOptions()), this::open));
 
-        track(container().ligtas().listenForReviewer(lgu, ui(this::onApplications)));
+        track(container().ligtas().listenForReviewer(staff, ui(this::onApplications)));
+    }
+
+    /** A scanned or typed code: the priority ID check or the Ligtas application. */
+    private void open(String contents) {
+        Intent destination = QrCheck.destination(requireContext(), contents);
+        if (destination == null) showMessage("This is not a RutaRescue priority ID or Ligtas QR code.");
+        else startActivity(destination);
     }
 
     private void onApplications(SourcedData<List<LigtasApplication>> data) {
         all = data.getData();
         Badges.freshness(requireView().findViewById(R.id.reviews_freshness), data.getFreshness(), data.getRetrievedAt(), "");
-        int pending = 0, approved = 0, rejected = 0;
+        int pending = 0, documents = 0, approved = 0, rejected = 0;
         for (LigtasApplication application : all) {
             if (application.getStatus() == ApplicationStatus.PENDING) pending++;
+            else if (application.getStatus() == ApplicationStatus.NEEDS_DOCUMENTS) documents++;
             else if (application.getStatus() == ApplicationStatus.APPROVED) approved++;
             else rejected++;
         }
         View view = requireView();
         ((Chip) view.findViewById(R.id.reviews_tab_pending)).setText(getString(R.string.pending) + " " + pending);
+        ((Chip) view.findViewById(R.id.reviews_tab_documents)).setText(getString(R.string.needs_documents) + " " + documents);
         ((Chip) view.findViewById(R.id.reviews_tab_approved)).setText(getString(R.string.approved) + " " + approved);
         ((Chip) view.findViewById(R.id.reviews_tab_rejected)).setText(getString(R.string.rejected) + " " + rejected);
         ((TextView) view.findViewById(R.id.reviews_pending_count)).setText(pending + " pending");
@@ -146,7 +146,7 @@ public class LguReviewsFragment extends BaseFragment {
         TextView empty = requireView().findViewById(R.id.reviews_empty);
         empty.setVisibility(shown.isEmpty() ? View.VISIBLE : View.GONE);
         empty.setText("No " + tab.getLabel().toLowerCase(Locale.ROOT) + " applications in "
-                + lgu.getJurisdiction().getDisplayName() + ".");
+                + staff.getJurisdiction().getDisplayName() + ".");
     }
 
     /** Figma "Application / ..." card. */
@@ -162,13 +162,16 @@ public class LguReviewsFragment extends BaseFragment {
         if (urgent) Badges.label(state, "Urgent", Badges.Tone.RED);
         else if (application.getStatus() == ApplicationStatus.PENDING) Badges.label(state, "New", Badges.Tone.TEAL);
         else if (application.getStatus() == ApplicationStatus.APPROVED) Badges.label(state, "Approved", Badges.Tone.GREEN);
+        else if (application.getStatus() == ApplicationStatus.NEEDS_DOCUMENTS) Badges.label(state, "Needs documents", Badges.Tone.ORANGE);
         else Badges.label(state, "Rejected", Badges.Tone.RED);
         ((TextView) row.findViewById(R.id.ligtas_body)).setText(application.getCategory().getLabel() + ": "
                 + application.getJustification());
         boolean pending = application.getStatus() == ApplicationStatus.PENDING;
         row.findViewById(R.id.ligtas_proof).setVisibility(pending ? View.VISIBLE : View.GONE);
+        // Decided applications can still be changed (a mistaken approval): say so on the card.
         ((TextView) row.findViewById(R.id.ligtas_footer)).setText(pending
-                ? getString(R.string.review_application) : "Reason: " + application.getReviewReason());
+                ? getString(R.string.review_application)
+                : "Message: " + application.getReviewReason() + "\n" + getString(R.string.change_status) + " →");
         row.setOnClickListener(v -> startActivity(ReviewDetailActivity.intent(requireContext(), application.getId(), false)));
     }
 }

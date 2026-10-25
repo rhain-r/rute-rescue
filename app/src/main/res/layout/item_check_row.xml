@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    One priority ID checklist item: what to check, its kind, and OK / Missing (2026-10-22).
+    Every row repeats the same chip ids, so the chips do not save their own state (the screen does).
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/RR.CardColumn">
+
+    <TextView
+        android:id="@+id/check_kind"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAllCaps="true"
+        android:textAppearance="@style/TextAppearance.RR.Micro"
+        android:textColor="@color/rr_text_secondary" />
+
+    <TextView
+        android:id="@+id/check_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textAppearance="@style/TextAppearance.RR.Body" />
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/check_choice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:saveEnabled="false"
+        app:selectionRequired="false"
+        app:singleSelection="true">
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/check_ok"
+            style="@style/Widget.RR.Chip.Status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checkable="true"
+            android:saveEnabled="false"
+            android:text="@string/check_ok" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/check_missing"
+            style="@style/Widget.RR.Chip.Status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checkable="true"
+            android:saveEnabled="false"
+            android:text="@string/check_missing" />
+    </com.google.android.material.chip.ChipGroup>
+</LinearLayout>

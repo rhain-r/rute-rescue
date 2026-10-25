@@ -33,12 +33,15 @@ import com.rutarescue.repository.firestore.FirebaseProofStorage;
 import com.rutarescue.repository.firestore.FirestoreAdvisoryRepository;
 import com.rutarescue.repository.firestore.FirestoreAuditRepository;
 import com.rutarescue.repository.firestore.FirestoreCenterRepository;
+import com.rutarescue.repository.firestore.FirestoreCityAlertRepository;
 import com.rutarescue.repository.firestore.FirestoreClosureRepository;
 import com.rutarescue.repository.firestore.FirestoreDatasetRepository;
 import com.rutarescue.repository.firestore.FirestoreFamilyRepository;
 import com.rutarescue.repository.firestore.FirestoreInlineProofStorage;
 import com.rutarescue.repository.firestore.FirestoreLigtasRepository;
+import com.rutarescue.repository.firestore.FirestorePriorityCardRepository;
 import com.rutarescue.repository.firestore.FirestoreSavedPlaceRepository;
+import com.rutarescue.repository.firestore.FirestoreStaffRepository;
 import com.rutarescue.repository.firestore.FirestoreStructureStatusRepository;
 import com.rutarescue.repository.firestore.FirestoreUserRepository;
 import com.rutarescue.repository.local.AssetHazardRepository;
@@ -48,14 +51,18 @@ import com.rutarescue.service.MapLayerPreferences;
 import com.rutarescue.service.AdvisoryService;
 import com.rutarescue.service.AuthService;
 import com.rutarescue.service.CenterService;
+import com.rutarescue.service.CityAlertService;
 import com.rutarescue.service.ConnectivityMonitor;
 import com.rutarescue.service.DatasetService;
 import com.rutarescue.service.FamilyService;
 import com.rutarescue.service.FreshnessService;
+import com.rutarescue.service.LigtasNotifier;
 import com.rutarescue.service.LigtasService;
 import com.rutarescue.service.LocationHelper;
 import com.rutarescue.service.RouteService;
+import com.rutarescue.service.PriorityIdService;
 import com.rutarescue.service.SessionManager;
+import com.rutarescue.service.StaffService;
 import com.rutarescue.util.AppExecutors;
 
 import java.io.BufferedReader;
@@ -89,6 +96,8 @@ public final class AppContainer {
     public final AdvisoryMarks advisoryMarks;
     /** Map layers sheet choices, remembered on this phone. */
     public final MapLayerPreferences mapLayers;
+    /** Phone notifications about the resident's Ligtas applications (2026-10-20). */
+    public final LigtasNotifier ligtasNotifier;
     /** National emergency hotlines bundled with the app (PLM SSC post, 24 Jul 2024; labels corrected). */
     public final List<Hotline> hotlines;
     /** Each city's own emergency hotline (official or LGU-quoted sources, checked 2026-10-19). */
@@ -106,6 +115,9 @@ public final class AppContainer {
     private DatasetService datasetService;
     private SavedPlaceRepository savedPlaces;
     private AuditRepository audit;
+    private StaffService staffService;
+    private CityAlertService cityAlertService;
+    private PriorityIdService priorityIdService;
 
     public AppContainer(Context context) {
         Context app = context.getApplicationContext();
@@ -116,6 +128,7 @@ public final class AppContainer {
         structures = new AssetStructureRepository(app.getAssets());
         advisoryMarks = new AdvisoryMarks(app);
         mapLayers = new MapLayerPreferences(app);
+        ligtasNotifier = new LigtasNotifier(app);
         hotlines = readHotlines(app);
         cityHotlines = readCityHotlines(app);
         hasTomTomKey = !BuildConfig.TOMTOM_API_KEY.isEmpty();
@@ -145,13 +158,16 @@ public final class AppContainer {
                     .build());
 
             UserRepository users = new FirestoreUserRepository(db);
-            authService = new AuthService(auth, users);
+            FirestoreStaffRepository staffRequests = new FirestoreStaffRepository(db, connectivity);
+            authService = new AuthService(auth, users, staffRequests);
+            staffService = new StaffService(staffRequests);
             session = new SessionManager(authService, users);
             familyService = new FamilyService(new FirestoreFamilyRepository(db, freshness, connectivity), executors,
                     new File(app.getFilesDir(), "data").toPath());
             FirestoreCenterRepository centers = new FirestoreCenterRepository(db, freshness, connectivity);
             centerService = new CenterService(centers, readBundledCenters(app));
             advisoryService = new AdvisoryService(new FirestoreAdvisoryRepository(db, freshness, connectivity));
+            advisoryService.setSaved(advisoryMarks::isSaved); // saved updates outlive the 30-day window
             ProofStorage proofs = BuildConfig.USE_FIREBASE_STORAGE
                     ? new FirebaseProofStorage(storage)
                     : new FirestoreInlineProofStorage(db, connectivity);
@@ -162,6 +178,8 @@ public final class AppContainer {
                     structureStatuses, closures, hazards, structures, executors);
             savedPlaces = new FirestoreSavedPlaceRepository(db, connectivity);
             audit = new FirestoreAuditRepository(db);
+            cityAlertService = new CityAlertService(new FirestoreCityAlertRepository(db, connectivity));
+            priorityIdService = new PriorityIdService(new FirestorePriorityCardRepository(db, connectivity));
         }
         // Free providers only (no payment):
         //  - search: OpenStreetMap Nominatim (no key);
@@ -185,6 +203,7 @@ public final class AppContainer {
         if (familyService != null) familyService.clearLocalCopy();
         executors.io().execute(routeCache::clear);
         advisoryMarks.clear();
+        ligtasNotifier.clear();
     }
 
     /** The PLM SSC centers bundled with the app; an unreadable file gives an empty list. */
@@ -221,6 +240,7 @@ public final class AppContainer {
     public boolean isFirebaseReady() { return firebaseReady; }
     public AuthService auth() { return authService; }
     public SessionManager session() { return session; }
+    public StaffService staff() { return staffService; }
     public FamilyService family() { return familyService; }
     public RouteService routes() { return routeService; }
     public CenterService centers() { return centerService; }
@@ -229,4 +249,8 @@ public final class AppContainer {
     public DatasetService datasets() { return datasetService; }
     public SavedPlaceRepository savedPlaces() { return savedPlaces; }
     public AuditRepository audit() { return audit; }
+    /** The city alert level, set only by the city's LGU (2026-10-22). */
+    public CityAlertService alerts() { return cityAlertService; }
+    /** Residents' priority IDs and the moderators' checks (2026-10-22). */
+    public PriorityIdService priorityIds() { return priorityIdService; }
 }

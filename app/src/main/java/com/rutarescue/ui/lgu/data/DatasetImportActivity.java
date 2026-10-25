@@ -15,7 +15,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.rutarescue.R;
 import com.rutarescue.exception.ValidationException;
-import com.rutarescue.model.user.LguProfile;
+import com.rutarescue.model.user.StaffProfile;
 import com.rutarescue.persistence.CenterCsvReader;
 import com.rutarescue.ui.common.Badges;
 import com.rutarescue.ui.common.BaseActivity;
@@ -41,7 +41,7 @@ public class DatasetImportActivity extends BaseActivity {
     /** PLM Supreme Student Council list (Facebook, 24 Jul 2024); pins located with OpenStreetMap. */
     private static final String PLMSSC_ASSET = "seed/centers_plmssc_2024_unverified.csv";
 
-    private LguProfile lgu;
+    private StaffProfile staff;
     private SimpleListAdapter<CenterCsvReader.Row> adapter;
     private List<CenterCsvReader.Row> rows = new ArrayList<>();
     private String fileLabel = "";
@@ -56,7 +56,7 @@ public class DatasetImportActivity extends BaseActivity {
         applySystemBarInsets(findViewById(R.id.import_root));
         ((TextView) findViewById(R.id.toolbar_title)).setText(R.string.dataset_import);
         findViewById(R.id.toolbar_back).setOnClickListener(v -> finish());
-        lgu = container().session().requireLgu();
+        staff = container().session().requireStaff();
 
         RecyclerView list = findViewById(R.id.import_rows);
         list.setLayoutManager(new LinearLayoutManager(this));
@@ -109,11 +109,11 @@ public class DatasetImportActivity extends BaseActivity {
             if (!row.isValid()) invalid++;
             else {
                 valid++;
-                if (lgu.canManage(row.center.getCity())) mine++;
+                if (staff.canManage(row.center.getCity())) mine++;
             }
         }
         ((TextView) findViewById(R.id.import_summary)).setText(rows.size() + " rows • " + valid + " valid • "
-                + invalid + " with errors • " + mine + " in " + lgu.getJurisdiction().getDisplayName() + " can be published");
+                + invalid + " with errors • " + mine + " in " + staff.getJurisdiction().getDisplayName() + " can be published");
         adapter.submit(rows);
         findViewById(R.id.import_publish).setEnabled(mine > 0);
     }
@@ -131,7 +131,7 @@ public class DatasetImportActivity extends BaseActivity {
         } else {
             title.setText(item.center.getName());
             subtitle.setText(item.center.getCity().getDisplayName() + " • " + item.center.getLocation());
-            if (lgu.canManage(item.center.getCity())) Badges.style(badge, "Will publish", Badges.Tone.GREEN);
+            if (staff.canManage(item.center.getCity())) Badges.style(badge, "Will publish", Badges.Tone.GREEN);
             else Badges.style(badge, "Other city", Badges.Tone.GREY);
         }
     }
@@ -148,11 +148,11 @@ public class DatasetImportActivity extends BaseActivity {
             return;
         }
         Dialogs.confirm(this, getString(R.string.publish_valid_rows),
-                "Publish the valid " + lgu.getJurisdiction().getDisplayName() + " rows as verified centers? Each one is "
+                "Publish the valid " + staff.getJurisdiction().getDisplayName() + " rows as verified centers? Each one is "
                         + "recorded in the audit trail with your verification note.", getString(R.string.publish),
                 () -> {
                     findViewById(R.id.import_publish).setEnabled(false);
-                    container().datasets().publishCenters(lgu, rows, source, fileLabel, UiCallback.of(this, count -> {
+                    container().datasets().publishCenters(staff, rows, source, fileLabel, UiCallback.of(this, count -> {
                         showMessage(count + " centers published");
                         finish();
                     }, error -> {

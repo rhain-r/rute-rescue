@@ -44,7 +44,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:autofillHints="name"
-                android:inputType="textPersonName|textCapWords" />
+                android:inputType="textPersonName|textCapWords"
+                android:imeOptions="actionNext"
+                android:nextFocusForward="@+id/register_email"
+                android:nextFocusDown="@+id/register_email" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -59,7 +62,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:autofillHints="emailAddress"
-                android:inputType="textEmailAddress" />
+                android:inputType="textEmailAddress"
+                android:imeOptions="actionNext"
+                android:nextFocusForward="@+id/register_password"
+                android:nextFocusDown="@+id/register_password" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -72,6 +78,23 @@
 
             <com.google.android.material.textfield.MaterialAutoCompleteTextView
                 android:id="@+id/register_city"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- 2026-10-22: a priority group gets a priority ID with a QR code right after sign-up -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/register_priority_layout"
+            style="@style/Widget.RR.TextInput.Dropdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/priority_group"
+            app:helperText="@string/priority_group_help">
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/register_priority"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="none" />
@@ -91,7 +114,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:autofillHints="newPassword"
-                android:inputType="textPassword" />
+                android:inputType="textPassword"
+                android:imeOptions="actionNext"
+                android:nextFocusForward="@+id/register_confirm"
+                android:nextFocusDown="@+id/register_confirm" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -107,7 +133,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:autofillHints="newPassword"
-                android:inputType="textPassword" />
+                android:inputType="textPassword"
+                android:imeOptions="actionDone" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.progressindicator.LinearProgressIndicator

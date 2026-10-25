@@ -16,6 +16,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Source;
+import com.rutarescue.repository.firestore.FirestoreLigtasRepository;
 import com.rutarescue.util.SafeLog;
 
 import java.util.concurrent.TimeUnit;
@@ -58,6 +59,9 @@ public final class SyncWorker extends Worker {
             freshness.markServerSync(FreshnessService.ADVISORIES, System.currentTimeMillis());
             Tasks.await(db.collection("centers").whereEqualTo("published", true).get(Source.SERVER), 30, TimeUnit.SECONDS);
             freshness.markServerSync(FreshnessService.CENTERS, System.currentTimeMillis());
+            // 2026-10-20: tell the resident when a moderator decided one of their Ligtas applications.
+            String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            new LigtasNotifier(getApplicationContext()).announce(FirestoreLigtasRepository.readMineFromServer(db, uid));
             SafeLog.i(TAG, "Background sync finished");
             return Result.success();
         } catch (Exception e) {

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Figma "LGU / Data & Centers": pinned LGU header, then "Screen Content" (16 dp padding, 12 dp gap):
-    Data Health, "Datasets" + "Upload", dataset rows, "Evacuation centers" + "Manage", center rows,
-    Scope Notice.
+    Data Health, "Evacuation centers" + "Manage", center rows, Scope Notice. (The dataset rows
+    moved to Settings on 2026-10-25.)
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -58,29 +58,11 @@
                     android:textAppearance="@style/TextAppearance.RR.Caption" />
             </LinearLayout>
 
-            <!-- "Datasets" + "Upload" -->
+            <!-- 2026-10-25: the Datasets list moved to Settings; importing centers is under Manage. -->
+
+            <!-- "Evacuation centers" + "Manage" (2026-10-25: the normal section gap, so the Data
+                 Health card's shadow no longer runs into the title) -->
             <LinearLayout style="@style/RR.SectionRow">
-
-                <TextView
-                    style="@style/RR.SectionTitle"
-                    android:text="@string/datasets" />
-
-                <TextView
-                    android:id="@+id/data_upload"
-                    style="@style/RR.SectionAction"
-                    android:text="@string/upload" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/data_datasets"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-
-            <!-- "Evacuation centers" + "Manage" -->
-            <LinearLayout
-                style="@style/RR.SectionRow"
-                android:layout_marginTop="0dp">
 
                 <TextView
                     style="@style/RR.SectionTitle"
@@ -101,6 +83,7 @@
             <!-- "Scope Notice": info-soft, 16 dp corners, padding 12, 20 dp shield -->
             <TextView
                 style="@style/RR.Note.Info"
+                android:layout_marginTop="@dimen/section_gap"
                 android:text="@string/info_management_only" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

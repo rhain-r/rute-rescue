@@ -18,6 +18,14 @@
         android:textAppearance="@style/TextAppearance.RR.Caption"
         android:visibility="gone" />
 
+    <!-- Optional rows above the list (Notifications: the resident's Ligtas status changes) -->
+    <LinearLayout
+        android:id="@+id/list_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone" />
+
     <TextView
         android:id="@+id/list_freshness"
         style="@style/RR.FreshnessChip"

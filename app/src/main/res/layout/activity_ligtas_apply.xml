@@ -38,6 +38,14 @@
                 android:inputType="none" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- 2026-10-25: who can be chosen ("Myself" is always there) -->
+        <TextView
+            android:id="@+id/apply_member_note"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textAppearance="@style/TextAppearance.RR.Caption" />
+
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/apply_category_layout"
             style="@style/Widget.RR.TextInput.Dropdown"

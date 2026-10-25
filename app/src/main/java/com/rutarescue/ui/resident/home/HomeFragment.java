@@ -23,13 +23,14 @@ import com.rutarescue.model.center.EvacuationCenter;
 import com.rutarescue.model.common.DataFreshness;
 import com.rutarescue.model.contact.Hotline;
 import com.rutarescue.model.common.GeoPoint;
+import com.rutarescue.model.common.MetroManilaCity;
 import com.rutarescue.model.common.SourcedData;
 import com.rutarescue.model.hazard.FloodScenario;
 import com.rutarescue.model.place.SavedPlace;
 import com.rutarescue.model.user.UserProfile;
 import com.rutarescue.service.AdvisoryService;
 import com.rutarescue.service.CenterService;
-import com.rutarescue.ui.about.AboutActivity;
+import com.rutarescue.ui.common.AlertStrip;
 import com.rutarescue.ui.common.Badges;
 import com.rutarescue.ui.common.BaseFragment;
 import com.rutarescue.ui.common.InfoTooltip;
@@ -62,6 +63,8 @@ public class HomeFragment extends BaseFragment {
     private View nearbyCard;
     private TextView noCenter;
     private LinearLayout advisoryList;
+    /** Null until the first advisories arrive (so "No LGU updates yet" never flashes while loading). */
+    private List<Advisory> latestAdvisories;
     private ChipGroup savedChips;
     private LinearLayout hotlineList;
     private TextView hotlineToggle;
@@ -95,7 +98,6 @@ public class HomeFragment extends BaseFragment {
 
         MainShellActivity shell = (MainShellActivity) requireActivity();
         view.findViewById(R.id.header_bell).setOnClickListener(v -> startActivity(new Intent(requireContext(), InboxActivity.class)));
-        view.findViewById(R.id.header_logo).setOnClickListener(v -> startActivity(new Intent(requireContext(), AboutActivity.class)));
         view.findViewById(R.id.home_find_route).setOnClickListener(v -> shell.selectTab(MainShellActivity.TAB_ROUTE));
         view.findViewById(R.id.home_search).setOnClickListener(v -> shell.openRouteSearch());
         view.findViewById(R.id.home_qa_route).setOnClickListener(v -> shell.selectTab(MainShellActivity.TAB_ROUTE));
@@ -109,7 +111,7 @@ public class HomeFragment extends BaseFragment {
                 profile == null ? "there" : profile.getFirstName(), getString(R.string.stay_ready)));
 
         bindNoahSource(view.findViewById(R.id.home_source_noah));
-        showHero(null, null);
+        showHero();
         // Info tooltips so the prepared risk zones are not read as a weather update (and vice versa)
         InfoTooltip.attach(view.findViewById(R.id.home_hero_info), R.string.tip_advisories_title, R.string.tip_advisories_body);
         InfoTooltip.attach(view.findViewById(R.id.home_source_advisories_info), R.string.tip_advisories_title,
@@ -118,6 +120,10 @@ public class HomeFragment extends BaseFragment {
                 R.string.tip_risk_zones_body);
 
         track(container().advisories().listenPublished(ui(this::onAdvisories)));
+        // The city's alert level, at the top of Home; only the city's LGU sets it.
+        MetroManilaCity city = profile == null ? null : profile.getCity();
+        track(container().alerts().listen(city, ui(alert ->
+                AlertStrip.bind(requireView().findViewById(R.id.alert_strip), city, alert, null))));
         track(container().centers().listenPublished(ui(this::onCenters)));
         if (profile != null) {
             track(container().savedPlaces().listen(profile.getUid(), ui(this::onSavedPlaces)));
@@ -136,39 +142,52 @@ public class HomeFragment extends BaseFragment {
     }
 
     private void onAdvisories(SourcedData<List<Advisory>> data) {
+        latestAdvisories = data.getData();
         Badges.freshness(requireView().findViewById(R.id.home_source_advisories), data.getFreshness(),
                 data.getRetrievedAt(), "");
-        UserProfile profile = profile();
-        Advisory latest = AdvisoryService.latestFor(data.getData(), profile == null ? null : profile.getCity());
-        showHero(latest, data);
-
-        advisoryList.removeAllViews();
-        LayoutInflater inflater = LayoutInflater.from(requireContext());
-        int shown = 0;
-        for (Advisory advisory : data.getData()) {
-            if (shown++ == 3) break;
-            View card = inflater.inflate(R.layout.item_advisory, advisoryList, false);
-            ViewBinders.bindAdvisory(card, advisory);
-            advisoryList.addView(card);
-        }
-        if (data.getData().isEmpty()) {
-            TextView empty = new TextView(requireContext());
-            empty.setText("No LGU updates yet.");
-            empty.setTextAppearance(R.style.TextAppearance_RR_Caption);
-            advisoryList.addView(empty);
-        }
+        showAdvisoryList();
     }
 
-    private void showHero(Advisory latest, SourcedData<List<Advisory>> data) {
-        if (latest == null) {
-            heroEyebrow.setText(R.string.no_advisory_eyebrow);
-            heroBody.setText(R.string.no_advisory_body);
-            Badges.freshness(heroFreshness, DataFreshness.PREPARED, 0, "Project NOAH scenarios");
+    /** Saving or un-saving in Notifications changes the "Saved" label here when Home comes back. */
+    @Override
+    public void onResume() {
+        super.onResume();
+        showAdvisoryList();
+    }
+
+    /**
+     * Only ONE announcement on Home (2026-10-25): the newest one of the last 7 days, of the
+     * resident's city (or the newest of all when the city has none). The others and the saved ones
+     * are in Notifications (the header bell, 30 days). The city's alert level is a separate line above it.
+     */
+    private void showAdvisoryList() {
+        if (getView() == null || latestAdvisories == null) return;
+        advisoryList.removeAllViews();
+        UserProfile profile = profile();
+        Advisory newest = AdvisoryService.latestThisWeek(latestAdvisories, profile == null ? null : profile.getCity(),
+                false, System.currentTimeMillis());
+        if (newest == null) {
+            TextView empty = new TextView(requireContext());
+            empty.setText(R.string.no_announcement_this_week);
+            empty.setTextAppearance(R.style.TextAppearance_RR_Caption);
+            advisoryList.addView(empty);
             return;
         }
-        heroEyebrow.setText(latest.getLevel().getLabel() + " • " + latest.getCity().getDisplayName());
-        heroBody.setText(latest.getTitle() + ". " + latest.getMessage());
-        Badges.freshness(heroFreshness, data.getFreshness(), data.getRetrievedAt(), "");
+        View card = LayoutInflater.from(requireContext()).inflate(R.layout.item_advisory, advisoryList, false);
+        ViewBinders.bindAdvisory(card, newest, this::showAdvisoryList);
+        advisoryList.addView(card);
+    }
+
+    /**
+     * The hero under the advisories: the resident's city, the greeting and the prepared-data note.
+     * Since 2026-10-22 it no longer repeats the newest advisory, which is right above it.
+     */
+    private void showHero() {
+        UserProfile profile = profile();
+        heroEyebrow.setText(getString(R.string.home_hero_eyebrow,
+                profile == null || profile.getCity() == null ? "Metro Manila" : profile.getCity().getDisplayName()));
+        heroBody.setText(R.string.no_advisory_body);
+        Badges.freshness(heroFreshness, DataFreshness.PREPARED, 0, "Project NOAH scenarios");
     }
 
     private void onCenters(SourcedData<List<EvacuationCenter>> data) {

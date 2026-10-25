@@ -2,6 +2,9 @@ package com.rutarescue.repository.firestore;
 
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Source;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.Query;
@@ -17,7 +20,10 @@ import com.rutarescue.service.ConnectivityMonitor;
 import com.rutarescue.service.FreshnessService;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * ligtasApplications/{id}. Queries always filter by owner or by city because the security
@@ -99,5 +105,29 @@ public final class FirestoreLigtasRepository implements LigtasRepository {
         batch.set(db.collection(COLLECTION).document(application.getId()), FirestoreMappers.ligtas(application, audit.getId()));
         batch.set(db.collection("auditEvents").document(audit.getId()), FirestoreMappers.audit(audit));
         FirestoreWrites.complete(batch.commit(), connectivity, callback);
+    }
+
+    /**
+     * The resident's own applications straight from the server, blocking (for SyncWorker, which
+     * runs on a background thread). The rules allow this query because it filters by owner.
+     */
+    public static List<LigtasApplication> readMineFromServer(FirebaseFirestore db, String ownerUid) throws Exception {
+        QuerySnapshot snapshot = Tasks.await(db.collection(COLLECTION).whereEqualTo("ownerUid", ownerUid)
+                .get(Source.SERVER), 30, TimeUnit.SECONDS);
+        List<LigtasApplication> applications = new ArrayList<>();
+        for (DocumentSnapshot doc : snapshot.getDocuments()) applications.add(FirestoreMappers.ligtas(doc));
+        return applications;
+    }
+
+    @Override
+    public void saveResubmission(LigtasApplication application, Callback<Void> callback) {
+        // update() with only these three fields: the rules let the owner change nothing else.
+        Map<String, Object> full = FirestoreMappers.ligtas(application, null);
+        Map<String, Object> changes = new HashMap<>();
+        changes.put("status", full.get("status"));
+        changes.put("proofRef", full.get("proofRef"));
+        changes.put("history", full.get("history"));
+        FirestoreWrites.complete(db.collection(COLLECTION).document(application.getId()).update(changes),
+                connectivity, callback);
     }
 }

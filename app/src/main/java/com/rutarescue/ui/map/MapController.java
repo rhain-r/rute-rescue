@@ -92,6 +92,9 @@ public final class MapController {
     private static final String SRC_ROUTES = "rr-routes";
     private static final String SRC_CENTERS = "rr-centers";
     private static final String SRC_MARKERS = "rr-markers";
+    /** The resident's own position ("you are here"), resident maps only. */
+    private static final String SRC_USER = "rr-user";
+    private static final String USER_BLUE = "#1A73E8";
     private static final String SRC_ROUTE_LABELS = "rr-route-labels";
     private static final String SRC_TRANSIT = "rr-transit";
     /** Bundled LRT/MRT lines and stations (OpenStreetMap, see data/sources/osm-rail-2026-10-19). */
@@ -242,6 +245,15 @@ public final class MapController {
         style.addSource(new GeoJsonSource(SRC_MARKERS, FeatureCollection.fromFeatures(new ArrayList<>())));
         style.addLayer(new CircleLayer("rr-markers", SRC_MARKERS).withProperties(
                 PropertyFactory.circleColor(Expression.toColor(Expression.get("color"))), PropertyFactory.circleRadius(8f),
+                PropertyFactory.circleStrokeColor("#FFFFFF"), PropertyFactory.circleStrokeWidth(3f)));
+
+        // 2026-10-25: the resident's own position, a blue dot with a soft halo, drawn above everything.
+        style.addSource(new GeoJsonSource(SRC_USER, FeatureCollection.fromFeatures(new ArrayList<>())));
+        style.addLayer(new CircleLayer("rr-user-halo", SRC_USER).withProperties(
+                PropertyFactory.circleColor(USER_BLUE), PropertyFactory.circleOpacity(0.18f),
+                PropertyFactory.circleRadius(20f)));
+        style.addLayer(new CircleLayer("rr-user-dot", SRC_USER).withProperties(
+                PropertyFactory.circleColor(USER_BLUE), PropertyFactory.circleRadius(8f),
                 PropertyFactory.circleStrokeColor("#FFFFFF"), PropertyFactory.circleStrokeWidth(3f)));
     }
 
@@ -609,6 +621,16 @@ public final class MapController {
         if (destination != null) features.add(marker(destination, "#152B3F"));
         if (selected != null) features.add(marker(selected, "#12B5D0"));
         setFeatures(SRC_MARKERS, features);
+    }
+
+    /**
+     * The resident's own position as a blue dot (2026-10-25), shown as soon as the phone knows
+     * where they are, before any center or destination is chosen. Null hides it.
+     */
+    public void showUserLocation(GeoPoint position) {
+        List<Feature> features = new ArrayList<>();
+        if (position != null) features.add(Feature.fromGeometry(point(position)));
+        setFeatures(SRC_USER, features);
     }
 
     private static Feature marker(GeoPoint location, String color) {

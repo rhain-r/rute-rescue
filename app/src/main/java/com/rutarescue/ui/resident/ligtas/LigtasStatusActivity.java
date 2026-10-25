@@ -15,12 +15,16 @@ import com.rutarescue.repository.ListenerHandle;
 import com.rutarescue.ui.common.Badges;
 import com.rutarescue.ui.common.BaseActivity;
 import com.rutarescue.ui.common.Dialogs;
+import com.rutarescue.ui.common.ImageCompressor;
 import com.rutarescue.ui.common.SimpleListAdapter;
 import com.rutarescue.util.Formats;
 
+import java.io.IOException;
+
 /**
- * The resident's Ligtas applications with status, reviewer reason and full history, and
- * the verification QR for approved ones. Readable offline from the cache.
+ * The resident's Ligtas applications with status, the moderator's latest message and the full
+ * history, and the verification QR for approved ones. Readable offline from the cache.
+ * Since 2026-10-20 a decision can change later; "Needs documents" shows "Send new documents".
  */
 public class LigtasStatusActivity extends BaseActivity {
 
@@ -63,7 +67,8 @@ public class LigtasStatusActivity extends BaseActivity {
         switch (application.getStatus()) {
             case APPROVED: Badges.label(state, "Approved", Badges.Tone.GREEN); break;
             case REJECTED: Badges.label(state, "Rejected", Badges.Tone.RED); break;
-            default: Badges.label(state, "Pending", Badges.Tone.ORANGE);
+            case NEEDS_DOCUMENTS: Badges.label(state, "Needs documents", Badges.Tone.ORANGE); break;
+            default: Badges.label(state, "Pending", Badges.Tone.NAVY);
         }
         StringBuilder history = new StringBuilder(application.getJustification());
         history.append("\n\nHistory:");
@@ -75,11 +80,37 @@ public class LigtasStatusActivity extends BaseActivity {
         ((TextView) row.findViewById(R.id.ligtas_body)).setText(history);
         boolean decided = !application.getReviewReason().isEmpty();
         row.findViewById(R.id.ligtas_proof).setVisibility(View.VISIBLE);
-        ((TextView) row.findViewById(R.id.ligtas_footer)).setText(decided
-                ? "LGU reason: " + application.getReviewReason() : "Waiting for LGU review");
+        String city = application.getCity() == null ? "" : application.getCity().getDisplayName() + " ";
+        ((TextView) row.findViewById(R.id.ligtas_footer)).setText(
+                application.getStatus() == ApplicationStatus.PENDING && decided
+                        ? "New documents sent. Waiting for the " + city + "moderator."
+                        : decided ? "Message from the " + city + "moderator: " + application.getReviewReason()
+                        : "Waiting for review by the " + city + "moderator");
+        View resubmit = row.findViewById(R.id.ligtas_resubmit);
+        resubmit.setVisibility(application.getStatus() == ApplicationStatus.NEEDS_DOCUMENTS ? View.VISIBLE : View.GONE);
+        resubmit.setOnClickListener(v -> resubmit(application));
         View qr = row.findViewById(R.id.ligtas_qr);
         qr.setVisibility(application.getStatus() == ApplicationStatus.APPROVED ? View.VISIBLE : View.GONE);
         qr.setOnClickListener(v -> Dialogs.qr(this, getString(R.string.open_verification_record), application.getQrPayload()));
+    }
+
+    /**
+     * Sends the synthetic demo proof again (this class demo never uses real documents); the
+     * application goes back to "Pending" for the moderator.
+     */
+    private void resubmit(LigtasApplication application) {
+        Dialogs.confirm(this, getString(R.string.resubmit_documents), "Send the demo proof again for "
+                        + application.getMemberName() + "? The moderator will review it again.", getString(R.string.send_request),
+                () -> container().executors.io().execute(() -> {
+                    try {
+                        byte[] proof = ImageCompressor.compressAsset(getAssets(), LigtasApplyActivity.DEMO_PROOF_ASSET);
+                        container().executors.main().execute(() -> container().ligtas().resubmit(
+                                container().session().getProfile(), application, proof,
+                                ui(ignored -> showMessage("New documents sent. The moderator will review them."))));
+                    } catch (IOException e) {
+                        container().executors.main().execute(() -> showError(e));
+                    }
+                }));
     }
 
     @Override

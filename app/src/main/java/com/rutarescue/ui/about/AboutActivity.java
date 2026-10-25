@@ -1,6 +1,5 @@
 package com.rutarescue.ui.about;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 
@@ -8,12 +7,12 @@ import com.rutarescue.R;
 import com.rutarescue.model.hazard.FloodScenario;
 import com.rutarescue.model.user.UserProfile;
 import com.rutarescue.persistence.PreparedDataManifest;
-import com.rutarescue.ui.auth.LoginActivity;
 import com.rutarescue.ui.common.BaseActivity;
 
 /**
  * Account, limitations (DOCX section 14), prepared data versions with their hashes, and
  * attribution for Project NOAH, OpenStreetMap (map, search, routing), TomTom (traffic) and MapLibre.
+ * Opened from Settings; since 2026-10-22 Sign out is only in Settings.
  */
 public class AboutActivity extends BaseActivity {
 
@@ -61,13 +60,6 @@ public class AboutActivity extends BaseActivity {
                         + "Routing with live traffic and the traffic overlay: © TomTom (free developer tier).\n\n"
                         + "Map rendering: MapLibre Native (BSD-2-Clause).");
 
-        findViewById(R.id.about_sign_out).setOnClickListener(v -> {
-            container().signOut();
-            Intent intent = new Intent(this, LoginActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish();
-        });
     }
 
     private static String shortHash(String hash) {

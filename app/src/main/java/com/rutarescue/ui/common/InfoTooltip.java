@@ -2,6 +2,7 @@ package com.rutarescue.ui.common;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -69,7 +70,15 @@ public final class InfoTooltip {
         int[] location = new int[2];
         anchor.getLocationOnScreen(location);
         boolean anchorOnRight = location[0] + anchor.getWidth() / 2 > metrics.widthPixels / 2;
-        popup.showAsDropDown(anchor, 0, dp(context, ANCHOR_GAP_DP), anchorOnRight ? Gravity.END : Gravity.START);
+        // 2026-10-25: measure the bubble first, so an anchor low on the screen gets it above itself
+        bubble.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        int gap = dp(context, ANCHOR_GAP_DP);
+        Rect screen = new Rect();
+        anchor.getWindowVisibleDisplayFrame(screen);
+        boolean fitsBelow = location[1] + anchor.getHeight() + gap + bubble.getMeasuredHeight() <= screen.bottom;
+        int yOffset = fitsBelow ? gap : -(anchor.getHeight() + gap + bubble.getMeasuredHeight());
+        popup.showAsDropDown(anchor, 0, yOffset, anchorOnRight ? Gravity.END : Gravity.START);
         return popup;
     }
 

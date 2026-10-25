@@ -22,7 +22,6 @@ import com.rutarescue.model.center.EvacuationCenter;
 import com.rutarescue.model.common.GeoPoint;
 import com.rutarescue.model.common.SourcedData;
 import com.rutarescue.service.CenterService;
-import com.rutarescue.ui.about.AboutActivity;
 import com.rutarescue.ui.common.Badges;
 import com.rutarescue.ui.common.BaseFragment;
 import com.rutarescue.ui.common.SimpleListAdapter;
@@ -62,7 +61,6 @@ public class CentersFragment extends BaseFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle state) {
         view.findViewById(R.id.header_bell).setOnClickListener(v -> startActivity(new Intent(requireContext(), InboxActivity.class)));
-        view.findViewById(R.id.header_logo).setOnClickListener(v -> startActivity(new Intent(requireContext(), AboutActivity.class)));
 
         search = view.findViewById(R.id.centers_search);
         nearby = view.findViewById(R.id.centers_filter_nearby);
@@ -100,6 +98,7 @@ public class CentersFragment extends BaseFragment {
         map.onCreate(state, ready -> {
             ready.setHazardVisible(false);
             ready.showCenters(shown);
+            ready.showUserLocation(origin); // 2026-10-25: the blue "you are here" dot
             ready.setOnMapClick(this::openNearestCenterTo);
         });
         View scroll = view.findViewById(R.id.centers_scroll);
@@ -109,6 +108,7 @@ public class CentersFragment extends BaseFragment {
             mapMode.setVisibility(View.VISIBLE);
             if (map.isReady()) {
                 map.showCenters(shown);
+                map.showUserLocation(origin);
                 if (origin != null) map.moveTo(origin, 13);
             }
         });
@@ -121,6 +121,7 @@ public class CentersFragment extends BaseFragment {
         if (container().location.hasPermission()) {
             container().location.getCurrent(UiCallback.of(this, point -> {
                 origin = point;
+                if (map != null && map.isReady()) map.showUserLocation(origin);
                 // Figma "Center Filters": "Nearby" is the selected filter once a location is known.
                 if (!nearby.isChecked()) nearby.setChecked(true); // the chip listener re-applies the filters
                 else applyFilters();

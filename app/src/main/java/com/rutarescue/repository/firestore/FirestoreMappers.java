@@ -4,7 +4,9 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.rutarescue.exception.InvalidFamilyRecordException;
 import com.rutarescue.exception.ValidationException;
 import com.rutarescue.model.advisory.Advisory;
+import com.rutarescue.model.advisory.AdvisoryReview;
 import com.rutarescue.model.advisory.AlertLevel;
+import com.rutarescue.model.advisory.CityAlert;
 import com.rutarescue.model.center.AccessibilityFeature;
 import com.rutarescue.model.center.CapacityChange;
 import com.rutarescue.model.center.CenterCapacity;
@@ -26,6 +28,9 @@ import com.rutarescue.model.ligtas.ApplicationStatus;
 import com.rutarescue.model.ligtas.LigtasApplication;
 import com.rutarescue.model.ligtas.NeedCategory;
 import com.rutarescue.model.ligtas.StatusChange;
+import com.rutarescue.model.priority.CheckResult;
+import com.rutarescue.model.priority.PriorityCard;
+import com.rutarescue.model.priority.PriorityGroup;
 import com.rutarescue.model.route.RoadClosure;
 
 import java.util.ArrayList;
@@ -201,6 +206,8 @@ final class FirestoreMappers {
         map.put("verifiedBy", center.getVerification().getVerifiedBy());
         map.put("verifiedAt", center.getVerification().getVerifiedAt());
         map.put("published", center.isPublished());
+        map.put("awaitingLgu", center.isAwaitingLgu());
+        map.put("lguNote", center.getLguNote());
         map.put("notes", center.getNotes());
         // Phase 2: location details and the LGU-entered headcount (checked by firestore.rules).
         map.put("barangay", center.getBarangay());
@@ -237,6 +244,7 @@ final class FirestoreMappers {
                 CenterStatus.fromName(str(doc, "status")), features, verification, bool(doc, "published"),
                 str(doc, "notes"));
         center.setLocationDetails(str(doc, "barangay"), str(doc, "landmark"), bool(doc, "locationVerified"));
+        center.restoreReview(bool(doc, "awaitingLgu"), str(doc, "lguNote"));
         int occupancy = (int) num(doc, "occupancy");
         CenterCapacity capacity;
         try {
@@ -262,6 +270,13 @@ final class FirestoreMappers {
         map.put("published", advisory.isPublished());
         map.put("publishedAt", advisory.getPublishedAt());
         map.put("authorName", advisory.getAuthorName());
+        map.put("awaitingLgu", advisory.isAwaitingLgu()); // kept for the 1.3 app
+        map.put("review", advisory.getReview() == AdvisoryReview.NONE ? "" : advisory.getReview().name());
+        map.put("lguNote", advisory.getLguNote());
+        map.put("requestedBy", advisory.getRequestedBy());
+        map.put("requestedByUid", advisory.getRequestedByUid());
+        map.put("centerId", advisory.getCenterId());
+        map.put("centerName", advisory.getCenterName());
         map.put("lastAuditId", lastAuditId);
         putAudit(map, advisory);
         return map;
@@ -271,8 +286,73 @@ final class FirestoreMappers {
         Advisory advisory = new Advisory(doc.getId(), str(doc, "title"), str(doc, "message"),
                 AlertLevel.fromName(str(doc, "level")), MetroManilaCity.fromCode(str(doc, "city")),
                 bool(doc, "published"), num(doc, "publishedAt"), str(doc, "authorName"));
+        AdvisoryReview review = AdvisoryReview.fromStored(str(doc, "review"), bool(doc, "awaitingLgu"),
+                str(doc, "lguNote"), bool(doc, "published"), str(doc, "requestedBy"));
+        advisory.restoreReview(review, str(doc, "lguNote"), str(doc, "requestedBy"), str(doc, "requestedByUid"),
+                str(doc, "centerId"), str(doc, "centerName"));
         restoreAudit(advisory, doc);
         return advisory;
+    }
+
+    // ---------------------------------------------------------------- city alert level (2026-10-22)
+
+    static Map<String, Object> cityAlert(CityAlert alert, String lastAuditId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("city", alert.getCity().code());
+        map.put("level", alert.getLevel().name());
+        map.put("note", alert.getNote());
+        map.put("setByName", alert.getSetByName());
+        map.put("setAt", alert.getSetAt());
+        map.put("lastAuditId", lastAuditId);
+        putAudit(map, alert);
+        return map;
+    }
+
+    static CityAlert cityAlert(DocumentSnapshot doc, MetroManilaCity city) {
+        if (!doc.exists()) return CityAlert.none(city);
+        CityAlert alert = new CityAlert(city, AlertLevel.fromName(str(doc, "level")), str(doc, "note"),
+                str(doc, "setByName"), num(doc, "setAt"));
+        restoreAudit(alert, doc);
+        return alert;
+    }
+
+    // ---------------------------------------------------------------- priority IDs (2026-10-22)
+
+    static Map<String, Object> priorityCard(PriorityCard card, String lastAuditId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("ownerUid", card.getOwnerUid());
+        map.put("holderName", card.getHolderName());
+        map.put("group", card.getGroup().name());
+        map.put("city", card.getCity() == null ? null : card.getCity().code());
+        map.put("issuedAt", card.getIssuedAt());
+        Map<String, Object> checks = new HashMap<>();
+        for (Map.Entry<String, CheckResult> entry : card.getChecks().entrySet()) {
+            checks.put(entry.getKey(), entry.getValue().name());
+        }
+        map.put("checks", checks);
+        map.put("missingCount", card.getMissingItems().size());
+        map.put("flagNote", card.getFlagNote());
+        map.put("checkedBy", card.getCheckedBy());
+        map.put("checkedByName", card.getCheckedByName());
+        map.put("checkedAt", card.getCheckedAt());
+        map.put("checkedAtCenter", card.getCheckedAtCenter());
+        if (lastAuditId != null) map.put("lastAuditId", lastAuditId);
+        return map;
+    }
+
+    static PriorityCard priorityCard(DocumentSnapshot doc) {
+        Map<String, CheckResult> checks = new java.util.LinkedHashMap<>();
+        Object raw = doc.get("checks");
+        if (raw instanceof Map) {
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) raw).entrySet()) {
+                checks.put(String.valueOf(entry.getKey()), CheckResult.fromName(String.valueOf(entry.getValue())));
+            }
+        }
+        PriorityGroup group = PriorityGroup.fromName(str(doc, "group"));
+        if (group == null) throw new IllegalStateException("This priority ID has no valid group.");
+        return new PriorityCard(doc.getId(), str(doc, "ownerUid"), str(doc, "holderName"), group,
+                MetroManilaCity.fromCode(str(doc, "city")), num(doc, "issuedAt"), checks, str(doc, "flagNote"),
+                str(doc, "checkedBy"), str(doc, "checkedByName"), num(doc, "checkedAt"), str(doc, "checkedAtCenter"));
     }
 
     // ---------------------------------------------------------------- Ligtas applications
@@ -287,6 +367,7 @@ final class FirestoreMappers {
         map.put("category", app.getCategory().name());
         map.put("justification", app.getJustification());
         map.put("proofRef", app.getProofRef());
+        map.put("applicantEmail", app.getApplicantEmail());
         map.put("submittedAt", app.getSubmittedAt());
         map.put("status", app.getStatus().name());
         map.put("reviewerUid", app.getReviewerUid());
@@ -315,7 +396,8 @@ final class FirestoreMappers {
         return new LigtasApplication(doc.getId(), str(doc, "ownerUid"), MetroManilaCity.fromCode(str(doc, "city")),
                 str(doc, "applicantName"), str(doc, "memberId"), str(doc, "memberName"),
                 NeedCategory.fromName(str(doc, "category")), str(doc, "justification"), str(doc, "proofRef"),
-                num(doc, "submittedAt"), ApplicationStatus.fromName(str(doc, "status")), str(doc, "reviewerUid"),
+                str(doc, "applicantEmail"), num(doc, "submittedAt"), ApplicationStatus.fromName(str(doc, "status")),
+                str(doc, "reviewerUid"),
                 str(doc, "reviewReason"), num(doc, "decidedAt"), history);
     }
 

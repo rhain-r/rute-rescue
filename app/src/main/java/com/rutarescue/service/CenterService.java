@@ -9,7 +9,7 @@ import com.rutarescue.model.common.AuditEvent;
 import com.rutarescue.model.common.DataFreshness;
 import com.rutarescue.model.common.GeoPoint;
 import com.rutarescue.model.common.SourcedData;
-import com.rutarescue.model.user.LguProfile;
+import com.rutarescue.model.user.StaffProfile;
 import com.rutarescue.persistence.BundledCenterReader;
 import com.rutarescue.repository.Callback;
 import com.rutarescue.repository.CenterRepository;
@@ -26,8 +26,10 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Evacuation center use cases: resident search/filter (DOCX section 4 "Centers") and LGU
- * management with audit events (DOCX sections 3 and 5).
+ * Evacuation center use cases: resident search/filter (DOCX section 4 "Centers") and staff
+ * management with audit events (DOCX sections 3 and 5). Since 2026-10-22 the LGU creates,
+ * verifies, publishes and archives centers; each moderator updates only the headcount, status
+ * and facilities of the one center they run.
  */
 public final class CenterService {
 
@@ -66,8 +68,9 @@ public final class CenterService {
         });
     }
 
-    public ListenerHandle listenForManager(LguProfile lgu, Callback<SourcedData<List<EvacuationCenter>>> callback) {
-        return repository.listenForCity(lgu.getJurisdiction(), callback);
+    /** Every center of the staff member's own city, drafts included (moderators and the LGU). */
+    public ListenerHandle listenForManager(StaffProfile staff, Callback<SourcedData<List<EvacuationCenter>>> callback) {
+        return repository.listenForCity(staff.getJurisdiction(), callback);
     }
 
     /** Bundled centers are found on the phone; the others are read from the server. */
@@ -112,22 +115,24 @@ public final class CenterService {
     }
 
     /**
-     * Saves the capacity screen: headcount, status and facilities, with an audit event that
-     * says what changed (e.g. "Headcount 207 → 212 · barangay field check").
+     * Moderator: saves the capacity screen of their own center (headcount, status and facilities),
+     * with an audit event that says what changed (e.g. "Headcount 207 → 212 · barangay field check").
      */
-    public void updateCapacity(LguProfile lgu, EvacuationCenter center, CenterCapacity capacity, CenterStatus status,
+    public void updateCapacity(StaffProfile moderator, EvacuationCenter center, CenterCapacity capacity, CenterStatus status,
                                Set<AccessibilityFeature> features, String source, Callback<Void> callback) {
-        if (!lgu.canManage(center.getCity())) {
-            callback.onError(new IllegalStateException("You can only manage centers in " + lgu.getJurisdiction() + "."));
+        if (!moderator.canManageCenter(center)) {
+            callback.onError(new IllegalStateException("Only the moderator of " + center.getName()
+                    + " updates its headcount."));
             return;
         }
         int before = center.getCapacity().getCurrentOccupancy();
-        center.updateCapacity(capacity, status, features, lgu.getUid(), lgu.getDisplayName(), source,
-                System.currentTimeMillis());
+        long now = System.currentTimeMillis();
+        center.updateCapacity(capacity, status, features, moderator.getUid(), moderator.getDisplayName(), source, now);
         String reason = "Headcount " + before + " → " + capacity.getCurrentOccupancy() + " of "
                 + capacity.getTotalPersons() + " · " + center.getStatus().getLabel()
                 + (source == null || source.isBlank() ? "" : " · " + source.strip());
-        save(lgu, center, "UPDATE_CAPACITY", reason, callback);
+        repository.saveCapacity(center, AuditEvent.create(moderator.getUid(), moderator.getJurisdiction().code(),
+                "UPDATE_CAPACITY", center, reason, now), callback);
     }
 
     /** Search + filter chips + distance sort (pure Java, also works on cached data offline). */
@@ -194,36 +199,79 @@ public final class CenterService {
         return best;
     }
 
-    /** Creates or updates a center for the LGU's own city, with an audit event. */
-    public void save(LguProfile lgu, EvacuationCenter center, String action, String reason, Callback<Void> callback) {
-        if (!lgu.canManage(center.getCity())) {
-            callback.onError(new IllegalStateException("You can only manage centers in " + lgu.getJurisdiction() + "."));
-            return;
-        }
+    /** LGU: creates or updates a center of its own city (details only), with an audit event. */
+    public void save(StaffProfile lgu, EvacuationCenter center, String action, String reason, Callback<Void> callback) {
+        if (!mayCreate(lgu, center, callback)) return;
         if (center.getId() == null) center.assignId(repository.newId());
         AuditEvent audit = AuditEvent.create(lgu.getUid(), lgu.getJurisdiction().code(), action, center,
                 reason, System.currentTimeMillis());
         repository.save(center, audit, callback);
     }
 
-    /** Verifies (with a named source) and publishes a center. */
-    public void verifyAndPublish(LguProfile lgu, EvacuationCenter center, String source, Callback<Void> callback) {
+    /**
+     * LGU: verifies the center against a named source and publishes it to residents at once
+     * (2026-10-22: only the LGU creates centers, so there is no hand-off any more).
+     */
+    public void verifyAndPublish(StaffProfile lgu, EvacuationCenter center, String source, Callback<Void> callback) {
+        if (!mayCreate(lgu, center, callback)) return;
         long now = System.currentTimeMillis();
         try {
             center.verify(source, lgu.getUid(), now);
-            center.setPublished(true, lgu.getUid(), now);
+            if (!center.isPublished()) center.publishByLgu(lgu, now);
         } catch (ValidationException | IllegalStateException e) {
             callback.onError(e);
             return;
         }
-        save(lgu, center, "VERIFY_AND_PUBLISH", "Verified against: " + source, callback);
+        save(lgu, center, "VERIFY_AND_PUBLISH", "Verified against: " + source + " • published to residents", callback);
     }
 
-    /** Archive instead of delete (DOCX section 5); archived centers disappear for residents. */
-    public void archive(LguProfile lgu, EvacuationCenter center, String reason, Callback<Void> callback) {
+    /** LGU: archive instead of delete (DOCX section 5); archived centers disappear for residents. */
+    public void archive(StaffProfile lgu, EvacuationCenter center, String reason, Callback<Void> callback) {
+        if (!mayCreate(lgu, center, callback)) return;
         long now = System.currentTimeMillis();
         center.setPublished(false, lgu.getUid(), now);
         center.archive(lgu.getUid(), now);
         save(lgu, center, "ARCHIVE", reason, callback);
+    }
+
+    /** LGU: publishes a verified center that is still hidden (also one a moderator sent before 2026-10-22). */
+    public void publishByLgu(StaffProfile lgu, EvacuationCenter center, Callback<Void> callback) {
+        long now = System.currentTimeMillis();
+        try {
+            center.publishByLgu(lgu, now);
+        } catch (IllegalStateException e) {
+            callback.onError(e);
+            return;
+        }
+        repository.saveReview(center, AuditEvent.create(lgu.getUid(), lgu.getJurisdiction().code(), "PUBLISH", center,
+                "Published " + center.getName() + " to residents", now), callback);
+    }
+
+    /** LGU: returns a center a moderator sent before 2026-10-22, with a note saying what to fix. */
+    public void sendBack(StaffProfile lgu, EvacuationCenter center, String note, Callback<Void> callback) {
+        long now = System.currentTimeMillis();
+        try {
+            center.sendBack(lgu, note, now);
+        } catch (ValidationException | IllegalStateException e) {
+            callback.onError(e);
+            return;
+        }
+        repository.saveReview(center, AuditEvent.create(lgu.getUid(), lgu.getJurisdiction().code(), "SEND_BACK", center,
+                center.getLguNote(), now), callback);
+    }
+
+    /** Only the LGU of the center's own city adds, edits, verifies, publishes or archives centers. */
+    private static boolean mayCreate(StaffProfile staff, EvacuationCenter center, Callback<Void> callback) {
+        if (!staff.canCreateCenters()) {
+            callback.onError(new IllegalStateException("Only the LGU adds and edits evacuation centers. "
+                    + "Moderators update the headcount of their own center."));
+            return false;
+        }
+        if (!staff.canManage(center.getCity())) {
+            callback.onError(new IllegalStateException("You can only manage centers in "
+                    + staff.getJurisdiction().getDisplayName() + "."));
+            return false;
+        }
+        return true;
     }
 }

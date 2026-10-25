@@ -8,6 +8,8 @@ import com.rutarescue.repository.HazardRepository;
 import com.rutarescue.risk.HazardLookup;
 import com.rutarescue.util.AppExecutors;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -47,6 +49,28 @@ public final class HazardQueryService {
                 deliver(ticket, callback, answer, null);
             } catch (Exception error) {
                 deliver(ticket, callback, null, error);
+            }
+        });
+    }
+
+    /**
+     * The hazard at one point in every scenario (5-, 25- and 100-year), for a center's flood status
+     * (2026-10-22). Runs on the io() pool; the callback runs on the UI thread. Not part of the
+     * "newest tap wins" tickets above, because it answers one fixed point.
+     */
+    public void inspectAll(GeoPoint point, Callback<List<PointHazard>> callback) {
+        executors.io().execute(() -> {
+            try {
+                List<PointHazard> answers = new ArrayList<>();
+                for (FloodScenario scenario : FloodScenario.values()) {
+                    HazardLookup lookup = hazards.loadBlocking(scenario);
+                    double lat = point.getLatitude();
+                    double lon = point.getLongitude();
+                    answers.add(new PointHazard(point, scenario, lookup.covers(lat, lon), lookup.classify(lat, lon)));
+                }
+                executors.main().execute(() -> callback.onSuccess(answers));
+            } catch (Exception error) {
+                executors.main().execute(() -> callback.onError(error));
             }
         });
     }

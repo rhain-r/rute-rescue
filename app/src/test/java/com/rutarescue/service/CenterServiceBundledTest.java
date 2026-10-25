@@ -170,5 +170,11 @@ public class CenterServiceBundledTest {
 
         @Override
         public void saveAll(List<EvacuationCenter> centers, List<AuditEvent> audits, Callback<Void> callback) { }
+
+        @Override
+        public void saveReview(EvacuationCenter center, AuditEvent audit, Callback<Void> callback) { }
+
+        @Override
+        public void saveCapacity(EvacuationCenter center, AuditEvent audit, Callback<Void> callback) { }
     }
 }

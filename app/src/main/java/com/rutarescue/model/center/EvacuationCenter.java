@@ -5,6 +5,7 @@ import com.rutarescue.model.common.AuditableEntity;
 import com.rutarescue.model.common.GeoPoint;
 import com.rutarescue.model.common.Locatable;
 import com.rutarescue.model.common.MetroManilaCity;
+import com.rutarescue.model.user.StaffProfile;
 import com.rutarescue.validation.TextRules;
 
 import java.util.Collections;
@@ -35,6 +36,10 @@ public class EvacuationCenter extends AuditableEntity implements Locatable {
     private boolean locationVerified;
     private CenterCapacity capacity = CenterCapacity.notSet();
     private CapacityChange lastCapacityChange;
+    /** 2026-10-20: a moderator verified it and asked the LGU to publish it. */
+    private boolean awaitingLgu;
+    /** The LGU's note when it sent the center back to the moderator ("" otherwise). */
+    private String lguNote = "";
 
     public EvacuationCenter(String id, String name, String address, MetroManilaCity city, GeoPoint location,
                             CenterStatus status, Set<AccessibilityFeature> features,
@@ -117,6 +122,48 @@ public class EvacuationCenter extends AuditableEntity implements Locatable {
         lastCapacityChange = storedChange;
     }
 
+    /** The moderator asks the LGU to publish a verified, hidden center (clears an earlier note). */
+    public void sendToLgu(String actorUid, long now) {
+        if (!verification.isVerified()) {
+            throw new IllegalStateException("Verify the center before sending it to the LGU.");
+        }
+        if (published) {
+            throw new IllegalStateException("This center is already published.");
+        }
+        awaitingLgu = true;
+        lguNote = "";
+        markUpdated(actorUid, now);
+    }
+
+    /** The LGU of the center's city publishes it to residents. */
+    public void publishByLgu(StaffProfile lgu, long now) {
+        checkFinalizer(lgu);
+        setPublished(true, lgu.getUid(), now);
+        awaitingLgu = false;
+        lguNote = "";
+    }
+
+    /** The LGU returns it to the moderator with a note saying what to fix. */
+    public void sendBack(StaffProfile lgu, String note, long now) throws ValidationException {
+        checkFinalizer(lgu);
+        String checkedNote = TextRules.multilineText("note", note, 5, 300);
+        awaitingLgu = false;
+        lguNote = checkedNote;
+        markUpdated(lgu.getUid(), now);
+    }
+
+    private void checkFinalizer(StaffProfile lgu) {
+        if (lgu == null || !lgu.canPublishToResidents() || !lgu.canManage(city)) {
+            throw new IllegalStateException("Only the " + city.getDisplayName() + " LGU can publish this center.");
+        }
+    }
+
+    /** Used by the repository when it reads a stored center (no audit change). */
+    public void restoreReview(boolean storedAwaitingLgu, String storedNote) {
+        awaitingLgu = storedAwaitingLgu && !published;
+        lguNote = storedNote == null ? "" : storedNote;
+    }
+
     /** Residents only see published centers, and only verified centers can be published. */
     public void setPublished(boolean shouldPublish, String actorUid, long now) {
         if (shouldPublish && !verification.isVerified()) {
@@ -156,4 +203,6 @@ public class EvacuationCenter extends AuditableEntity implements Locatable {
     public CenterCapacity getCapacity() { return capacity; }
     /** The last headcount change, or null if nobody has entered one yet. */
     public CapacityChange getLastCapacityChange() { return lastCapacityChange; }
+    public boolean isAwaitingLgu() { return awaitingLgu; }
+    public String getLguNote() { return lguNote; }
 }

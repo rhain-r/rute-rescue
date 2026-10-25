@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    One center in the moderator's Centers list (2026-10-22): name, status, the headcount gauge and
+    "212 of 300 people · 71%". The moderator's own center is marked "Your center".
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/load_row"
+    style="@style/RR.CardColumn"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="@drawable/ripple_card">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/load_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAppearance="@style/TextAppearance.RR.Label" />
+
+        <TextView
+            android:id="@+id/load_status"
+            style="@style/RR.Badge"
+            android:layout_marginStart="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/load_mine"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="@string/your_center"
+        android:textAllCaps="true"
+        android:textAppearance="@style/TextAppearance.RR.Micro"
+        android:textColor="@color/rr_teal_green"
+        android:visibility="gone" />
+
+    <com.rutarescue.ui.common.CapacityGaugeView
+        android:id="@+id/load_gauge"
+        android:layout_width="match_parent"
+        android:layout_height="14dp"
+        android:layout_marginTop="8dp" />
+
+    <TextView
+        android:id="@+id/load_count"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textAppearance="@style/TextAppearance.RR.Caption" />
+</LinearLayout>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -10,7 +11,8 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Name (e.g. Mabini St. corner Rizal Ave.)">
+        android:hint="Road name"
+        app:helperText="For example: Mabini St. corner Rizal Ave.">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/closure_name"
@@ -23,7 +25,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:hint="Affected radius in metres (10-1000)">
+        android:hint="Affected radius (metres)"
+        app:helperText="From 10 to 1000 metres">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/closure_radius"

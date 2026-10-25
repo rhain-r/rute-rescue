@@ -20,7 +20,9 @@ import com.rutarescue.service.FreshnessService;
 import com.rutarescue.util.SafeLog;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /** centers/{id}: published centers are readable by every signed-in user; LGU staff write. */
 public final class FirestoreCenterRepository implements CenterRepository {
@@ -119,6 +121,40 @@ public final class FirestoreCenterRepository implements CenterRepository {
         batch.set(db.collection("auditEvents").document(audit.getId()), FirestoreMappers.audit(audit));
         FirestoreWrites.complete(batch.commit(), connectivity, callback);
     }
+
+    @Override
+    public void saveReview(EvacuationCenter center, AuditEvent audit, Callback<Void> callback) {
+        Map<String, Object> changes = new HashMap<>();
+        changes.put("published", center.isPublished());
+        changes.put("awaitingLgu", center.isAwaitingLgu());
+        changes.put("lguNote", center.getLguNote());
+        changes.put("lastAuditId", audit.getId());
+        if (center.getAuditInfo() != null) {
+            changes.put("updatedBy", center.getAuditInfo().getUpdatedBy());
+            changes.put("updatedAt", center.getAuditInfo().getUpdatedAt());
+        }
+        WriteBatch batch = db.batch();
+        batch.update(db.collection(COLLECTION).document(center.getId()), changes);
+        batch.set(db.collection("auditEvents").document(audit.getId()), FirestoreMappers.audit(audit));
+        FirestoreWrites.complete(batch.commit(), connectivity, callback);
+    }
+
+    @Override
+    public void saveCapacity(EvacuationCenter center, AuditEvent audit, Callback<Void> callback) {
+        Map<String, Object> all = FirestoreMappers.center(center, audit.getId());
+        Map<String, Object> changes = new HashMap<>();
+        for (String key : CAPACITY_FIELDS) {
+            if (all.containsKey(key)) changes.put(key, all.get(key));
+        }
+        WriteBatch batch = db.batch();
+        batch.update(db.collection(COLLECTION).document(center.getId()), changes);
+        batch.set(db.collection("auditEvents").document(audit.getId()), FirestoreMappers.audit(audit));
+        FirestoreWrites.complete(batch.commit(), connectivity, callback);
+    }
+
+    /** What a moderator may change on their center (the same list is in firebase/firestore.rules). */
+    private static final String[] CAPACITY_FIELDS = {"capacity", "occupancy", "status", "features", "occupancyFrom",
+            "occupancyBy", "occupancyAt", "occupancySource", "updatedBy", "updatedAt", "lastAuditId"};
 
     @Override
     public void saveAll(List<EvacuationCenter> centers, List<AuditEvent> audits, Callback<Void> callback) {

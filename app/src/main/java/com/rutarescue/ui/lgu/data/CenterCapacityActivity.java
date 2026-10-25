@@ -22,15 +22,19 @@ import com.rutarescue.exception.ValidationException;
 import com.rutarescue.model.center.AccessibilityFeature;
 import com.rutarescue.model.center.CapacityChange;
 import com.rutarescue.model.center.CenterCapacity;
+import com.rutarescue.model.center.CenterState;
 import com.rutarescue.model.center.CenterStatus;
 import com.rutarescue.model.center.EvacuationCenter;
-import com.rutarescue.model.user.LguProfile;
+import com.rutarescue.model.user.ModeratorProfile;
+import com.rutarescue.model.user.StaffProfile;
 import com.rutarescue.repository.CenterSnapshot;
 import com.rutarescue.repository.ListenerHandle;
+import com.rutarescue.ui.common.Badges;
 import com.rutarescue.ui.common.BaseActivity;
 import com.rutarescue.ui.common.CapacityGaugeView;
 import com.rutarescue.ui.common.Dialogs;
 import com.rutarescue.ui.common.UiCallback;
+import com.rutarescue.ui.shell.MainShellActivity;
 import com.rutarescue.util.Formats;
 
 import java.util.EnumMap;
@@ -39,9 +43,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Phase 1 "Center capacity" (LGU staff). Staff change the headcount with quick buttons or an
- * exact number, pick a status (suggested from the headcount, but they may override it) and tick
- * the facilities. "Save" stores everything with one audit event (CenterService.updateCapacity).
+ * Phase 1 "Center capacity". The moderator who runs the center (2026-10-22: only that moderator)
+ * changes the headcount with quick buttons or an exact number, picks a status (suggested from the
+ * headcount, but they may override it) and ticks the facilities. "Save" stores everything with
+ * one audit event (CenterService.updateCapacity). Everyone else sees the page read-only; the LGU
+ * also gets "Edit center details" (More menu) and "Publish to residents" for a hidden center.
  *
  * The screen edits a draft: CenterCapacity is immutable and checks the 120% limit, so an invalid
  * number never reaches the center. Offline saves are queued by Firestore; the orange banner shows
@@ -50,12 +56,16 @@ import java.util.Set;
 public class CenterCapacityActivity extends BaseActivity {
 
     public static final String EXTRA_ID = "center_id";
+    /** Set by the center editor right after a new center was saved. */
+    public static final String EXTRA_JUST_SAVED = "just_saved";
 
     private static final int[] STEP_IDS = {R.id.capacity_minus10, R.id.capacity_minus5, R.id.capacity_minus1,
             R.id.capacity_plus1, R.id.capacity_plus5, R.id.capacity_plus10};
     private static final int[] STEP_DELTAS = {-10, -5, -1, 1, 5, 10};
 
-    private LguProfile lgu;
+    private StaffProfile staff;
+    /** Only the moderator who runs this center edits it; for everyone else the page is read-only. */
+    private boolean readOnly;
     private ListenerHandle listener;
     private EvacuationCenter center;
     private boolean pendingSync;
@@ -78,7 +88,10 @@ public class CenterCapacityActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_center_capacity);
         applySystemBarInsets(findViewById(R.id.capacity_root));
-        lgu = container().session().requireLgu();
+        staff = container().session().requireStaff();
+        String id = getIntent().getStringExtra(EXTRA_ID);
+        // The same check as staff.canManageCenter(center), made before the center has loaded.
+        readOnly = !(staff instanceof ModeratorProfile) || !((ModeratorProfile) staff).getCenterId().equals(id);
         exact = findViewById(R.id.capacity_exact);
 
         findViewById(R.id.toolbar_back).setOnClickListener(v -> finish());
@@ -86,6 +99,11 @@ public class CenterCapacityActivity extends BaseActivity {
         findViewById(R.id.capacity_set_total).setOnClickListener(v -> askTotalCapacity());
         findViewById(R.id.capacity_set).setOnClickListener(v -> setExact());
         findViewById(R.id.capacity_save).setOnClickListener(v -> save());
+        findViewById(R.id.capacity_show_on_map).setOnClickListener(v -> {
+            if (center != null) startActivity(MainShellActivity.staffMapIntent(this, center));
+        });
+        // Only the LGU has a staff map (moderators see the Centers list instead).
+        findViewById(R.id.capacity_show_on_map).setVisibility(staff.canCreateCenters() ? View.VISIBLE : View.GONE);
         exact.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 setExact();
@@ -103,7 +121,10 @@ public class CenterCapacityActivity extends BaseActivity {
         buildFeatureBoxes();
         findViewById(R.id.capacity_scale).post(this::placeScaleLabels);
 
-        String id = getIntent().getStringExtra(EXTRA_ID);
+        findViewById(R.id.capacity_publish).setOnClickListener(v -> publish());
+        findViewById(R.id.capacity_send_back).setOnClickListener(v -> sendBack());
+        if (readOnly) hideEditing();
+
         listener = container().centers().listen(id, UiCallback.of(this, this::onSnapshot, this::showError));
     }
 
@@ -184,10 +205,11 @@ public class CenterCapacityActivity extends BaseActivity {
         });
     }
 
+    /** Moderator of the center: set the capacity. LGU: edit the center's details. */
     private void showMore(View anchor) {
         PopupMenu menu = new PopupMenu(this, anchor);
-        menu.getMenu().add(0, 1, 0, R.string.set_capacity);
-        menu.getMenu().add(0, 2, 1, R.string.edit_center_details);
+        if (!readOnly) menu.getMenu().add(0, 1, 0, R.string.set_capacity);
+        if (staff.canCreateCenters()) menu.getMenu().add(0, 2, 1, R.string.edit_center_details);
         menu.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == 1) {
                 askTotalCapacity();
@@ -200,6 +222,36 @@ public class CenterCapacityActivity extends BaseActivity {
         menu.show();
     }
 
+    /** Read-only view: no editing controls; the facts stay visible (the LGU keeps "Edit center details"). */
+    private void hideEditing() {
+        findViewById(R.id.capacity_more).setVisibility(staff.canCreateCenters() ? View.VISIBLE : View.GONE);
+        findViewById(R.id.capacity_steps).setVisibility(View.GONE);
+        findViewById(R.id.capacity_steps_plus).setVisibility(View.GONE);
+        findViewById(R.id.capacity_exact_row).setVisibility(View.GONE);
+        findViewById(R.id.capacity_set_total).setVisibility(View.GONE);
+        findViewById(R.id.capacity_limit).setVisibility(View.GONE);
+        findViewById(R.id.capacity_save).setVisibility(View.GONE);
+        for (Chip chip : statusChips.values()) chip.setEnabled(false);
+        for (MaterialCheckBox box : featureBoxes.values()) box.setEnabled(false);
+    }
+
+    /** LGU: publish a verified center that is still hidden; residents see it at once. */
+    private void publish() {
+        if (center == null) return;
+        Dialogs.confirm(this, getString(R.string.publish_to_residents), "Publish " + center.getName()
+                        + " to residents? They will see it in Centers, on the map and in Safe Route.",
+                getString(R.string.publish), () -> container().centers().publishByLgu(staff, center, ui(ignored ->
+                        showMessage("Published to residents"))));
+    }
+
+    /** LGU: return a center a moderator sent before 2026-10-22, with a note saying what to fix. */
+    private void sendBack() {
+        if (center == null) return;
+        Dialogs.input(this, getString(R.string.send_back), "What should the moderator fix?", "",
+                note -> container().centers().sendBack(staff, center, note, ui(ignored ->
+                        showMessage("Sent back to the moderators"))));
+    }
+
     private void save() {
         if (center == null) return;
         if (error != null) {
@@ -207,7 +259,7 @@ public class CenterCapacityActivity extends BaseActivity {
             return;
         }
         boolean online = container().connectivity.isOnline();
-        container().centers().updateCapacity(lgu, center, draft, status, EnumSet.copyOf(features),
+        container().centers().updateCapacity(staff, center, draft, status, EnumSet.copyOf(features),
                 "", UiCallback.of(this, ignored -> {
                     dirty = false;
                     if (!online) pendingSaves++;
@@ -238,6 +290,32 @@ public class CenterCapacityActivity extends BaseActivity {
         location.setText(verified ? R.string.location_verified : R.string.location_not_verified);
         location.setCompoundDrawablesRelativeWithIntrinsicBounds(verified ? R.drawable.ic_status_check : 0, 0, 0, 0);
         tint(location, verified ? R.color.rr_green_tint : R.color.rr_orange_soft, verified ? R.color.rr_green : R.color.rr_orange);
+        CenterState state = CenterState.of(center);
+        Badges.centerState(findViewById(R.id.capacity_state), state);
+        String explanation = state.getExplanation();
+        if (state == CenterState.SENT_BACK) explanation += "\nLGU note: " + center.getLguNote();
+        if (readOnly) {
+            explanation = "Address: " + center.getAddress() + "\n" + explanation
+                    + (center.getNotes().isEmpty() ? "" : "\nNotes: " + center.getNotes());
+            // LGU: publish a verified hidden center; "Send back" only for one a moderator sent earlier.
+            boolean lgu = staff.canPublishToResidents() && staff.canManage(center.getCity());
+            boolean publishable = lgu && !center.isPublished() && !center.isArchived() && center.getVerification().isVerified();
+            boolean waiting = lgu && state == CenterState.WAITING_FOR_LGU;
+            findViewById(R.id.capacity_publish).setVisibility(publishable ? View.VISIBLE : View.GONE);
+            findViewById(R.id.capacity_send_back).setVisibility(waiting ? View.VISIBLE : View.GONE);
+            findViewById(R.id.capacity_savebar).setVisibility(publishable || waiting ? View.VISIBLE : View.GONE);
+            if (!staff.canCreateCenters()) {
+                explanation += "\nOnly its moderator updates this center. You can see it to send people where there is room.";
+            }
+        }
+        if (center.getVerification().isVerified()) {
+            explanation += "\nVerified against: " + center.getVerification().getSource();
+        }
+        if (getIntent().getBooleanExtra(EXTRA_JUST_SAVED, false)) {
+            explanation = "Saved. You can find it again under Data > Evacuation centers, and on the Map tab. "
+                    + "Assign its moderator under Finalize > Moderators.\n" + explanation;
+        }
+        ((TextView) findViewById(R.id.capacity_state_text)).setText(explanation);
         TextView landmark = findViewById(R.id.capacity_landmark_chip);
         landmark.setVisibility(center.getLandmark().isEmpty() ? View.GONE : View.VISIBLE);
         landmark.setText(getString(R.string.landmark_chip, center.getLandmark()));
@@ -277,6 +355,7 @@ public class CenterCapacityActivity extends BaseActivity {
             button.setAlpha(allowed ? 1f : 0.4f);
         }
         if (!exact.hasFocus() || error == null) exact.setText(String.valueOf(draft.getCurrentOccupancy()));
+        if (readOnly) return;
 
         TextView limit = findViewById(R.id.capacity_limit);
         View field = findViewById(R.id.capacity_field);
@@ -355,7 +434,7 @@ public class CenterCapacityActivity extends BaseActivity {
         TextView audit = findViewById(R.id.capacity_audit);
         CapacityChange change = center.getLastCapacityChange();
         if (change == null) {
-            audit.setText(R.string.no_capacity_change);
+            audit.setText(center.getCapacity().isSet() ? R.string.no_capacity_change_yet : R.string.no_capacity_change);
             return;
         }
         String tail = pendingSync ? "waiting to upload"

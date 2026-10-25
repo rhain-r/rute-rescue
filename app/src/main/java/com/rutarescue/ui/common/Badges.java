@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.widget.TextViewCompat;
 
 import com.rutarescue.R;
+import com.rutarescue.model.center.CenterState;
 import com.rutarescue.model.center.CenterStatus;
 import com.rutarescue.model.common.DataFreshness;
 import com.rutarescue.model.hazard.HazardClass;
@@ -102,10 +103,23 @@ public final class Badges {
         }
     }
 
+    /** A saved center's state for staff lists: what still has to happen before residents see it. */
+    public static void centerState(TextView badge, CenterState state) {
+        switch (state) {
+            case PUBLISHED: style(badge, state.getLabel(), Tone.GREEN); break;
+            case WAITING_FOR_LGU: style(badge, state.getLabel(), Tone.NAVY, 0); break;
+            case SENT_BACK: style(badge, state.getLabel(), Tone.RED, 0); break;
+            case NEEDS_VERIFICATION: style(badge, state.getLabel(), Tone.ORANGE, 0); break;
+            default: style(badge, state.getLabel(), Tone.GREY, 0);
+        }
+    }
+
     public static void application(TextView badge, ApplicationStatus status) {
         switch (status) {
             case APPROVED: style(badge, "Approved", Tone.GREEN); break;
-            case REJECTED: style(badge, "Rejected", Tone.RED); break;
+            // Only an approval gets the check mark; the other statuses show their name alone.
+            case REJECTED: style(badge, "Rejected", Tone.RED, 0); break;
+            case NEEDS_DOCUMENTS: style(badge, "Needs documents", Tone.ORANGE, 0); break;
             default: style(badge, "Pending", Tone.ORANGE);
         }
     }

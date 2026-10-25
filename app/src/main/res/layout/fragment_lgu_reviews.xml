@@ -3,7 +3,7 @@
     Figma "LGU / Ligtas Reviews": pinned LGU header, then "Screen Content" (16 dp padding, 12 dp gap):
     Section Header ("Ligtas Priority reviews" + "18 pending"), Review Tabs (Pending / Approved /
     Rejected, 8 dp apart), Search Field, application cards, Review Standard card.
-    DOCX additions: the QR verification scanner button and the freshness label.
+    DOCX additions: the QR check row at the top (priority ID or Ligtas QR) and the freshness label.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -14,10 +14,39 @@
 
         <LinearLayout style="@style/RR.ScreenColumn">
 
+            <!-- 2026-10-22: a resident's priority ID at the center (scan the QR or type its code) -->
+            <LinearLayout
+                android:id="@+id/reviews_priority_check"
+                style="@style/RR.RowCard.Compact">
+
+                <ImageView
+                    style="@style/RR.IconTile.Small"
+                    android:src="@drawable/ic_qr" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/RR.RowTitle"
+                        android:text="@string/check_priority_id" />
+
+                    <TextView
+                        style="@style/RR.RowMeta"
+                        android:maxLines="5"
+                        android:text="@string/check_priority_id_sub" />
+                </LinearLayout>
+
+                <ImageView style="@style/RR.Chevron" />
+            </LinearLayout>
+
             <!-- "Section Header" -->
             <LinearLayout
                 style="@style/RR.SectionRow"
-                android:layout_marginTop="0dp">
+                android:layout_marginTop="@dimen/item_gap">
 
                 <TextView
                     style="@style/RR.SectionTitle"
@@ -31,7 +60,7 @@
                     android:textColor="@color/rr_navy_light" />
             </LinearLayout>
 
-            <!-- "Review Tabs" + QR scanner -->
+            <!-- "Review Tabs" (2026-10-22: the QR scan is the "Check a priority ID" row above, for both QR kinds) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -54,6 +83,13 @@
                         android:checked="true"
                         android:text="@string/pending" />
 
+                    <!-- 2026-10-20: applications the moderator asked new documents for -->
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/reviews_tab_documents"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/needs_documents" />
+
                     <com.google.android.material.chip.Chip
                         android:id="@+id/reviews_tab_approved"
                         android:layout_width="wrap_content"
@@ -67,12 +103,6 @@
                         android:text="@string/rejected" />
                 </com.google.android.material.chip.ChipGroup>
 
-                <ImageButton
-                    android:id="@+id/reviews_scan"
-                    style="@style/RR.MapButton"
-                    android:layout_marginStart="8dp"
-                    android:contentDescription="@string/scan_qr"
-                    android:src="@drawable/ic_scan" />
             </LinearLayout>
 
             <!-- "RR / Search Field" -->

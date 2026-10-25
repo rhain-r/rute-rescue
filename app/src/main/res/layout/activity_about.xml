@@ -57,15 +57,6 @@
             android:id="@+id/about_attribution"
             style="@style/RR.CardColumn"
             android:textAppearance="@style/TextAppearance.RR.Body" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/about_sign_out"
-            style="@style/Widget.RR.Button.Secondary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/sign_out"
-            app:icon="@drawable/ic_logout"
-            xmlns:app="http://schemas.android.com/apk/res-auto" />
+        <!-- 2026-10-22: no Sign out here any more; it is in Settings, which opens this screen. -->
     </LinearLayout>
 </ScrollView>

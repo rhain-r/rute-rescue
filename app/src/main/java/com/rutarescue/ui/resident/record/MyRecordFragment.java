@@ -21,8 +21,8 @@ import com.rutarescue.model.family.FamilyRecord;
 import com.rutarescue.model.family.TrustedContact;
 import com.rutarescue.model.ligtas.ApplicationStatus;
 import com.rutarescue.model.ligtas.LigtasApplication;
+import com.rutarescue.model.priority.PriorityCard;
 import com.rutarescue.model.user.UserProfile;
-import com.rutarescue.ui.about.AboutActivity;
 import com.rutarescue.ui.common.Badges;
 import com.rutarescue.ui.common.BaseFragment;
 import com.rutarescue.ui.common.Dialogs;
@@ -30,6 +30,7 @@ import com.rutarescue.ui.common.UiCallback;
 import com.rutarescue.ui.resident.home.InboxActivity;
 import com.rutarescue.ui.resident.ligtas.LigtasApplyActivity;
 import com.rutarescue.ui.resident.ligtas.LigtasStatusActivity;
+import com.rutarescue.ui.resident.priority.PriorityIdActivity;
 import com.rutarescue.util.Formats;
 
 import java.util.ArrayList;
@@ -54,17 +55,28 @@ public class MyRecordFragment extends BaseFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle state) {
         view.findViewById(R.id.header_bell).setOnClickListener(v -> startActivity(new Intent(requireContext(), InboxActivity.class)));
-        view.findViewById(R.id.header_logo).setOnClickListener(v -> startActivity(new Intent(requireContext(), AboutActivity.class)));
         view.findViewById(R.id.record_edit).setOnClickListener(v -> startActivity(new Intent(requireContext(), FamilyEditActivity.class)));
         view.findViewById(R.id.record_create).setOnClickListener(v -> startActivity(new Intent(requireContext(), FamilyEditActivity.class)));
         view.findViewById(R.id.record_lab_open).setOnClickListener(v -> startActivity(new Intent(requireContext(), LegacyDataActivity.class)));
         view.findViewById(R.id.record_ligtas_apply).setOnClickListener(v -> startActivity(new Intent(requireContext(), LigtasApplyActivity.class)));
         view.findViewById(R.id.record_ligtas_list).setOnClickListener(v -> startActivity(new Intent(requireContext(), LigtasStatusActivity.class)));
 
+        // 2026-10-22: the priority ID (the screen offers "Get a priority ID" when there is none).
+        view.findViewById(R.id.record_priority).setOnClickListener(v -> startActivity(new Intent(requireContext(), PriorityIdActivity.class)));
+
         UserProfile profile = profile();
         if (profile != null) {
             track(container().ligtas().listenMine(profile.getUid(), ui(this::onApplications)));
+            track(container().priorityIds().listenMine(profile.getUid(), ui(this::onPriorityCard)));
         }
+    }
+
+    private void onPriorityCard(PriorityCard card) {
+        View view = getView();
+        if (view == null || card == null) return;
+        ((TextView) view.findViewById(R.id.record_priority_title)).setText(R.string.my_priority_id);
+        ((TextView) view.findViewById(R.id.record_priority_meta)).setText(card.getGroup().getLabel() + " • "
+                + card.getDisplayCode() + " • " + card.getStatusLabel());
     }
 
     @Override

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/review_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -59,6 +60,32 @@
                 android:textAppearance="@style/TextAppearance.RR.Body" />
         </LinearLayout>
 
+        <!--
+            2026-10-21: an already decided application shows its current status at the top with
+            "Change status", so a mistaken approval is easy to find and fix.
+        -->
+        <LinearLayout
+            android:id="@+id/review_current"
+            style="@style/RR.CardColumn"
+            android:background="@drawable/bg_info_card"
+            android:elevation="0dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/review_current_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.RR.Body" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/review_change"
+                style="@style/Widget.RR.Button.Outline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/change_status" />
+        </LinearLayout>
+
         <TextView
             style="@style/RR.SectionHeader"
             android:text="Synthetic proof" />
@@ -88,6 +115,11 @@
             style="@style/RR.CardColumn"
             android:textAppearance="@style/TextAppearance.RR.Body" />
 
+        <!--
+            2026-10-20: the moderator's decision, which can be changed later (for example an approval
+            given while a document was missing). The message is what the resident reads.
+            2026-10-21: pick the status (chips), write the message, then "Save".
+        -->
         <LinearLayout
             android:id="@+id/review_decision"
             android:layout_width="match_parent"
@@ -95,12 +127,65 @@
             android:orientation="vertical"
             android:visibility="gone">
 
+            <TextView
+                android:id="@+id/review_decision_title"
+                style="@style/RR.SectionHeader"
+                android:text="@string/decision_title" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/decision_caption"
+                android:textAppearance="@style/TextAppearance.RR.Caption" />
+
+            <!-- The status to give: exactly one, and it can be changed again later -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/review_choices"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:chipSpacingHorizontal="8dp"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/review_choice_approved"
+                    style="@style/Widget.RR.Chip.Status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/approved" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/review_choice_documents"
+                    style="@style/Widget.RR.Chip.Status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/needs_documents" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/review_choice_rejected"
+                    style="@style/Widget.RR.Chip.Status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/rejected" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <TextView
+                android:id="@+id/review_choice_error"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/choose_status"
+                android:textAppearance="@style/TextAppearance.RR.Caption"
+                android:textColor="@color/rr_red"
+                android:visibility="gone" />
+
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/review_reason_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:hint="@string/decision_reason">
+                android:hint="@string/decision_message_hint"
+                app:counterEnabled="true"
+                app:counterMaxLength="300">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/review_reason"
@@ -110,30 +195,25 @@
                     android:minLines="2" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <LinearLayout
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/review_save"
+                style="@style/Widget.RR.Button.Primary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:orientation="horizontal">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/review_reject"
-                    style="@style/Widget.RR.Button.Secondary"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="1"
-                    android:text="@string/reject" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/review_approve"
-                    style="@style/Widget.RR.Button.Primary"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:layout_weight="1"
-                    android:text="@string/approve" />
-            </LinearLayout>
+                android:text="@string/save_decision" />
         </LinearLayout>
+
+        <!-- Opens the moderator's own email app with the decision already written (free, no server). -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/review_email"
+            style="@style/Widget.RR.Button.Text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/email_resident"
+            android:visibility="gone"
+            app:icon="@drawable/ic_mail"
+            app:iconGravity="textStart" />
     </LinearLayout>
 </ScrollView>

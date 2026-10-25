@@ -8,7 +8,8 @@
     <!-- ===== Bottom navigation item: 96 x 58 dp, icon 22 dp, 3 dp gap, Mobile/Micro label ===== -->
     <style name="RR.NavItem">
         <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">58dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">58dp</item>
         <item name="android:layout_weight">1</item>
         <item name="android:gravity">center</item>
         <item name="android:orientation">vertical</item>
@@ -36,6 +37,8 @@
         <item name="android:clipToPadding">false</item>
         <item name="android:paddingTop">@dimen/header_height</item>
         <item name="android:scrollbars">none</item>
+        <!-- ScreenFit moves the top padding to the header's real height (large text, small phones) -->
+        <item name="android:tag">fit:below_header</item>
     </style>
 
     <!-- "Screen Content": 16 dp padding on every side -->
@@ -47,6 +50,8 @@
         <item name="android:paddingTop">@dimen/screen_padding</item>
         <item name="android:paddingEnd">@dimen/screen_padding</item>
         <item name="android:paddingBottom">@dimen/bottom_nav_space</item>
+        <!-- ScreenFit moves the bottom padding to the bottom tabs' real height -->
+        <item name="android:tag">fit:above_nav</item>
     </style>
 
     <!-- ===== Glass card (LinearLayout): 24 dp corners, 14 dp padding, Elevation/Sm ===== -->

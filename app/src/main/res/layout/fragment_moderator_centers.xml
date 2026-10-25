@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Moderator "Centers" tab (2026-10-22), in place of the map: every evacuation center of the
+    moderator's city with its current headcount, fullest first, so the moderator knows where to
+    send people when their own center fills up. The list follows the database live.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.core.widget.NestedScrollView style="@style/RR.TabScroll">
+
+        <LinearLayout style="@style/RR.ScreenColumn">
+
+            <LinearLayout
+                style="@style/RR.SectionRow"
+                android:layout_marginTop="0dp">
+
+                <TextView
+                    android:id="@+id/mod_centers_title"
+                    style="@style/RR.SectionTitle" />
+
+                <TextView
+                    android:id="@+id/mod_centers_total"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.RR.Label"
+                    android:textColor="@color/rr_navy_light" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/mod_centers_freshness"
+                style="@style/RR.FreshnessChip"
+                android:layout_marginBottom="@dimen/item_gap" />
+
+            <LinearLayout
+                android:id="@+id/mod_centers_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView
+                style="@style/RR.Note.Info"
+                android:layout_marginTop="@dimen/section_gap"
+                android:text="@string/centers_list_note" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <include layout="@layout/view_app_header" />
+</FrameLayout>

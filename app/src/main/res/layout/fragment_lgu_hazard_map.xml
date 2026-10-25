@@ -28,10 +28,11 @@
         android:paddingTop="14dp"
         android:paddingEnd="14dp">
 
-        <!-- "LGU Map Header": 10 dp gaps -->
+        <!-- "LGU Map Header": 10 dp gaps; grows with large text (min 48 dp) -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -44,7 +45,8 @@
             <!-- "Map Title": glass pill, padding 0/14, 20 dp map icon, Section title + Micro meta -->
             <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:layout_weight="1"
@@ -53,7 +55,9 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingStart="14dp"
-                android:paddingEnd="14dp">
+                android:paddingTop="4dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="4dp">
 
                 <ImageView
                     android:layout_width="20dp"
@@ -72,6 +76,8 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="2"
                         android:text="@string/flood_risk_map"
                         android:textAppearance="@style/TextAppearance.RR.Section" />
 
@@ -98,99 +104,18 @@
                 android:contentDescription="@string/cd_more"
                 android:src="@drawable/ic_more" />
         </LinearLayout>
-
-        <!-- "Layer Filters": map pills, 8 dp apart -->
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_marginTop="14dp"
-            android:clipToPadding="false"
-            android:paddingBottom="4dp"
-            android:scrollbars="none">
-
-            <com.google.android.material.chip.ChipGroup
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:chipSpacingHorizontal="8dp"
-                app:singleLine="true">
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/lgu_layer_zones"
-                    style="@style/Widget.RR.Chip.Map"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="@string/layer_risk_zones" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/lgu_layer_structures"
-                    style="@style/Widget.RR.Chip.Map"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="@string/layer_structures" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/lgu_layer_centers"
-                    style="@style/Widget.RR.Chip.Map"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="@string/layer_centers" />
-            </com.google.android.material.chip.ChipGroup>
-        </HorizontalScrollView>
-
-        <!-- Risk Horizon (DOCX section 7) -->
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_marginTop="6dp"
-            android:clipToPadding="false"
-            android:paddingBottom="4dp"
-            android:scrollbars="none">
-
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/lgu_scenario_chips"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:chipSpacingHorizontal="8dp"
-                app:selectionRequired="true"
-                app:singleLine="true"
-                app:singleSelection="true">
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/lgu_scenario_5"
-                    style="@style/Widget.RR.Chip.Map"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="@string/scenario_5" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/lgu_scenario_25"
-                    style="@style/Widget.RR.Chip.Map"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/scenario_25" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/lgu_scenario_100"
-                    style="@style/Widget.RR.Chip.Map"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/scenario_100" />
-            </com.google.android.material.chip.ChipGroup>
-        </HorizontalScrollView>
     </LinearLayout>
 
-    <!-- "Map Controls": Locate and Layers, 8 dp apart, 210 dp below the top of the content -->
+    <!--
+        "Map Controls": Locate and Layers, 8 dp apart, just under the header. 2026-10-21: the layer
+        pills and the summary chip are gone; the Layers button below is the one place to change layers.
+    -->
     <LinearLayout
+        android:id="@+id/lgu_map_controls"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|end"
-        android:layout_marginTop="210dp"
+        android:layout_marginTop="90dp"
         android:layout_marginEnd="18dp"
         android:orientation="vertical">
 
@@ -214,6 +139,7 @@
     -->
     <com.rutarescue.ui.common.MaxHeightScrollView
         android:id="@+id/lgu_map_sheet"
+        android:tag="fit:above_nav_margin"
         style="@style/RR.Sheet"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -229,13 +155,23 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- "Sheet Handle" -->
-                <View
-                    android:layout_width="44dp"
-                    android:layout_height="4dp"
-                    android:layout_marginStart="1dp"
-                    android:layout_marginBottom="10dp"
-                    android:background="@drawable/bg_drag_handle" />
+                <!-- "Sheet Handle", centred in a 32 dp touch strip (2026-10-20): zooming or moving the
+                     map slides the card down to this handle; picking a point slides it back up.
+                     Drag it or tap it to slide the card yourself. -->
+                <FrameLayout
+                    android:id="@+id/lgu_sheet_handle"
+                    android:layout_width="match_parent"
+                    android:layout_height="32dp"
+                    android:layout_marginTop="-10dp"
+                    android:contentDescription="@string/cd_map_sheet_handle"
+                    android:focusable="true">
+
+                    <View
+                        android:layout_width="44dp"
+                        android:layout_height="4dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/bg_drag_handle" />
+                </FrameLayout>
 
                 <TextView
                     android:id="@+id/lgu_map_hint"

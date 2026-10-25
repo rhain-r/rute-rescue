@@ -2,8 +2,12 @@
 <!--
     Figma "LGU / Overview": pinned LGU header, then "Screen Content" (16 dp padding, 12 dp gap):
     Operations Status, "Today" + "View report", Metric Grid (2 x 2, 10 dp gaps), Quick operations
-    (two 66 dp rows), Advisory Composer. DOCX addition: the LGU's published advisories, which the
-    officer can update or archive (DOCX section 3), followed by the information-only scope note.
+    (two 66 dp rows). DOCX addition: the LGU's published advisories, which the officer can update or
+    archive (DOCX section 3), followed by the information-only scope note. 2026-10-20: the Advisory
+    Composer card was removed (it repeated "Publish community advisory"), and only the 3 newest
+    advisories of the last 30 days are listed, with "See all advisories" for the rest.
+    2026-10-22: the LGU Overview only (moderators have their own); Advisories moved to the very top,
+    led by the city's alert level, which only the LGU sets.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -14,10 +18,32 @@
 
         <LinearLayout style="@style/RR.ScreenColumn">
 
+            <!-- 2026-10-22: Advisories at the very top - the city's alert level (the LGU can change it),
+                 then (since 2026-10-25) only the newest published announcement of the last 7 days;
+                 a level older than 7 days reads "No alert level set" again. The rest are in
+                 Notifications (the header bell, 30 days); no "See all advisories" since 2026-10-25 -->
+            <LinearLayout
+                style="@style/RR.SectionRow"
+                android:layout_marginTop="0dp">
+
+                <TextView
+                    style="@style/RR.SectionTitle"
+                    android:text="@string/advisories" />
+            </LinearLayout>
+
+            <include layout="@layout/view_alert_strip" />
+
+            <LinearLayout
+                android:id="@+id/lgu_advisories"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
             <!-- "Operations Status": 28 dp corners, padding 16, gap 8, Elevation/Float -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/section_gap"
                 android:background="@drawable/bg_hero_lgu"
                 android:elevation="@dimen/elevation_float"
                 android:orientation="vertical"
@@ -45,18 +71,19 @@
                         android:textColor="@color/rr_orange" />
                 </LinearLayout>
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/operations_overview"
-                    android:textAppearance="@style/TextAppearance.RR.Title" />
-
+                <!-- 2026-10-22: a short description of the city's day instead of the big "Operations overview" title -->
                 <TextView
                     android:id="@+id/lgu_hero_body"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="6dp"
+                    android:textAppearance="@style/TextAppearance.RR.Body" />
+
+                <TextView
+                    android:id="@+id/lgu_hero_data"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
                     android:textAppearance="@style/TextAppearance.RR.Caption" />
             </LinearLayout>
 
@@ -82,8 +109,9 @@
                 <LinearLayout style="@style/RR.MetricTile">
 
                     <TextView
+                        android:id="@+id/lgu_metric_reviews_label"
                         style="@style/RR.MetricLabel"
-                        android:text="@string/open_reviews" />
+                        android:text="@string/waiting_for_you" />
 
                     <TextView
                         android:id="@+id/lgu_metric_reviews"
@@ -137,17 +165,20 @@
                     style="@style/RR.MetricTile"
                     android:layout_marginStart="10dp">
 
+                    <!-- 2026-10-25: Ligtas Priority applications pending review replaced "Updates"
+                         (the change history is in View report) -->
                     <TextView
                         style="@style/RR.MetricLabel"
-                        android:text="@string/updates_label" />
+                        android:text="@string/ligtas_pending_label" />
 
                     <TextView
-                        android:id="@+id/lgu_metric_updates"
+                        android:id="@+id/lgu_metric_ligtas"
                         style="@style/RR.MetricValue" />
 
                     <TextView
-                        android:id="@+id/lgu_metric_updates_sub"
-                        style="@style/RR.MetricSub" />
+                        android:id="@+id/lgu_metric_ligtas_sub"
+                        style="@style/RR.MetricSub"
+                        android:text="@string/ligtas_pending_sub" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -173,8 +204,9 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/lgu_op_reviews_title"
                         style="@style/RR.RowTitle"
-                        android:text="@string/review_ligtas" />
+                        android:text="@string/finalize_op" />
 
                     <TextView
                         android:id="@+id/lgu_op_reviews_sub"
@@ -201,10 +233,12 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/lgu_op_advisory_title"
                         style="@style/RR.RowTitle"
                         android:text="@string/publish_advisory" />
 
                     <TextView
+                        android:id="@+id/lgu_op_advisory_sub"
                         style="@style/RR.RowMeta"
                         android:text="@string/publish_advisory_sub" />
                 </LinearLayout>
@@ -212,63 +246,10 @@
                 <ImageView style="@style/RR.Chevron" />
             </LinearLayout>
 
-            <!-- "Advisory Composer": padding 14, gap 8 -->
-            <LinearLayout style="@style/RR.CardColumn">
-
-                <EditText
-                    android:id="@+id/lgu_composer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@null"
-                    android:gravity="top"
-                    android:hint="@string/share_update_hint"
-                    android:importantForAutofill="no"
-                    android:inputType="textMultiLine|textCapSentences"
-                    android:minLines="2"
-                    android:textAppearance="@style/TextAppearance.RR.Body"
-                    android:textColorHint="@color/rr_text_secondary" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/lgu_compose_closure"
-                        style="@style/RR.ComposerAction"
-                        android:text="@string/add_closure"
-                        android:textColor="@color/rr_navy_light" />
-
-                    <TextView
-                        android:id="@+id/lgu_compose_center"
-                        style="@style/RR.ComposerAction"
-                        android:text="@string/add_center"
-                        android:textColor="@color/rr_accent_teal" />
-
-                    <TextView
-                        android:id="@+id/lgu_compose_publish"
-                        style="@style/RR.ComposerAction"
-                        android:text="@string/publish"
-                        android:textColor="@color/rr_teal" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Published advisories (update / archive) -->
-            <TextView
-                style="@style/RR.SectionHeader"
-                android:text="@string/your_advisories" />
-
-            <LinearLayout
-                android:id="@+id/lgu_advisories"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-
             <!-- Same component as the Figma "Scope Notice" -->
             <TextView
                 style="@style/RR.Note.Info"
+                android:layout_marginTop="@dimen/section_gap"
                 android:text="@string/info_management_only" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

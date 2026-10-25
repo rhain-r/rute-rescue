@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Figma "Safe route / Centers / Family Action" tiles: 116 x 94 dp, glass, padding 12, gap 6 -->
+    <!-- At least 94 dp; grows with large text. match_parent makes the three tiles of a row equally tall. -->
     <style name="RR.QuickAction">
         <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">94dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:minHeight">94dp</item>
         <item name="android:layout_weight">1</item>
         <item name="android:orientation">vertical</item>
         <item name="android:background">@drawable/bg_card</item>

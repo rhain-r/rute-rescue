@@ -6,7 +6,10 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.rutarescue.BuildConfig;
 import com.rutarescue.exception.OfflineException;
+import com.rutarescue.exception.ProfileNotFoundException;
+import com.rutarescue.exception.StaffPendingException;
 import com.rutarescue.exception.ProviderException;
 import com.rutarescue.exception.ValidationException;
 
@@ -23,12 +26,17 @@ public final class UiMessages {
         if (error == null) return "Something went wrong.";
         if (error instanceof ValidationException) return error.getMessage();
         if (error instanceof OfflineException) return error.getMessage();
+        if (error instanceof StaffPendingException) return error.getMessage();
+        if (error instanceof ProfileNotFoundException) return error.getMessage();
         if (error instanceof ProviderException) return error.getMessage();
         if (error instanceof FirebaseNetworkException) {
             return "No connection to the server. Your changes are kept on this phone and will sync later.";
         }
         if (error instanceof FirebaseAuthInvalidCredentialsException || error instanceof FirebaseAuthInvalidUserException) {
-            return "Incorrect e-mail or password.";
+            return "This e-mail and password do not match an account. Check for typing mistakes (capital letters "
+                    + "count), use Forgot password, or - for new staff - Staff sign-up first."
+                    + (BuildConfig.USE_FIREBASE_EMULATOR
+                    ? " This test copy only knows the accounts on the test server, not the real app's." : "");
         }
         if (error instanceof FirebaseAuthUserCollisionException) {
             return "An account with this e-mail already exists. Sign in instead.";

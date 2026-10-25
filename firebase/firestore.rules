@@ -4,10 +4,15 @@ rules_version = '2';
 //
 // Role restrictions are enforced HERE, not only by hiding screens in the app:
 //  - residents can read/write only their own profile, family record, places and applications;
-//  - LGU personnel exist only in lgu_staff/{uid}, which nobody can write from the app
-//    (an administrator creates them in the Firebase console);
-//  - LGU personnel can only read/write records of their assigned jurisdiction;
-//  - every LGU change must be written together with an audit event in the same batch;
+//  - city staff exist only in lgu_staff/{uid} with role MODERATOR or LGU (no role = LGU, the
+//    accounts made before 2026-10-20). A staff sign-up is only a PENDING staffRequests/{uid};
+//    the LGU of that city approves it (or an administrator in the Firebase console);
+//  - staff can only read/write records of their own city (jurisdiction);
+//  - 2026-10-22: the LGU creates and publishes centers, sets the city alert level, posts road
+//    closures and bridge/tunnel status, accepts or declines advisories, approves staff and assigns
+//    each moderator ONE center. A moderator changes only the headcount of that center, decides
+//    Ligtas applications, checks priority IDs, and sends advisories about the center for approval;
+//  - every staff change must be written together with an audit event in the same batch;
 //  - audit events can never be edited or deleted; records are archived, not deleted.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -24,12 +29,48 @@ service cloud.firestore {
       return /databases/$(database)/documents/lgu_staff/$(request.auth.uid);
     }
 
-    function isLgu() {
+    function isStaff() {
       return signedIn() && exists(staffPath());
     }
 
+    // Staff of this city, either role.
+    function isStaffFor(city) {
+      return isStaff() && get(staffPath()).data.jurisdiction == city;
+    }
+
+    // Accounts made before moderators existed have no role field and are LGU.
+    function staffRole() {
+      return get(staffPath()).data.get('role', 'LGU');
+    }
+
     function isLguFor(city) {
-      return isLgu() && get(staffPath()).data.jurisdiction == city;
+      return isStaffFor(city) && staffRole() == 'LGU';
+    }
+
+    function isModeratorFor(city) {
+      return isStaffFor(city) && staffRole() == 'MODERATOR';
+    }
+
+    // A moderator of any city (priority IDs are checked wherever the resident evacuates).
+    function isModerator() {
+      return isStaff() && staffRole() == 'MODERATOR';
+    }
+
+    // The center the signed-in moderator runs ('' until the LGU assigns one).
+    function staffCenter() {
+      return get(staffPath()).data.get('centerId', '');
+    }
+
+    // A center of this city that exists (the LGU assigns moderators only to its own centers).
+    function isCenterOf(centerId, city) {
+      return centerId is string && centerId.size() > 0
+        && exists(/databases/$(database)/documents/centers/$(centerId))
+        && get(/databases/$(database)/documents/centers/$(centerId)).data.city == city;
+    }
+
+    // Only these fields changed between the stored and the new document.
+    function onlyChanged(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
     }
 
     function validCity(city) {
@@ -76,8 +117,51 @@ service cloud.firestore {
     }
 
     match /lgu_staff/{uid} {
-      allow read: if isSelf(uid);
-      allow write: if false;
+      allow read: if isSelf(uid) || isLguFor(resource.data.jurisdiction);
+      // The LGU approves a PENDING sign-up of its own city: the role and city must be the ones the
+      // person asked for, the request must become APPROVED in the same batch, with an audit event.
+      // A moderator is approved together with the center of the city they will run.
+      allow create: if isLguFor(request.resource.data.jurisdiction)
+        && request.resource.data.role in ['MODERATOR', 'LGU']
+        && request.resource.data.keys().hasOnly(['displayName', 'email', 'jurisdiction', 'position', 'role',
+                                                  'approvedBy', 'approvedAt', 'centerId', 'centerName'])
+        && (request.resource.data.role != 'MODERATOR'
+            || isCenterOf(request.resource.data.get('centerId', ''), request.resource.data.jurisdiction))
+        && request.resource.data.approvedBy == request.auth.uid
+        && exists(/databases/$(database)/documents/staffRequests/$(uid))
+        && get(/databases/$(database)/documents/staffRequests/$(uid)).data.status == 'PENDING'
+        && get(/databases/$(database)/documents/staffRequests/$(uid)).data.jurisdiction == request.resource.data.jurisdiction
+        && get(/databases/$(database)/documents/staffRequests/$(uid)).data.role == request.resource.data.role
+        && getAfter(/databases/$(database)/documents/staffRequests/$(uid)).data.status == 'APPROVED';
+      // The LGU gives one of its moderators (another) center of the city, with an audit event.
+      allow update: if isLguFor(resource.data.jurisdiction)
+        && resource.data.get('role', 'LGU') == 'MODERATOR'
+        && onlyChanged(['centerId', 'centerName', 'assignedBy', 'assignedAt', 'lastAuditId'])
+        && request.resource.data.assignedBy == request.auth.uid
+        && isCenterOf(request.resource.data.centerId, resource.data.jurisdiction)
+        && audited(request.resource.data.lastAuditId, uid);
+      allow delete: if false;
+    }
+
+    // Staff sign-up (2026-10-20): a locked request until the city's LGU decides.
+    match /staffRequests/{uid} {
+      allow read: if isSelf(uid) || isLguFor(resource.data.jurisdiction);
+      allow create: if isSelf(uid)
+        && !isStaff()
+        && request.resource.data.status == 'PENDING'
+        && request.resource.data.role in ['MODERATOR', 'LGU']
+        && validCity(request.resource.data.jurisdiction)
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.decidedBy == ''
+        && request.resource.data.keys().hasOnly(['displayName', 'email', 'role', 'jurisdiction', 'position',
+                                                  'requestedAt', 'status', 'decidedBy', 'decisionReason', 'decidedAt']);
+      allow update: if isLguFor(resource.data.jurisdiction)
+        && resource.data.status == 'PENDING'
+        && request.resource.data.status in ['APPROVED', 'REJECTED']
+        && request.resource.data.decidedBy == request.auth.uid
+        && onlyChanged(['status', 'decidedBy', 'decisionReason', 'decidedAt', 'lastAuditId'])
+        && audited(request.resource.data.lastAuditId, uid);
+      allow delete: if false;
     }
 
     match /families/{uid} {
@@ -93,10 +177,23 @@ service cloud.firestore {
 
     match /centers/{centerId} {
       allow read: if signedIn()
-        && (resource.data.published == true || isLguFor(resource.data.city));
-      allow create, update: if isLguFor(request.resource.data.city)
-        && (resource == null || resource.data.city == request.resource.data.city)
+        && (resource.data.published == true || isStaffFor(resource.data.city));
+      // 2026-10-22: only the LGU adds, edits, verifies, publishes and archives centers of its city
+      // (a published center must be verified).
+      allow create: if isLguFor(request.resource.data.city)
         && !(request.resource.data.published == true && request.resource.data.verified != true)
+        && validOccupancy(request.resource.data)
+        && audited(request.resource.data.lastAuditId, centerId);
+      allow update: if isLguFor(resource.data.city)
+        && resource.data.city == request.resource.data.city
+        && !(request.resource.data.published == true && request.resource.data.verified != true)
+        && validOccupancy(request.resource.data)
+        && audited(request.resource.data.lastAuditId, centerId);
+      // The moderator of THIS center updates only its headcount, status and facilities.
+      allow update: if isModeratorFor(resource.data.city)
+        && staffCenter() == centerId
+        && onlyChanged(['capacity', 'occupancy', 'status', 'features', 'occupancyFrom', 'occupancyBy',
+                        'occupancyAt', 'occupancySource', 'updatedBy', 'updatedAt', 'lastAuditId'])
         && validOccupancy(request.resource.data)
         && audited(request.resource.data.lastAuditId, centerId);
       allow delete: if false;
@@ -104,15 +201,50 @@ service cloud.firestore {
 
     match /advisories/{advisoryId} {
       allow read: if signedIn()
-        && (resource.data.published == true || isLguFor(resource.data.city));
+        && (resource.data.published == true || isStaffFor(resource.data.city));
+      // Only the LGU publishes to residents (its own advisories, or a moderator's it accepts). A
+      // DECLINED advisory stays declined and is never published.
       allow create, update: if isLguFor(request.resource.data.city)
         && (resource == null || resource.data.city == request.resource.data.city)
+        && !(request.resource.data.get('review', '') == 'DECLINED' && request.resource.data.published == true)
+        && (resource == null || resource.data.get('review', '') != 'DECLINED'
+            || request.resource.data.get('review', '') == 'DECLINED')
         && audited(request.resource.data.lastAuditId, advisoryId);
+      // A moderator sends a PENDING advisory about their own center, with no alert level of its own...
+      allow create: if isModeratorFor(request.resource.data.city)
+        && request.resource.data.published != true
+        && request.resource.data.review == 'PENDING'
+        && request.resource.data.level == 'ADVISORY'
+        && staffCenter() != ''
+        && request.resource.data.centerId == staffCenter()
+        && request.resource.data.requestedByUid == request.auth.uid
+        && audited(request.resource.data.lastAuditId, advisoryId);
+      // ...and may fix or withdraw it only while it is still pending.
+      allow update: if isModeratorFor(resource.data.city)
+        && resource.data.get('review', '') == 'PENDING'
+        && request.resource.data.review == 'PENDING'
+        && request.resource.data.published != true
+        && request.resource.data.level == 'ADVISORY'
+        && request.resource.data.city == resource.data.city
+        && request.resource.data.centerId == resource.data.centerId
+        && resource.data.centerId == staffCenter()
+        && audited(request.resource.data.lastAuditId, advisoryId);
+      allow delete: if false;
+    }
+
+    // The city's alert level (2026-10-22): everyone reads it; only that city's LGU sets it.
+    match /cityAlerts/{city} {
+      allow read: if signedIn();
+      allow create, update: if isLguFor(city)
+        && request.resource.data.city == city
+        && request.resource.data.level in ['ADVISORY', 'ALERT_1', 'ALERT_2', 'ALERT_3']
+        && audited(request.resource.data.lastAuditId, city);
       allow delete: if false;
     }
 
     match /closures/{closureId} {
       allow read: if signedIn();
+      // 2026-10-22: road closures change residents' routes, so only the LGU posts or lifts them.
       allow create, update: if isLguFor(request.resource.data.city)
         && (resource == null || resource.data.city == request.resource.data.city)
         && audited(request.resource.data.lastAuditId, closureId);
@@ -121,6 +253,7 @@ service cloud.firestore {
 
     match /structureStatus/{structureId} {
       allow read: if signedIn();
+      // Bridge and tunnel status is a road notice too: LGU only (2026-10-22).
       allow create, update: if isLguFor(request.resource.data.jurisdiction)
         && request.resource.data.updatedBy == request.auth.uid
         && request.resource.data.status in ['UNVERIFIED', 'VERIFIED_OPEN', 'CLOSED']
@@ -130,6 +263,7 @@ service cloud.firestore {
 
     match /datasetVersions/{versionId} {
       allow read: if signedIn();
+      // Center imports are LGU only (2026-10-22).
       allow create, update: if isLguFor(request.resource.data.city)
         && audited(request.resource.data.lastAuditId, versionId);
       allow delete: if false;
@@ -139,19 +273,21 @@ service cloud.firestore {
 
     match /ligtasApplications/{appId} {
       allow read: if signedIn()
-        && (resource.data.ownerUid == request.auth.uid || isLguFor(resource.data.city));
-      // Residents can only submit PENDING applications for themselves.
+        && (resource.data.ownerUid == request.auth.uid || isStaffFor(resource.data.city));
+      // Residents can only submit PENDING applications for themselves (with their own sign-in email).
       allow create: if signedIn()
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.status == 'PENDING'
         && request.resource.data.reviewerUid == ''
         && request.resource.data.reviewReason == ''
+        && request.resource.data.get('applicantEmail', '') in ['', request.auth.token.email]
         && validCity(request.resource.data.city);
-      // Only LGU staff of the same city decide, once, with a reason and an audit event.
-      allow update: if isLguFor(resource.data.city)
-        && resource.data.status == 'PENDING'
-        && request.resource.data.status in ['APPROVED', 'REJECTED']
+      // A moderator of the same city decides - and may change the decision later - always with a
+      // message for the resident and an audit event. The LGU only reads.
+      allow update: if isModeratorFor(resource.data.city)
+        && request.resource.data.status in ['APPROVED', 'REJECTED', 'NEEDS_DOCUMENTS']
         && request.resource.data.reviewerUid == request.auth.uid
+        && request.resource.data.get('applicantEmail', '') == resource.data.get('applicantEmail', '')
         && request.resource.data.reviewReason is string
         && request.resource.data.reviewReason.size() >= 5
         && request.resource.data.ownerUid == resource.data.ownerUid
@@ -160,13 +296,19 @@ service cloud.firestore {
         && request.resource.data.justification == resource.data.justification
         && request.resource.data.proofRef == resource.data.proofRef
         && audited(request.resource.data.lastAuditId, appId);
+      // The owner answers "Needs documents" with a new proof; it waits for review again.
+      allow update: if signedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && resource.data.status == 'NEEDS_DOCUMENTS'
+        && request.resource.data.status == 'PENDING'
+        && onlyChanged(['status', 'proofRef', 'history']);
       allow delete: if false;
     }
 
     // Free-plan fallback storage for the synthetic proof image (see FirestoreInlineProofStorage).
     match /ligtasProofs/{appId} {
       allow read: if signedIn()
-        && (resource.data.ownerUid == request.auth.uid || isLguFor(resource.data.city));
+        && (resource.data.ownerUid == request.auth.uid || isStaffFor(resource.data.city));
       allow create: if signedIn()
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.contentType == 'image/jpeg'
@@ -175,11 +317,40 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // ------------------------------------------------------------------ priority IDs (2026-10-22)
+
+    // A resident in a priority group gets an ID at registration. Its random code (the document id)
+    // is in the QR. The owner may list their own; a moderator may only open one by its code (no
+    // listing) and record the document check, with an audit event.
+    match /priorityIds/{cardId} {
+      allow get: if signedIn() && (resource.data.ownerUid == request.auth.uid || isModerator());
+      allow list: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow create: if signedIn()
+        && cardId.size() == 12
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.group in ['SENIOR_CITIZEN', 'PERSON_WITH_DISABILITY', 'PREGNANT']
+        && validCity(request.resource.data.city)
+        && request.resource.data.checkedBy == ''
+        && request.resource.data.checkedAt == 0
+        && request.resource.data.missingCount == 0
+        && request.resource.data.checks.size() == 0
+        && request.resource.data.keys().hasOnly(['ownerUid', 'holderName', 'group', 'city', 'issuedAt', 'checks',
+                                                  'missingCount', 'flagNote', 'checkedBy', 'checkedByName',
+                                                  'checkedAt', 'checkedAtCenter']);
+      allow update: if isModerator()
+        && onlyChanged(['checks', 'missingCount', 'flagNote', 'checkedBy', 'checkedByName', 'checkedAt',
+                        'checkedAtCenter', 'lastAuditId'])
+        && request.resource.data.checkedBy == request.auth.uid
+        && request.resource.data.flagNote.size() <= 300
+        && audited(request.resource.data.lastAuditId, cardId);
+      allow delete: if false;
+    }
+
     // ------------------------------------------------------------------ audit trail
 
     match /auditEvents/{eventId} {
-      allow read: if isLguFor(resource.data.jurisdiction);
-      allow create: if isLguFor(request.resource.data.jurisdiction)
+      allow read: if isStaffFor(resource.data.jurisdiction);
+      allow create: if isStaffFor(request.resource.data.jurisdiction)
         && request.resource.data.actorUid == request.auth.uid;
       allow update, delete: if false;
     }

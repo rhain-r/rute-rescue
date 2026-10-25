@@ -13,6 +13,7 @@ import com.rutarescue.model.advisory.AlertLevel;
 import com.rutarescue.model.center.CenterStatus;
 import com.rutarescue.model.center.EvacuationCenter;
 import com.rutarescue.model.common.GeoPoint;
+import com.rutarescue.model.user.UserProfile;
 import com.rutarescue.service.AdvisoryMarks;
 import com.rutarescue.service.CenterService;
 import com.rutarescue.util.Formats;
@@ -53,6 +54,14 @@ public final class ViewBinders {
      * the post, and the "Helpful" / "Save update" actions (remembered on this device only).
      */
     public static void bindAdvisory(View card, Advisory advisory) {
+        bindAdvisory(card, advisory, null);
+    }
+
+    /**
+     * @param onSavedChanged runs after "Save update" is switched, so the list can move saved updates to
+     *                       the top (null when the card stands alone)
+     */
+    public static void bindAdvisory(View card, Advisory advisory, Runnable onSavedChanged) {
         String author = advisory.getAuthorName();
         ((TextView) card.findViewById(R.id.advisory_author)).setText(author.isEmpty() ? "LGU" : author);
         ((TextView) card.findViewById(R.id.advisory_meta)).setText("LGU verified • "
@@ -78,12 +87,22 @@ public final class ViewBinders {
         save.setOnClickListener(v -> {
             boolean saved = marks.toggleSaved(advisory.getId());
             showMarks(helpful, save, marks, advisory.getId());
-            Snackbar.make(card, saved ? "Update saved; it stays readable offline" : "Removed from saved updates",
-                    Snackbar.LENGTH_SHORT).show();
+            if (!saved) {
+                Snackbar.make(card, "Removed from saved updates", Snackbar.LENGTH_SHORT).show();
+            } else if (marks.shouldExplainSave(signedInUid(card))) {
+                // Only the first three times: after that the card moving to the top says enough.
+                Snackbar.make(card, "Saved: it now stays at the top of your updates", Snackbar.LENGTH_SHORT).show();
+            }
+            if (onSavedChanged != null) onSavedChanged.run();
         });
     }
 
     /** Figma colours: an active action is brand-600, an inactive one is #667085 ("Save update"). */
+    private static String signedInUid(View view) {
+        UserProfile profile = RutaRescueApp.container(view.getContext()).session().getProfile();
+        return profile == null ? "" : profile.getUid();
+    }
+
     private static void showMarks(TextView helpful, TextView save, AdvisoryMarks marks, String id) {
         boolean isHelpful = marks.isHelpful(id);
         boolean isSaved = marks.isSaved(id);

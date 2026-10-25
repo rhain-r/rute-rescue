@@ -3,10 +3,13 @@ package com.rutarescue.repository;
 import com.rutarescue.model.user.ResidentProfile;
 import com.rutarescue.model.user.UserProfile;
 
-/** Loads the signed-in person's profile (resident or pre-provisioned LGU staff). */
+/** Loads the signed-in person's profile (resident, moderator or LGU officer). */
 public interface UserRepository {
 
-    /** Returns an LguProfile when lgu_staff/{uid} exists, otherwise the ResidentProfile. */
+    /**
+     * Returns a ModeratorProfile or LguProfile when lgu_staff/{uid} exists, otherwise the
+     * ResidentProfile. A staff sign-up not approved yet fails with StaffPendingException.
+     */
     void loadProfile(String uid, Callback<UserProfile> callback);
 
     /** Registration can only ever create a RESIDENT profile. */

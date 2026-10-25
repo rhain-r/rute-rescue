@@ -50,6 +50,7 @@ import com.rutarescue.model.map.MapLayerSettings;
 import com.rutarescue.model.place.PlaceResult;
 import com.rutarescue.model.place.SavedPlace;
 import com.rutarescue.model.route.Maneuver;
+import com.rutarescue.model.route.RoadClosure;
 import com.rutarescue.model.route.RouteAssessment;
 import com.rutarescue.model.route.RouteComparison;
 import com.rutarescue.model.route.RouteRole;
@@ -69,7 +70,9 @@ import com.rutarescue.service.MapLayerPreferences;
 import com.rutarescue.ui.common.BaseFragment;
 import com.rutarescue.ui.common.Dialogs;
 import com.rutarescue.ui.common.MaxHeightScrollView;
+import com.rutarescue.ui.common.ScreenFit;
 import com.rutarescue.ui.common.SimpleListAdapter;
+import com.rutarescue.ui.common.SlidingCard;
 import com.rutarescue.ui.common.UiCallback;
 import com.rutarescue.ui.common.UiMessages;
 import com.rutarescue.ui.map.MapController;
@@ -80,9 +83,11 @@ import com.rutarescue.util.GeoMath;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Safe Route (DOCX section 4, Figma "Client / Safe Route", approved Phase 1 frames).
@@ -166,6 +171,10 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
     private final Handler handler = new Handler(Looper.getMainLooper());
     private Runnable pendingSearch;
     private boolean guiding;
+    /** 2026-10-22: the LGU's active closures at the last check (null until the first answer). */
+    private Set<String> knownClosures;
+    /** Set while routes are planned again because the LGU posted or lifted a closure. */
+    private boolean replanForClosure;
     private RouteAssessment guidedRoute;   // the route being followed (may be replaced while guiding)
     private RouteRole guidedRole = RouteRole.LOWEST_RISK;
     private double guidedAlong;             // metres already travelled on guidedRoute
@@ -197,6 +206,9 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
         searchHeader = view.findViewById(R.id.route_search_header);
         searchEmpty = view.findViewById(R.id.route_search_empty);
         locateButton = view.findViewById(R.id.route_locate);
+        // Locate stays under the search bar / guidance card (and the offline banner), however tall they get.
+        ScreenFit.keepBelow(locateButton, 16, view.findViewById(R.id.route_top), view.findViewById(R.id.route_guide_card),
+                requireActivity().findViewById(R.id.shell_offline_banner));
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), routeBack);
         topControls = view.findViewById(R.id.route_top);
         guideCard = view.findViewById(R.id.route_guide_card);
@@ -218,6 +230,7 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
             // map is ready), otherwise their sign-up city.
             // The location can arrive before the map is ready: draw the "you" dot now too.
             if (origin != null) ready.showMarkers(origin, destination == null ? null : destination.getLocation(), null);
+            ready.showUserLocation(origin); // 2026-10-25: the blue "you are here" dot
             if (pendingDestination == null && comparison == null) {
                 ready.centerOn(referencePoint(), origin != null ? FIRST_FIX_ZOOM : 13, topControls, sheet);
             }
@@ -238,6 +251,7 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
         setUpSheetDrag(view);
 
         track(container().centers().listenPublished(ui(this::onCenters)));
+        track(container().datasets().listenClosures(ui(this::onClosures)));
         UserProfile profile = profile();
         if (profile != null) track(container().savedPlaces().listen(profile.getUid(), ui(this::onSavedPlaces)));
         loadCachedRoutes();
@@ -743,7 +757,7 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
     private float collapsedOffset() {
         View handle = requireView().findViewById(R.id.route_sheet_handle);
         View parent = (View) sheet.getParent();
-        int peek = sheet.getChildAt(0).getTop() + handle.getBottom(); // card top to handle bottom
+        int peek = SlidingCard.peek(sheet, handle); // card top to just under the "–" bar
         return Math.max(0, parent.getHeight() - sheet.getTop() - peek);
     }
 
@@ -795,6 +809,7 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
             if (searchMode && Dialogs.text(searchInput).strip().length() < 2) showNearestCenters();
             if (map.isReady()) {
                 map.showMarkers(origin, destination == null ? null : destination.getLocation(), null);
+                map.showUserLocation(origin);
                 // Locate button: the resident in the middle of the visible map, zoomed in closer.
                 if (recenter && !movedSinceLocate) map.centerOn(origin, LOCATE_ZOOM, topControls, sheet);
                 else if (comparison == null) map.centerOn(origin, FIRST_FIX_ZOOM, topControls, sheet);
@@ -831,6 +846,48 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
         drawComparison();
         loadCachedRoutes();
         sheet.post(() -> sheet.smoothScrollTo(0, 0)); // show the route cards first
+        if (replanForClosure) {
+            replanForClosure = false;
+            showToast(getString(R.string.routes_updated_closure));
+        }
+    }
+
+    /**
+     * 2026-10-22: the LGU posted or lifted a road closure. Routes on screen are planned again at
+     * once (RouteService ranks routes through a closure last and asks for detours when every route
+     * is closed); during guidance the route is replaced from where the resident is now.
+     */
+    private void onClosures(List<RoadClosure> closures) {
+        Set<String> ids = new HashSet<>();
+        for (RoadClosure closure : closures) ids.add(closure.getId());
+        boolean changed = knownClosures != null && !knownClosures.equals(ids);
+        knownClosures = ids;
+        if (!changed || destination == null) return;
+        if (guiding) {
+            rerouteAroundClosure();
+        } else if (comparison != null && stateResult.getVisibility() == View.VISIBLE) {
+            replanForClosure = true;
+            requestRoutes();
+        }
+    }
+
+    /** Guidance: take the best route from the current position at once (no "is it clearly better?" test). */
+    private void rerouteAroundClosure() {
+        if (origin == null || rerouteRunning) return;
+        rerouteRunning = true;
+        container().routes().findRoutes(origin, destination, mode, scenario, UiCallback.of(this, fresh -> {
+            rerouteRunning = false;
+            if (!guiding || fresh.getTopRoute() == null) return;
+            comparison = fresh;
+            roles = roleAssigner.assign(fresh.getRanked());
+            selectedIndex = 0;
+            guidedRoute = fresh.getTopRoute();
+            guidedRole = roleAt(0);
+            guidedAlong = 0;
+            map.showRoutes(Collections.singletonList(guidedRoute), 0);
+            showToast(getString(R.string.reroute_closure));
+            onGuidancePosition(origin);
+        }, error -> rerouteRunning = false));
     }
 
     private void drawComparison() {
@@ -1145,6 +1202,7 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
     private void onGuidancePosition(GeoPoint position) {
         if (!guiding || getView() == null || guidedRoute == null) return;
         origin = position;
+        if (map.isReady()) map.showUserLocation(position);
         guidedAlong = distanceAlong(guidedRoute, position);
         double length = guidedRoute.getCandidate().getLengthMeters();
         double remaining = Math.max(0, length - guidedAlong);
@@ -1281,7 +1339,7 @@ public class SafeRouteFragment extends BaseFragment implements MapLayersSheet.Li
         if (isVisible()) ((MainShellActivity) requireActivity()).setBottomNavHidden(focus);
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) sheet.getLayoutParams();
         params.bottomMargin = focus ? Math.round(16 * getResources().getDisplayMetrics().density)
-                : getResources().getDimensionPixelSize(R.dimen.bottom_nav_space);
+                : ((MainShellActivity) requireActivity()).bottomNavSpace(); // measured, not a fixed 94 dp
         sheet.setLayoutParams(params);
         sheet.setMaxShareOfParent(stateResult.getVisibility() == View.VISIBLE ? RESULT_SHEET_SHARE : DEFAULT_SHEET_SHARE);
         sheet.setMaxHeight(stateResult.getVisibility() == View.VISIBLE ? Integer.MAX_VALUE

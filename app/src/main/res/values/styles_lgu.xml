@@ -39,18 +39,6 @@
         <item name="android:textColor">@color/rr_orange</item>
     </style>
 
-    <!-- "Composer Actions": Mobile/Label, 18 dp apart; each action sets its Figma colour -->
-    <style name="RR.ComposerAction">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginEnd">18dp</item>
-        <item name="android:paddingTop">4dp</item>
-        <item name="android:paddingBottom">4dp</item>
-        <item name="android:textAppearance">@style/TextAppearance.RR.Label</item>
-        <item name="android:textColor">@color/rr_navy_light</item>
-        <item name="android:background">?attr/selectableItemBackground</item>
-    </style>
-
     <!-- Compact row text: "Title" Mobile/Label, "Meta" Mobile/Caption, 1 dp apart -->
     <style name="RR.RowTitle">
         <item name="android:layout_width">match_parent</item>

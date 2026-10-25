@@ -1,22 +1,18 @@
 package com.rutarescue.model.user;
 
+import com.rutarescue.model.center.EvacuationCenter;
 import com.rutarescue.model.common.MetroManilaCity;
-import com.rutarescue.model.ligtas.LigtasApplication;
 
 /**
- * Pre-provisioned LGU personnel. Their profile comes from the lgu_staff collection, which
- * only a project administrator can write (from the Firebase console).
+ * LGU officer: the city's announcer and finalizer. Creates and publishes evacuation centers,
+ * sets the city's alert level, posts road closures, approves or declines the moderators'
+ * advisories, and approves staff sign-ups (assigning each moderator to a center). The first LGU
+ * of a city is created by an administrator in the Firebase console (lgu_staff/{uid}).
  */
-public class LguProfile extends UserProfile {
-
-    private final String position;
+public class LguProfile extends StaffProfile {
 
     public LguProfile(String uid, String displayName, String email, MetroManilaCity jurisdiction, String position) {
-        super(uid, displayName, email, jurisdiction);
-        if (jurisdiction == null) {
-            throw new IllegalArgumentException("LGU staff must have an assigned jurisdiction.");
-        }
-        this.position = position == null || position.isBlank() ? "LGU personnel" : position.strip();
+        super(uid, displayName, email, jurisdiction, position == null || position.isBlank() ? "LGU personnel" : position);
     }
 
     @Override
@@ -25,25 +21,48 @@ public class LguProfile extends UserProfile {
     }
 
     @Override
-    public String getRoleLabel() {
-        return position + " • " + getJurisdiction().getDisplayName();
+    public boolean canCreateCenters() {
+        return true;
+    }
+
+    /** Headcounts are entered at the center by its moderator; the LGU sees them read-only. */
+    @Override
+    public boolean canManageCenter(EvacuationCenter center) {
+        return false;
     }
 
     @Override
-    public boolean canReview(LigtasApplication application) {
-        return application != null && getJurisdiction() == application.getCity();
+    public boolean canDecideLigtas() {
+        return false;
     }
 
     @Override
-    public boolean canManage(MetroManilaCity targetCity) {
-        return targetCity == getJurisdiction();
+    public boolean canPublishToResidents() {
+        return true;
     }
 
-    public MetroManilaCity getJurisdiction() {
-        return getCity();
+    @Override
+    public boolean canApproveStaff() {
+        return true;
     }
 
-    public String getPosition() {
-        return position;
+    @Override
+    public boolean canSetAlertLevel() {
+        return true;
+    }
+
+    @Override
+    public boolean canPostRoadNotices() {
+        return true;
+    }
+
+    @Override
+    public boolean canSubmitAdvisories() {
+        return false;
+    }
+
+    @Override
+    public boolean canVerifyPriorityIds() {
+        return false;
     }
 }

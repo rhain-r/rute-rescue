@@ -146,6 +146,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:paddingTop="@dimen/header_height"
+        android:tag="fit:below_header"
         android:visibility="gone">
 
         <LinearLayout

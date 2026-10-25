@@ -15,9 +15,10 @@ import java.util.regex.Pattern;
 /**
  * A Ligtas Priority application (DOCX sections 4, 5 and 12).
  *
- * Encapsulation: the status can only move PENDING -> APPROVED or PENDING -> REJECTED
- * through approve()/reject(), which require an authorized reviewer and a reason, and
- * always append to the history. Proof images must be synthetic demo images only.
+ * Encapsulation: the status only changes through decide() (moderator of the same city, with a
+ * message to the resident) and resubmit() (the owner, after NEEDS_DOCUMENTS), and every change is
+ * appended to the history. Since 2026-10-20 a moderator may change a decision later, e.g. an
+ * approval given by mistake while a document was missing. Proof images must be synthetic demo images.
  */
 public class LigtasApplication extends AuditableEntity {
 
@@ -32,7 +33,9 @@ public class LigtasApplication extends AuditableEntity {
     private final String memberName;
     private final NeedCategory category;
     private final String justification;
-    private final String proofRef;
+    private String proofRef;
+    /** The resident's sign-in email, for the moderator's "Email the resident" (empty on old records). */
+    private final String applicantEmail;
     private final long submittedAt;
     private ApplicationStatus status;
     private String reviewerUid;
@@ -43,8 +46,8 @@ public class LigtasApplication extends AuditableEntity {
     /** Full constructor used by repositories when loading a saved application. */
     public LigtasApplication(String id, String ownerUid, MetroManilaCity city, String applicantName,
                              String memberId, String memberName, NeedCategory category, String justification,
-                             String proofRef, long submittedAt, ApplicationStatus status, String reviewerUid,
-                             String reviewReason, long decidedAt, List<StatusChange> history) {
+                             String proofRef, String applicantEmail, long submittedAt, ApplicationStatus status,
+                             String reviewerUid, String reviewReason, long decidedAt, List<StatusChange> history) {
         super(id, null, false);
         this.ownerUid = ownerUid;
         this.city = city;
@@ -54,6 +57,7 @@ public class LigtasApplication extends AuditableEntity {
         this.category = category == null ? NeedCategory.OTHER : category;
         this.justification = justification == null ? "" : justification;
         this.proofRef = proofRef == null ? "" : proofRef;
+        this.applicantEmail = applicantEmail == null ? "" : applicantEmail.strip();
         this.submittedAt = submittedAt;
         this.status = status == null ? ApplicationStatus.PENDING : status;
         this.reviewerUid = reviewerUid == null ? "" : reviewerUid;
@@ -65,7 +69,7 @@ public class LigtasApplication extends AuditableEntity {
     /** Creates a new PENDING application after validating the resident's input. */
     public static LigtasApplication submit(String id, String ownerUid, MetroManilaCity city, String applicantName,
                                            String memberId, String memberName, NeedCategory category,
-                                           String justification, String proofRef, long now)
+                                           String justification, String proofRef, String applicantEmail, long now)
             throws ValidationException {
         if (ownerUid == null || ownerUid.isBlank()) throw new ValidationException("owner", "Sign in before applying.");
         if (city == null) throw new ValidationException("city", "Your record needs a city before applying.");
@@ -78,7 +82,7 @@ public class LigtasApplication extends AuditableEntity {
         List<StatusChange> history = new ArrayList<>();
         history.add(new StatusChange(ApplicationStatus.PENDING, ownerUid, "Submitted by resident", now));
         return new LigtasApplication(id, ownerUid, city, applicantName, memberId, checkedMember, category,
-                checkedJustification, proofRef, now, ApplicationStatus.PENDING, "", "", 0L, history);
+                checkedJustification, proofRef, applicantEmail, now, ApplicationStatus.PENDING, "", "", 0L, history);
     }
 
     @Override
@@ -94,21 +98,56 @@ public class LigtasApplication extends AuditableEntity {
         decide(reviewer, ApplicationStatus.REJECTED, reason, now);
     }
 
-    private void decide(UserProfile reviewer, ApplicationStatus decision, String reason, long now)
+    public void askForDocuments(UserProfile reviewer, String message, long now) throws ValidationException {
+        decide(reviewer, ApplicationStatus.NEEDS_DOCUMENTS, message, now);
+    }
+
+    /**
+     * Gives or changes the decision. The message (5-300 characters) is what the resident reads on
+     * their status screen, so it should say what happened and what to do next.
+     */
+    public void decide(UserProfile reviewer, ApplicationStatus decision, String message, long now)
             throws ValidationException {
-        if (status != ApplicationStatus.PENDING) {
-            throw new IllegalStateException("This application was already " + status.getLabel().toLowerCase() + ".");
+        if (decision == null || !decision.isDecision()) {
+            throw new IllegalArgumentException("Choose approved, needs documents or rejected.");
         }
         if (reviewer == null || !reviewer.canReview(this)) {
-            throw new IllegalStateException("Only LGU personnel of " + cityName() + " can review this application.");
+            throw new IllegalStateException("Only a moderator of " + cityName() + " can decide this application.");
         }
-        String checkedReason = TextRules.multilineText("reason", reason, 5, 300);
+        String checkedMessage = TextRules.multilineText("reason", message, 5, 300);
         status = decision;
         reviewerUid = reviewer.getUid();
-        reviewReason = checkedReason;
+        reviewReason = checkedMessage;
         decidedAt = now;
-        history.add(new StatusChange(decision, reviewer.getUid(), checkedReason, now));
+        history.add(new StatusChange(decision, reviewer.getUid(), checkedMessage, now));
         markUpdated(reviewer.getUid(), now);
+    }
+
+    /** The owner sends a new proof after "Needs documents"; the application waits for review again. */
+    public void resubmit(String ownerUidOfCaller, String newProofRef, long now) {
+        if (status != ApplicationStatus.NEEDS_DOCUMENTS) {
+            throw new IllegalStateException("Only an application that needs documents can be sent again.");
+        }
+        if (ownerUidOfCaller == null || !ownerUidOfCaller.equals(ownerUid)) {
+            throw new IllegalStateException("Only the resident who applied can send new documents.");
+        }
+        if (newProofRef == null || newProofRef.isBlank()) {
+            throw new IllegalArgumentException("Attach the new proof first.");
+        }
+        proofRef = newProofRef;
+        status = ApplicationStatus.PENDING;
+        history.add(new StatusChange(ApplicationStatus.PENDING, ownerUid, "New documents sent by the resident", now));
+        markUpdated(ownerUid, now);
+    }
+
+    /** True once a moderator has given any decision (approved, needs documents or rejected). */
+    public boolean isDecided() {
+        return status.isDecision();
+    }
+
+    /** When the status last changed (decision or resubmission), for "new" notices. */
+    public long getStatusChangedAt() {
+        return history.isEmpty() ? submittedAt : history.get(history.size() - 1).getAt();
     }
 
     /** QR content for an approved application: only an opaque identifier, no personal data. */
@@ -138,6 +177,7 @@ public class LigtasApplication extends AuditableEntity {
     public NeedCategory getCategory() { return category; }
     public String getJustification() { return justification; }
     public String getProofRef() { return proofRef; }
+    public String getApplicantEmail() { return applicantEmail; }
     public long getSubmittedAt() { return submittedAt; }
     public ApplicationStatus getStatus() { return status; }
     public String getReviewerUid() { return reviewerUid; }
@@ -145,8 +185,8 @@ public class LigtasApplication extends AuditableEntity {
     public long getDecidedAt() { return decidedAt; }
     public List<StatusChange> getHistory() { return Collections.unmodifiableList(history); }
 
-    /** Pending for more than a day: shown as "waiting > 24 h" to LGU reviewers. */
+    /** Pending for more than a day since it was sent (or resent): "waiting > 24 h" for moderators. */
     public boolean isWaitingLong(long now) {
-        return status == ApplicationStatus.PENDING && now - submittedAt > 24L * 60 * 60 * 1000;
+        return status == ApplicationStatus.PENDING && now - getStatusChangedAt() > 24L * 60 * 60 * 1000;
     }
 }

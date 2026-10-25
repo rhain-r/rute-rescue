@@ -27,11 +27,14 @@ import com.rutarescue.ui.common.ImageCompressor;
 import com.rutarescue.ui.common.UiCallback;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Ligtas Priority application (DOCX section 4): choose the family member and need
- * category, write a justification and attach a SYNTHETIC/DEMO image only.
+ * Ligtas Priority application (DOCX section 4): choose who needs help (the resident themself or a
+ * family member) and the need category, write a justification and attach a SYNTHETIC/DEMO image only.
+ * Since 2026-10-25 "Myself" is always the first choice, so the list is never empty: a resident
+ * without a family record can still apply for themself.
  *
  * The bundled "SYNTHETIC DEMO PROOF" image is attached when the screen opens, so the
  * application can be tested on any phone without a real document. "Choose image" replaces
@@ -43,6 +46,10 @@ public class LigtasApplyActivity extends BaseActivity {
     static final String DEMO_PROOF_ASSET = "demo/demo-proof.png";
 
     private FamilyRecord family;
+    /** The family members offered after "Myself" (empty until the record loads, or without one). */
+    private List<FamilyMember> members = new ArrayList<>();
+    /** -1 = nobody chosen yet, 0 = myself, 1.. = members.get(choice - 1). */
+    private int choice = -1;
     private FamilyMember member;
     private NeedCategory category;
     private byte[] proofJpeg;
@@ -76,23 +83,37 @@ public class LigtasApplyActivity extends BaseActivity {
         findViewById(R.id.apply_submit).setOnClickListener(v -> submit());
         attachDemoProof(); // ready to submit without a real document
 
+        MaterialAutoCompleteTextView memberField = findViewById(R.id.apply_member);
+        memberField.setOnItemClickListener((parent, view, position, id) -> {
+            choice = position;
+            member = position == 0 ? null : members.get(position - 1);
+            if (member != null) suggestCategory(member, categoryField);
+        });
+        showChoices(); // "Myself" right away, even before the family record has loaded
+
         container().family().load(profile.getUid(), ui(data -> {
             family = data.getData();
-            if (family == null || family.getMembers().isEmpty()) {
-                showMessage("Create your family record with its members first (My Record > Create record).");
-                findViewById(R.id.apply_submit).setEnabled(false);
-                return;
-            }
-            MaterialAutoCompleteTextView memberField = findViewById(R.id.apply_member);
-            List<FamilyMember> members = family.getMembers();
-            String[] names = new String[members.size()];
-            for (int i = 0; i < names.length; i++) names[i] = members.get(i).getFullName() + " (" + members.get(i).describe() + ")";
-            memberField.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, names));
-            memberField.setOnItemClickListener((parent, view, position, id) -> {
-                member = members.get(position);
-                suggestCategory(member, categoryField);
-            });
+            members = family == null ? new ArrayList<>() : new ArrayList<>(family.getMembers());
+            showChoices();
         }));
+    }
+
+    /** "Myself" first, then every member of the family record, with a note when there is no record. */
+    private void showChoices() {
+        String[] names = new String[members.size() + 1];
+        names[0] = getString(R.string.ligtas_myself, profile.getDisplayName());
+        for (int i = 0; i < members.size(); i++) {
+            names[i + 1] = members.get(i).getFullName() + " (" + members.get(i).describe() + ")";
+        }
+        MaterialAutoCompleteTextView memberField = findViewById(R.id.apply_member);
+        memberField.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, names));
+        if (choice >= names.length) {
+            choice = -1;
+            member = null;
+            memberField.setText("", false);
+        }
+        ((TextView) findViewById(R.id.apply_member_note)).setText(members.isEmpty()
+                ? R.string.ligtas_member_note_none : R.string.ligtas_member_note);
     }
 
     /** Pre-selects an obvious category from the member's flags (the resident can change it). */
@@ -148,6 +169,10 @@ public class LigtasApplyActivity extends BaseActivity {
         memberLayout.setError(null);
         categoryLayout.setError(null);
         justificationLayout.setError(null);
+        if (choice < 0) {
+            memberLayout.setError("Choose who needs priority help.");
+            return;
+        }
         if (category == null) {
             categoryLayout.setError("Choose a need category.");
             return;
@@ -157,7 +182,7 @@ public class LigtasApplyActivity extends BaseActivity {
         progress.setVisibility(View.VISIBLE);
         submit.setEnabled(false);
         String justification = Dialogs.text((TextInputEditText) findViewById(R.id.apply_justification));
-        container().ligtas().submit(profile, family, member, category, justification, proofJpeg,
+        UiCallback<com.rutarescue.model.ligtas.LigtasApplication> done =
                 UiCallback.of(this, application -> {
                     showMessage("Application submitted. Your LGU will review it.");
                     finish();
@@ -172,6 +197,11 @@ public class LigtasApplyActivity extends BaseActivity {
                     } else {
                         showError(error);
                     }
-                }));
+                });
+        if (choice == 0) {
+            container().ligtas().submitForSelf(profile, family, category, justification, proofJpeg, done);
+        } else {
+            container().ligtas().submit(profile, family, member, category, justification, proofJpeg, done);
+        }
     }
 }

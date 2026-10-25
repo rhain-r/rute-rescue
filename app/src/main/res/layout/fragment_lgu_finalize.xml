@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    LGU "Finalize" tab (2026-10-20, reworked 2026-10-22): everything that waits for the LGU.
+    Pinned app header, then a hero card with the total, and the sections in the same Figma
+    components as the other LGU tabs: advisories from moderators to accept or decline, staff
+    sign-up requests, the moderators and the center each one runs, and (only when there are any)
+    centers moderators sent before 2026-10-22.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.core.widget.NestedScrollView style="@style/RR.TabScroll">
+
+        <LinearLayout style="@style/RR.ScreenColumn">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_hero_lgu"
+                android:elevation="@dimen/elevation_float"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/finalize_city"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.RR.Eyebrow" />
+
+                <TextView
+                    android:id="@+id/finalize_total"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textAppearance="@style/TextAppearance.RR.Title" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/finalize_intro"
+                    android:textAppearance="@style/TextAppearance.RR.Caption" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/RR.SectionHeader"
+                android:text="@string/finalize_advisories" />
+
+            <LinearLayout
+                android:id="@+id/finalize_advisories"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView
+                style="@style/RR.SectionHeader"
+                android:text="@string/finalize_requests" />
+
+            <LinearLayout
+                android:id="@+id/finalize_requests"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView
+                style="@style/RR.SectionHeader"
+                android:text="@string/finalize_moderators" />
+
+            <LinearLayout
+                android:id="@+id/finalize_moderators"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView
+                android:id="@+id/finalize_centers_header"
+                style="@style/RR.SectionHeader"
+                android:text="@string/finalize_centers"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/finalize_centers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <include layout="@layout/view_app_header" />
+</FrameLayout>

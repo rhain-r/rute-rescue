@@ -5,23 +5,29 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.rutarescue.BuildConfig;
 import com.rutarescue.R;
+import com.rutarescue.exception.ProfileNotFoundException;
+import com.rutarescue.exception.StaffPendingException;
 import com.rutarescue.exception.ValidationException;
 import com.rutarescue.model.user.UserProfile;
+import com.rutarescue.service.LigtasNotifier;
 import com.rutarescue.ui.common.BaseActivity;
+import com.rutarescue.ui.resident.ligtas.LigtasStatusActivity;
 import com.rutarescue.ui.common.Dialogs;
 import com.rutarescue.ui.common.UiCallback;
 import com.rutarescue.ui.shell.MainShellActivity;
 
 /**
- * Launcher screen (controller). Restores an existing login, otherwise lets residents and
- * pre-provisioned LGU personnel sign in. The role is read from the database, never
- * chosen on this screen.
+ * Launcher screen (controller). Restores an existing login, otherwise lets residents and city
+ * staff sign in. The role is read from the database, never chosen on this screen. Staff who
+ * signed up but are not approved yet are told who decides, and signed out again.
  */
 public class LoginActivity extends BaseActivity {
 
@@ -57,7 +63,16 @@ public class LoginActivity extends BaseActivity {
         }
 
         loginButton.setOnClickListener(v -> signIn());
+        password.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId != EditorInfo.IME_ACTION_DONE) return false;
+            signIn(); // "Done" on the keyboard signs in, like the button
+            return true;
+        });
+        findViewById(R.id.login_forgot).setOnClickListener(v -> resetPassword());
+        // A test build talks to the test server on this computer: say so, so it is never mistaken for the real app.
+        findViewById(R.id.login_test_server).setVisibility(BuildConfig.USE_FIREBASE_EMULATOR ? View.VISIBLE : View.GONE);
         register.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
+        findViewById(R.id.login_staff).setOnClickListener(v -> startActivity(new Intent(this, StaffRegisterActivity.class)));
         askForLocalNetworkIfUsingEmulator();
 
         if (container().auth().isSignedIn()) {
@@ -70,9 +85,24 @@ public class LoginActivity extends BaseActivity {
                 }
             }, error -> {
                 setBusy(false);
-                showError(error);
+                if (error instanceof StaffPendingException) {
+                    showStaffPending((StaffPendingException) error);
+                } else {
+                    if (error instanceof ProfileNotFoundException) container().signOut(); // do not stay half signed in
+                    showError(error);
+                }
             }));
         }
+    }
+
+    /** A staff sign-up that the city's LGU has not approved (or refused): explain, then sign out. */
+    private void showStaffPending(StaffPendingException pending) {
+        container().signOut();
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(pending.getRequest().getStatus().getLabel())
+                .setMessage(pending.getMessage())
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
     }
 
     /**
@@ -99,10 +129,30 @@ public class LoginActivity extends BaseActivity {
                     if (error instanceof ValidationException) {
                         String field = ((ValidationException) error).getField();
                         ("password".equals(field) ? passwordLayout : emailLayout).setError(error.getMessage());
+                    } else if (error instanceof StaffPendingException) {
+                        showStaffPending((StaffPendingException) error);
+                    } else if (error instanceof ProfileNotFoundException) {
+                        container().signOut(); // do not stay half signed in
+                        showError(error);
                     } else {
                         showError(error);
                     }
                 }));
+    }
+
+    /** "Forgot password?": Firebase e-mails a reset link to the address typed above. */
+    private void resetPassword() {
+        emailLayout.setError(null);
+        String typed = Dialogs.text(email).strip();
+        if (typed.isEmpty()) {
+            emailLayout.setError("Type your e-mail first, then tap Forgot password.");
+            return;
+        }
+        container().auth().sendPasswordReset(typed, UiCallback.of(this, ignored -> showMessage(
+                "If " + typed + " has an account, a reset link is on its way. Check that inbox (and spam)."), error -> {
+            if (error instanceof ValidationException) emailLayout.setError(error.getMessage());
+            else showError(error);
+        }));
     }
 
     private void onSignedIn(UserProfile profile) {
@@ -114,6 +164,10 @@ public class LoginActivity extends BaseActivity {
         Intent intent = new Intent(this, MainShellActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
+        // Opened from a Ligtas notification: show the resident's applications on top of the shell.
+        if (getIntent().getBooleanExtra(LigtasNotifier.EXTRA_OPEN_LIGTAS, false) && !container().session().isStaff()) {
+            startActivity(new Intent(this, LigtasStatusActivity.class));
+        }
         finish();
     }
 

@@ -11,7 +11,7 @@ import com.rutarescue.R;
 
 /**
  * The Figma bottom navigation ("RR / Resident Bottom Nav" and "RR / LGU Bottom Nav"):
- * four items; the active one sits on a navy 20 dp tile with a white icon and label, the
+ * four items (three for moderators); the active one sits on a navy 20 dp tile with a white icon and label, the
  * others use a #98A2B3 icon and a #667085 label. Clicks are forwarded to a listener (event handling).
  */
 final class BottomNav {
@@ -28,12 +28,17 @@ final class BottomNav {
     private final ImageView[] icons = new ImageView[4];
     private final TextView[] labels = new TextView[4];
 
+    /** Shows iconRes.length items (3 or 4); the moderator has three tabs since 2026-10-22. */
     BottomNav(View root, int[] iconRes, int[] labelRes, Listener listener) {
         for (int i = 0; i < 4; i++) {
             final int index = i;
             items[i] = root.findViewById(ITEM_IDS[i]);
             icons[i] = root.findViewById(ICON_IDS[i]);
             labels[i] = root.findViewById(LABEL_IDS[i]);
+            if (i >= iconRes.length) {
+                items[i].setVisibility(View.GONE); // the others share its width
+                continue;
+            }
             icons[i].setImageResource(iconRes[i]);
             labels[i].setText(labelRes[i]);
             items[i].setContentDescription(root.getContext().getString(labelRes[i]));

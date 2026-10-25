@@ -91,6 +91,16 @@
             android:textColor="@color/rr_navy_light" />
     </LinearLayout>
 
+    <!-- 2026-10-20: the resident answers "Needs documents" with a new proof -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/ligtas_resubmit"
+        style="@style/Widget.RR.Button.Primary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/resubmit_documents"
+        android:visibility="gone" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/ligtas_qr"
         style="@style/Widget.RR.Button.Secondary"

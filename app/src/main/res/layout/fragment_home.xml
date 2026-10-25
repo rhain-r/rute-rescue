@@ -4,6 +4,8 @@
     16 dp padding and 14 dp between blocks: Safety Advisory, Search, Quick actions, Nearby evacuation
     center, Verified LGU Update. DOCX additions kept in the same visual language: the advisory
     freshness label, saved places, and the data-source timestamps card (DOCX section 4).
+    2026-10-22: the advisories (city alert level + the 3 newest LGU updates) moved to the very top;
+    the hero below keeps the greeting, the prepared-data note and "Find safer route".
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -14,10 +16,31 @@
 
         <LinearLayout style="@style/RR.ScreenColumn">
 
+            <!-- 2026-10-22: Advisories at the very top - the city's alert level (set by its LGU), then
+                 only the newest announcement of the last 7 days (since 2026-10-25). No "See all"
+                 since 2026-10-25: the bell in the header opens Notifications (30 days). -->
+            <LinearLayout
+                style="@style/RR.SectionRow"
+                android:layout_marginTop="0dp">
+
+                <TextView
+                    style="@style/RR.SectionTitle"
+                    android:text="@string/advisories" />
+            </LinearLayout>
+
+            <include layout="@layout/view_alert_strip" />
+
+            <LinearLayout
+                android:id="@+id/home_advisories"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
             <!-- "Safety Advisory": 28 dp corners, padding 18, gap 10, Elevation/Float -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/section_gap"
                 android:background="@drawable/bg_hero_resident"
                 android:elevation="@dimen/elevation_float"
                 android:orientation="vertical"
@@ -35,8 +58,8 @@
                         android:layout_width="18dp"
                         android:layout_height="18dp"
                         android:importantForAccessibility="no"
-                        android:src="@drawable/ic_warning"
-                        app:tint="@color/rr_orange" />
+                        android:src="@drawable/ic_shield_check"
+                        app:tint="@color/rr_navy_light" />
 
                     <TextView
                         android:id="@+id/home_hero_eyebrow"
@@ -45,7 +68,7 @@
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
                         android:textAppearance="@style/TextAppearance.RR.Eyebrow"
-                        android:textColor="@color/rr_orange" />
+                        android:textColor="@color/rr_navy_light" />
 
                     <!-- Info tooltip: LGU advisories are current updates, not the NOAH risk zones -->
                     <ImageButton
@@ -84,7 +107,8 @@
                     android:id="@+id/home_find_route"
                     style="@style/Widget.RR.Button.Small"
                     android:layout_width="wrap_content"
-                    android:layout_height="34dp"
+                    android:layout_height="wrap_content"
+                    android:minHeight="34dp"
                     android:layout_marginTop="10dp"
                     android:text="@string/find_safer_route"
                     app:icon="@drawable/ic_route" />
@@ -132,6 +156,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:baselineAligned="false"
                 android:orientation="horizontal">
 
                 <LinearLayout
@@ -275,13 +300,6 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical" />
             </LinearLayout>
-
-            <!-- "Verified LGU Update" cards -->
-            <LinearLayout
-                android:id="@+id/home_advisories"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
 
             <!-- Data sources and freshness (DOCX section 4: data-source timestamps) -->
             <LinearLayout style="@style/RR.CardColumn">

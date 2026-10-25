@@ -10,7 +10,7 @@ import com.rutarescue.model.hazard.DatasetVersion;
 import com.rutarescue.model.hazard.FloodScenario;
 import com.rutarescue.model.route.RoadClosure;
 import com.rutarescue.model.structure.StructureStatus;
-import com.rutarescue.model.user.LguProfile;
+import com.rutarescue.model.user.StaffProfile;
 import com.rutarescue.persistence.CenterCsvReader;
 import com.rutarescue.persistence.PreparedDataManifest;
 import com.rutarescue.repository.Callback;
@@ -85,6 +85,21 @@ public final class DatasetService {
         return list;
     }
 
+    /**
+     * The prepared datasets after the bridges and tunnels file has been read in the background,
+     * so its row shows the real version instead of "loading" (2026-10-25, Settings).
+     */
+    public void loadPreparedDatasets(Callback<List<DatasetVersion>> callback) {
+        executors.io().execute(() -> {
+            try {
+                structures.loadBaseBlocking();
+            } catch (IOException ignored) {
+                // The row keeps saying "loading"; the map shows the reading error.
+            }
+            executors.main().execute(() -> callback.onSuccess(preparedDatasets()));
+        });
+    }
+
     /** Reads and validates a center CSV in the background. */
     public void previewCenterCsv(InputStream stream, Callback<List<CenterCsvReader.Row>> callback) {
         executors.io().execute(() -> {
@@ -98,11 +113,16 @@ public final class DatasetService {
     }
 
     /**
-     * Publishes the previewed centers of the LGU's own city as verified (the reviewer
-     * names the verification source) and records a new dataset version.
+     * LGU: imports the previewed centers of its own city as verified (the officer names the
+     * verification source) and publishes them to residents; records a new dataset version.
+     * Since 2026-10-22 only the LGU adds centers.
      */
-    public void publishCenters(LguProfile lgu, List<CenterCsvReader.Row> rows, String verificationSource,
+    public void publishCenters(StaffProfile lgu, List<CenterCsvReader.Row> rows, String verificationSource,
                                String fileLabel, Callback<Integer> callback) {
+        if (!lgu.canCreateCenters()) {
+            callback.onError(new IllegalStateException("Only the LGU imports evacuation centers."));
+            return;
+        }
         String source;
         try {
             source = TextRules.requiredText("verificationSource", verificationSource);
@@ -119,10 +139,10 @@ public final class DatasetService {
                 EvacuationCenter center = row.center;
                 center.assignId(centers.newId());
                 center.verify(source + " (imported from " + row.source + ")", lgu.getUid(), now);
-                center.setPublished(true, lgu.getUid(), now);
+                center.publishByLgu(lgu, now);
                 toSave.add(center);
-                audits.add(AuditEvent.create(lgu.getUid(), lgu.getJurisdiction().code(), "IMPORT_PUBLISH", center,
-                        "Dataset import from " + fileLabel, now));
+                audits.add(AuditEvent.create(lgu.getUid(), lgu.getJurisdiction().code(), "IMPORT", center,
+                        "Dataset import from " + fileLabel + " (published)", now));
             }
         } catch (ValidationException e) {
             callback.onError(e);
@@ -137,7 +157,7 @@ public final class DatasetService {
             public void onSuccess(Void ignored) {
                 DatasetVersion version = new DatasetVersion(datasets.newId(), DatasetType.EVACUATION_CENTERS,
                         lgu.getJurisdiction().getDisplayName() + " centers • " + Formats.dateTime(now), DatasetStatus.DRAFT,
-                        fileLabel + "; verified: " + source, "", toSave.size(), "Imported " + toSave.size() + " centers",
+                        fileLabel + "; verified: " + source, "", toSave.size(), "Imported and published " + toSave.size() + " centers",
                         lgu.getJurisdiction(), 0);
                 version.publish(lgu.getUid(), now);
                 datasets.save(version, AuditEvent.create(lgu.getUid(), lgu.getJurisdiction().code(), "PUBLISH_DATASET",
@@ -161,9 +181,10 @@ public final class DatasetService {
         });
     }
 
-    /** Records closure/open evidence for a bridge or tunnel (DOCX section 8). */
-    public void setStructureStatus(LguProfile lgu, String structureId, String structureName, StructureStatus status,
+    /** LGU: records closure/open evidence for a bridge or tunnel (DOCX section 8). */
+    public void setStructureStatus(StaffProfile lgu, String structureId, String structureName, StructureStatus status,
                                    String evidence, Callback<Void> callback) {
+        if (!mayPostRoadNotices(lgu, callback)) return;
         String checkedEvidence;
         try {
             checkedEvidence = TextRules.requiredText("evidence", evidence);
@@ -179,8 +200,10 @@ public final class DatasetService {
                 now, lgu.getUid()), lgu.getJurisdiction(), audit, callback);
     }
 
-    public void reportClosure(LguProfile lgu, String name, GeoPoint location, int radiusMeters, String reason,
+    /** LGU: posts a road closure; residents' routes are re-planned around it (SafeRouteFragment). */
+    public void reportClosure(StaffProfile lgu, String name, GeoPoint location, int radiusMeters, String reason,
                               Callback<Void> callback) {
+        if (!mayPostRoadNotices(lgu, callback)) return;
         long now = System.currentTimeMillis();
         try {
             RoadClosure closure = new RoadClosure(closures.newId(), name, location, radiusMeters, reason,
@@ -192,11 +215,21 @@ public final class DatasetService {
         }
     }
 
-    public void liftClosure(LguProfile lgu, RoadClosure closure, String reason, Callback<Void> callback) {
+    public void liftClosure(StaffProfile lgu, RoadClosure closure, String reason, Callback<Void> callback) {
+        if (!mayPostRoadNotices(lgu, callback)) return;
         long now = System.currentTimeMillis();
         closure.lift(lgu.getUid(), now);
         closures.save(closure, AuditEvent.create(lgu.getUid(), lgu.getJurisdiction().code(), "LIFT_CLOSURE",
                 closure, reason == null || reason.isBlank() ? "Closure lifted" : reason, now), callback);
+    }
+
+    /** 2026-10-22: road closures and bridge/tunnel status change residents' routes, so only the LGU posts them. */
+    private static boolean mayPostRoadNotices(StaffProfile staff, Callback<Void> callback) {
+        if (!staff.canPostRoadNotices()) {
+            callback.onError(new IllegalStateException("Only the LGU posts road closures and bridge or tunnel status."));
+            return false;
+        }
+        return true;
     }
 
     public ListenerHandle listenClosures(Callback<List<RoadClosure>> callback) {

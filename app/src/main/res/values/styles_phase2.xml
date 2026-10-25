@@ -40,7 +40,10 @@
     <!-- 22 dp soft chip: "Recommended", "Prepared, not live", "Location verified" -->
     <style name="RR.SoftChip">
         <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">22dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">22dp</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
         <item name="android:paddingStart">8dp</item>
         <item name="android:paddingEnd">8dp</item>
         <item name="android:gravity">center_vertical</item>
@@ -99,7 +102,8 @@
     <!-- Headcount quick buttons: 44 dp, 14 dp corners -->
     <style name="RR.Step">
         <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">44dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">44dp</item>
         <item name="android:layout_weight">1</item>
         <item name="android:gravity">center</item>
         <item name="android:background">@drawable/bg_step</item>

@@ -62,7 +62,7 @@ public final class FirestoreAdvisoryRepository implements AdvisoryRepository {
                 }
             }
             // Sorted here instead of in the query, so no composite index is needed.
-            advisories.sort((a, b) -> Long.compare(b.getPublishedAt(), a.getPublishedAt()));
+            advisories.sort((a, b) -> Long.compare(b.getActivityTime(), a.getActivityTime()));
             callback.onSuccess(freshness.wrap(advisories, snapshot.getMetadata().isFromCache(), FreshnessService.ADVISORIES, source));
         });
         return registration::remove;

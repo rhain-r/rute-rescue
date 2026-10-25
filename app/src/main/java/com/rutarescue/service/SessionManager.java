@@ -1,6 +1,8 @@
 package com.rutarescue.service;
 
 import com.rutarescue.model.user.LguProfile;
+import com.rutarescue.model.user.ModeratorProfile;
+import com.rutarescue.model.user.StaffProfile;
 import com.rutarescue.model.user.UserProfile;
 import com.rutarescue.repository.Callback;
 import com.rutarescue.repository.UserRepository;
@@ -49,16 +51,25 @@ public final class SessionManager {
         return profile;
     }
 
+    /** True for city staff (moderators and LGU officers), who get the staff screens. */
+    public boolean isStaff() {
+        return profile instanceof StaffProfile;
+    }
+
     public boolean isLgu() {
         return profile instanceof LguProfile;
     }
 
-    /** For LGU-only screens; the database rules enforce the same restriction server-side. */
-    public LguProfile requireLgu() {
-        if (!(profile instanceof LguProfile)) {
-            throw new IllegalStateException("This action is only available to LGU personnel.");
+    public boolean isModerator() {
+        return profile instanceof ModeratorProfile;
+    }
+
+    /** For staff screens; the database rules enforce the same restriction server-side. */
+    public StaffProfile requireStaff() {
+        if (!(profile instanceof StaffProfile)) {
+            throw new IllegalStateException("This screen is only for city staff.");
         }
-        return (LguProfile) profile;
+        return (StaffProfile) profile;
     }
 
     public void signOut() {

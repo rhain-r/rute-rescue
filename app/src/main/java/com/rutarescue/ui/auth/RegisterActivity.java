@@ -13,15 +13,22 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.rutarescue.R;
 import com.rutarescue.exception.ValidationException;
 import com.rutarescue.model.common.MetroManilaCity;
+import com.rutarescue.model.priority.PriorityGroup;
+import com.rutarescue.model.user.ResidentProfile;
 import com.rutarescue.ui.common.BaseActivity;
 import com.rutarescue.ui.common.Dialogs;
 import com.rutarescue.ui.common.UiCallback;
+import com.rutarescue.ui.resident.priority.PriorityIdActivity;
 import com.rutarescue.ui.shell.MainShellActivity;
 
 import java.util.HashMap;
 import java.util.Map;
 
-/** Resident self-registration (always creates a RESIDENT account). */
+/**
+ * Resident self-registration (always creates a RESIDENT account). Since 2026-10-22 a resident may
+ * choose a priority group (senior citizen, person with disability, pregnant): the app then issues
+ * a priority ID with a QR code and opens it right after sign-up, ready to save to the phone.
+ */
 public class RegisterActivity extends BaseActivity {
 
     private final Map<String, TextInputLayout> fieldLayouts = new HashMap<>();
@@ -31,6 +38,8 @@ public class RegisterActivity extends BaseActivity {
     private TextInputEditText confirm;
     private MaterialAutoCompleteTextView city;
     private MetroManilaCity selectedCity;
+    /** Null for "None". */
+    private PriorityGroup selectedGroup;
     private MaterialButton registerButton;
     private View progress;
 
@@ -59,6 +68,17 @@ public class RegisterActivity extends BaseActivity {
         city.setOnItemClickListener((parent, view, position, id) ->
                 selectedCity = (MetroManilaCity) parent.getItemAtPosition(position));
 
+        // "None" first, then the groups that get a priority ID.
+        PriorityGroup[] groups = PriorityGroup.values();
+        String[] groupLabels = new String[groups.length + 1];
+        groupLabels[0] = getString(R.string.priority_group_none);
+        for (int i = 0; i < groups.length; i++) groupLabels[i + 1] = groups[i].getLabel();
+        MaterialAutoCompleteTextView priority = findViewById(R.id.register_priority);
+        priority.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, groupLabels));
+        priority.setText(groupLabels[0], false);
+        priority.setOnItemClickListener((parent, view, position, id) ->
+                selectedGroup = position == 0 ? null : groups[position - 1]);
+
         registerButton.setOnClickListener(v -> register());
     }
 
@@ -68,10 +88,11 @@ public class RegisterActivity extends BaseActivity {
         container().auth().registerResident(Dialogs.text(name), Dialogs.text(email), Dialogs.text(password),
                 Dialogs.text(confirm), selectedCity, UiCallback.of(this, profile -> {
                     container().session().setProfile(profile);
-                    Intent intent = new Intent(this, MainShellActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
-                    finish();
+                    if (selectedGroup != null && profile instanceof ResidentProfile) {
+                        issuePriorityId((ResidentProfile) profile);
+                    } else {
+                        openApp(false);
+                    }
                 }, error -> {
                     setBusy(false);
                     if (error instanceof ValidationException
@@ -81,6 +102,29 @@ public class RegisterActivity extends BaseActivity {
                         showError(error);
                     }
                 }));
+    }
+
+    /**
+     * The account exists; now the priority ID. If it cannot be saved (e.g. no signal), the resident
+     * still gets in and can get the ID later from Settings or My Record.
+     */
+    private void issuePriorityId(ResidentProfile resident) {
+        container().priorityIds().issue(resident, selectedGroup, UiCallback.of(this, card -> openApp(true), error -> {
+            showMessage("Your account is ready. Get your priority ID later in Settings.");
+            openApp(false);
+        }));
+    }
+
+    /** Opens the app; with withPriorityId the new ID is shown on top so it can be saved at once. */
+    private void openApp(boolean withPriorityId) {
+        Intent shell = new Intent(this, MainShellActivity.class);
+        shell.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        if (withPriorityId) {
+            startActivities(new Intent[]{shell, new Intent(this, PriorityIdActivity.class)});
+        } else {
+            startActivity(shell);
+        }
+        finish();
     }
 
     private void setBusy(boolean busy) {

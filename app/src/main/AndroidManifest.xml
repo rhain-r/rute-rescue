@@ -4,6 +4,8 @@
     <!-- TomTom, Firebase and map tiles -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- 2026-10-20: tells residents when a moderator decides their Ligtas application -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Route origin and guidance progress (used on the device only, never logged) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -65,6 +67,19 @@
             android:name=".ui.lgu.data.DatasetImportActivity"
             android:windowSoftInputMode="adjustResize" />
         <activity android:name=".ui.about.AboutActivity" />
+        <activity
+            android:name=".ui.auth.StaffRegisterActivity"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ui.lgu.overview.ReportActivity" />
+        <activity android:name=".ui.lgu.overview.AdvisoryListActivity" />
+        <activity android:name=".ui.lgu.data.LocationPickerActivity" />
+        <!-- 2026-10-22: settings, the resident's priority ID and the moderator's priority ID check -->
+        <activity android:name=".ui.settings.SettingsActivity" />
+        <activity android:name=".ui.resident.priority.PriorityIdActivity" />
+        <activity android:name=".ui.lgu.finalize.ModeratorDashboardActivity" />
+        <activity
+            android:name=".ui.moderator.PriorityCheckActivity"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 
 </manifest>

@@ -1,10 +1,15 @@
 package com.rutarescue.ui.lgu.data;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
@@ -17,7 +22,7 @@ import com.rutarescue.model.center.CenterStatus;
 import com.rutarescue.model.center.EvacuationCenter;
 import com.rutarescue.model.center.VerificationInfo;
 import com.rutarescue.model.common.GeoPoint;
-import com.rutarescue.model.user.LguProfile;
+import com.rutarescue.model.user.StaffProfile;
 import com.rutarescue.repository.Callback;
 import com.rutarescue.ui.common.BaseActivity;
 import com.rutarescue.ui.common.Dialogs;
@@ -25,14 +30,17 @@ import com.rutarescue.ui.common.UiCallback;
 import com.rutarescue.util.Formats;
 
 import java.util.EnumMap;
+import java.util.Locale;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Create, edit, verify+publish or archive an evacuation center of the officer's city.
- * Capacity is deliberately not editable: there is no legitimate live source for it.
+ * The LGU creates, edits, verifies, publishes or archives an evacuation center of its own city
+ * (since 2026-10-22 moderators no longer add centers). "Verify and publish" names the source the
+ * officer checked and shows the center to residents at once. The headcount is entered on the
+ * capacity screen by the moderator who runs the center.
  */
 public class CenterEditorActivity extends BaseActivity {
 
@@ -40,11 +48,21 @@ public class CenterEditorActivity extends BaseActivity {
 
     private final Map<String, TextInputLayout> layouts = new HashMap<>();
     private final Map<AccessibilityFeature, MaterialCheckBox> featureBoxes = new EnumMap<>(AccessibilityFeature.class);
-    private LguProfile lgu;
+    private StaffProfile staff;
     private EvacuationCenter center;
     private CenterStatus status = CenterStatus.NOT_REPORTED;
     private TextInputEditText name, address, lat, lon, notes, source;
     private MaterialAutoCompleteTextView statusField;
+    /** "Pick on map": the picked point fills the latitude and longitude fields. */
+    private final ActivityResultLauncher<Intent> picker = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(), result -> {
+                GeoPoint point = result.getResultCode() == Activity.RESULT_OK
+                        ? LocationPickerActivity.result(result.getData()) : null;
+                if (point == null) return;
+                lat.setText(String.format(Locale.US, "%.6f", point.getLatitude()));
+                lon.setText(String.format(Locale.US, "%.6f", point.getLongitude()));
+                layouts.get("location").setError(null);
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,8 +71,8 @@ public class CenterEditorActivity extends BaseActivity {
         applySystemBarInsets(findViewById(R.id.editor_root));
         ((TextView) findViewById(R.id.toolbar_title)).setText(R.string.center_editor);
         findViewById(R.id.toolbar_back).setOnClickListener(v -> finish());
-        lgu = container().session().requireLgu();
-        ((TextView) findViewById(R.id.editor_city)).setText(lgu.getJurisdiction().getDisplayName() + " LGU");
+        staff = container().session().requireStaff();
+        ((TextView) findViewById(R.id.editor_city)).setText(staff.getJurisdiction().getDisplayName() + " LGU");
 
         name = findViewById(R.id.editor_name);
         address = findViewById(R.id.editor_address);
@@ -87,6 +105,8 @@ public class CenterEditorActivity extends BaseActivity {
         String id = getIntent().getStringExtra(EXTRA_ID);
         if (id != null) container().centers().get(id, ui(this::fill));
 
+        findViewById(R.id.editor_pick_on_map).setOnClickListener(v -> picker.launch(
+                LocationPickerActivity.intent(this, typedLocationOr(staff.getJurisdiction().getHallLocation()))));
         findViewById(R.id.editor_save).setOnClickListener(v -> save(false));
         findViewById(R.id.editor_publish).setOnClickListener(v -> save(true));
         findViewById(R.id.editor_archive).setOnClickListener(v -> archive());
@@ -112,7 +132,12 @@ public class CenterEditorActivity extends BaseActivity {
     private void updateVerificationText() {
         TextView text = findViewById(R.id.editor_verification);
         if (center == null) {
-            text.setText("New center. It stays hidden from residents until you verify and publish it.");
+            text.setText("New center. Residents see it once you verify it and publish it. Then assign a moderator "
+                    + "to it under Finalize > Moderators.");
+        } else if (!center.getLguNote().isEmpty() && !center.isPublished()) {
+            text.setText("Sent back earlier: " + center.getLguNote() + "\nFix it, then verify and publish it.");
+        } else if (center.isAwaitingLgu()) {
+            text.setText("Verified by a moderator and waiting to be published. Source: " + center.getVerification().getSource());
         } else if (center.getVerification().isVerified()) {
             text.setText("Verified: " + center.getVerification().getSource() + " • "
                     + Formats.dateTime(center.getVerification().getVerifiedAt())
@@ -138,20 +163,27 @@ public class CenterEditorActivity extends BaseActivity {
         long now = System.currentTimeMillis();
         try {
             if (center == null) {
-                center = new EvacuationCenter(null, Dialogs.text(name), Dialogs.text(address), lgu.getJurisdiction(),
-                        location, status, features, VerificationInfo.unverified("Entered by " + lgu.getRoleLabel()),
+                center = new EvacuationCenter(null, Dialogs.text(name), Dialogs.text(address), staff.getJurisdiction(),
+                        location, status, features, VerificationInfo.unverified("Entered by " + staff.getRoleLabel()),
                         false, Dialogs.text(notes));
             } else {
-                center.update(Dialogs.text(name), Dialogs.text(address), lgu.getJurisdiction(), location, status, features,
-                        Dialogs.text(notes), lgu.getUid(), now);
+                center.update(Dialogs.text(name), Dialogs.text(address), staff.getJurisdiction(), location, status, features,
+                        Dialogs.text(notes), staff.getUid(), now);
             }
         } catch (ValidationException invalid) {
             TextInputLayout layout = layouts.get(invalid.getField());
             if (layout != null) layout.setError(invalid.getMessage()); else showError(invalid);
             return;
         }
+        boolean isNew = center.getId() == null;
         Callback<Void> done = UiCallback.of(this, ignored -> {
-            showMessage(verifyAndPublish ? "Center verified and published" : "Center saved");
+            showMessage(!verifyAndPublish ? "Center saved (not published)" : "Center verified and published");
+            // A new center opens its own page (state, headcount, "Show on map"), so it is easy to find.
+            if (isNew) {
+                startActivity(new Intent(this, CenterCapacityActivity.class)
+                        .putExtra(CenterCapacityActivity.EXTRA_ID, center.getId())
+                        .putExtra(CenterCapacityActivity.EXTRA_JUST_SAVED, true));
+            }
             finish();
         }, error -> {
             if (error instanceof ValidationException && layouts.containsKey(((ValidationException) error).getField())) {
@@ -161,16 +193,27 @@ public class CenterEditorActivity extends BaseActivity {
             }
         });
         if (verifyAndPublish) {
-            container().centers().verifyAndPublish(lgu, center, Dialogs.text(source), done);
+            container().centers().verifyAndPublish(staff, center, Dialogs.text(source), done);
         } else {
-            container().centers().save(lgu, center, "SAVE", "Saved center details", done);
+            container().centers().save(staff, center, "SAVE", "Saved center details", done);
+        }
+    }
+
+    /** The coordinates typed in the form, or the fallback when they are empty or not numbers. */
+    private GeoPoint typedLocationOr(GeoPoint fallback) {
+        try {
+            GeoPoint typed = new GeoPoint(Double.parseDouble(Dialogs.text(lat).strip()),
+                    Double.parseDouble(Dialogs.text(lon).strip()));
+            return typed.isInsideMetroManilaRegion() ? typed : fallback;
+        } catch (IllegalArgumentException notTyped) {
+            return fallback;
         }
     }
 
     private void archive() {
         if (center == null) return;
         Dialogs.input(this, getString(R.string.archive), "Reason (kept in the audit trail)", "", reason ->
-                container().centers().archive(lgu, center, reason.isBlank() ? "Archived by LGU" : reason, ui(ignored -> {
+                container().centers().archive(staff, center, reason.isBlank() ? "Archived by the LGU" : reason, ui(ignored -> {
                     showMessage("Center archived");
                     finish();
                 })));

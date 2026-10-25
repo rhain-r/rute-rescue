@@ -11,11 +11,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.TooltipCompat;
 import androidx.core.widget.NestedScrollView;
 
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.rutarescue.BuildConfig;
@@ -29,7 +26,7 @@ import com.rutarescue.model.map.MapLayerSettings;
 import com.rutarescue.model.route.RoadClosure;
 import com.rutarescue.model.structure.RoadStructureRecord;
 import com.rutarescue.model.structure.StructureStatus;
-import com.rutarescue.model.user.LguProfile;
+import com.rutarescue.model.user.StaffProfile;
 import com.rutarescue.repository.StructureStatusRepository;
 import com.rutarescue.risk.StructureIndex;
 import com.rutarescue.service.HazardQueryService;
@@ -38,6 +35,8 @@ import com.rutarescue.ui.common.Badges;
 import com.rutarescue.ui.common.BaseFragment;
 import com.rutarescue.ui.common.Dialogs;
 import com.rutarescue.ui.common.InfoTooltip;
+import com.rutarescue.ui.common.ScreenFit;
+import com.rutarescue.ui.common.SlidingCard;
 import com.rutarescue.ui.common.UiCallback;
 import com.rutarescue.ui.map.MapController;
 import com.rutarescue.ui.map.MapLayersSheet;
@@ -59,21 +58,30 @@ import java.util.Map;
  */
 public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet.Listener {
 
-    private LguProfile lgu;
+    private StaffProfile staff;
     /** Parallel ways closer than this (metres, degrees) are parts of the same bridge or tunnel. */
     private static final double SAME_STRUCTURE_METERS = 25;
     private static final double SAME_STRUCTURE_DEGREES = 20;
+    /** A picked point is shown at least this close (street level, like Locate). */
+    private static final double PICK_ZOOM = 16.5;
 
     private MapController map;
     /** Tap-to-inspect lookups: off the UI thread, newest tap wins. */
     private HazardQueryService hazardQueries;
     private FloodScenario scenario = FloodScenario.DEFAULT;
     private MapLayerSettings layers;
-    private boolean syncingPills; // true while the pills are updated from the Map layers sheet
     private StructureIndex structureIndex;
     private List<RoadClosure> closures = new ArrayList<>();
     private GeoPoint selected;
     private NestedScrollView sheet; // the floating Figma sheet card (scrolls inside when long)
+    /** Slides the sheet down when the map is zoomed or moved, and up when a point is picked. */
+    private SlidingCard sheetSlider;
+    /** A place to zoom to once the map is ready ("Show on map" from a center's page). */
+    private GeoPoint pendingFocus;
+    private String pendingFocusName;
+    /** The center shown by "Show on map", so later refreshes keep its name in the sheet title. */
+    private GeoPoint focusedPoint;
+    private String focusedName;
 
     @Nullable
     @Override
@@ -83,11 +91,16 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle state) {
-        lgu = container().session().requireLgu();
+        staff = container().session().requireStaff();
         hazardQueries = new HazardQueryService(container().hazards, container().executors);
         sheet = view.findViewById(R.id.lgu_map_sheet);
+        sheetSlider = new SlidingCard(sheet, view.findViewById(R.id.lgu_sheet_handle),
+                requireActivity().findViewById(R.id.bottom_nav));
+        // Locate / Layers stay under the title bar (and the offline banner), however tall they get.
+        ScreenFit.keepBelow(view.findViewById(R.id.lgu_map_controls), 16, view.findViewById(R.id.lgu_map_top),
+                requireActivity().findViewById(R.id.shell_offline_banner));
         ((TextView) view.findViewById(R.id.lgu_closures_title)).setText("Active closures • "
-                + lgu.getJurisdiction().getDisplayName());
+                + staff.getJurisdiction().getDisplayName());
         layers = container().mapLayers.load(MapLayerPreferences.LGU_MAP);
         scenario = layers.getAssessmentScenario();
         updateLayerLabel();
@@ -95,53 +108,32 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
         map = new MapController(view.findViewById(R.id.lgu_map), BuildConfig.TOMTOM_API_KEY);
         map.onCreate(state, ready -> {
             ready.applyLayers(layers, container().hazards, container().executors);
-            ready.setOnMapClick(this::select);
+            ready.setOnMapClick(point -> {
+                select(point);
+                focusPicked(point); // its details slide up and the map zooms to it
+            });
             ready.setOnMapLongClick(point -> {
                 select(point);
+                focusPicked(point);
                 reportClosure();
             });
+            // Zooming or panning with the fingers slides the card down so the map is free to see.
+            ready.setOnUserMove(sheetSlider::collapse);
             track(container().datasets().listenStructureStatuses(ui(this::onStatuses)));
             track(container().datasets().listenClosures(ui(this::onClosures)));
-            track(container().centers().listenForManager(lgu, ui(data -> {
+            track(container().centers().listenForManager(staff, ui(data -> {
                 List<EvacuationCenter> centers = data.getData();
                 if (map != null) map.showCenters(centers);
-                if (!centers.isEmpty() && selected == null && map != null) map.moveTo(centers.get(0).getLocation(), 13);
+                if (!centers.isEmpty() && selected == null && pendingFocus == null && map != null) {
+                    map.moveTo(centers.get(0).getLocation(), 13);
+                }
             })));
+            applyFocus();
         });
 
-        Chip zones = view.findViewById(R.id.lgu_layer_zones);
-        Chip structures = view.findViewById(R.id.lgu_layer_structures);
-        Chip centers = view.findViewById(R.id.lgu_layer_centers);
-        syncPills(view);
-        zones.setOnCheckedChangeListener((b, checked) -> map.setHazardVisible(checked));
-        // Info tooltips: the risk zones are prepared NOAH scenarios, not a weather update.
+        // Info tooltip: the risk zones are prepared NOAH scenarios, not a weather update.
         InfoTooltip.attach(view.findViewById(R.id.lgu_map_info), R.string.tip_risk_zones_title,
                 R.string.tip_risk_zones_body);
-        TooltipCompat.setTooltipText(zones, getString(R.string.tip_risk_zones_title));
-        // "Routes" layer: bridges/tunnels, LGU closures and (with a TomTom key) live traffic.
-        structures.setOnCheckedChangeListener((b, checked) -> {
-            if (syncingPills) return;
-            layers.setStructuresVisible(checked);
-            layers.setTrafficVisible(checked);
-            saveAndApplyLayers();
-        });
-        centers.setOnCheckedChangeListener((b, checked) -> {
-            if (syncingPills) return;
-            layers.setCentersVisible(checked);
-            saveAndApplyLayers();
-        });
-        ChipGroup scenarios = view.findViewById(R.id.lgu_scenario_chips);
-        scenarios.setOnCheckedStateChangeListener((group, ids) -> {
-            if (ids.isEmpty() || syncingPills) return;
-            int id = ids.get(0);
-            scenario = id == R.id.lgu_scenario_25 ? FloodScenario.TWENTY_FIVE_YEAR
-                    : id == R.id.lgu_scenario_100 ? FloodScenario.HUNDRED_YEAR : FloodScenario.FIVE_YEAR;
-            // A scenario pill shows that one scenario; the Map layers sheet can show several.
-            for (FloodScenario each : FloodScenario.values()) layers.setFloodVisible(each, each == scenario);
-            saveAndApplyLayers();
-            updateLayerLabel();
-            if (selected != null) select(selected);
-        });
 
         // Figma "LGU Map Header" and "Map Controls"
         view.findViewById(R.id.lgu_back).setOnClickListener(v ->
@@ -156,6 +148,44 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
 
         view.findViewById(R.id.lgu_sel_set_status).setOnClickListener(v -> setStructureStatus());
         view.findViewById(R.id.lgu_sel_report_closure).setOnClickListener(v -> reportClosure());
+    }
+
+    /**
+     * "Show on map" (2026-10-20): zooms to a saved center, turns the Centers layer on and selects
+     * the point, so its pin and its flood-risk details are shown together.
+     */
+    public void focusOn(GeoPoint point, String name) {
+        pendingFocus = point;
+        pendingFocusName = name;
+        if (map != null && map.isReady()) applyFocus();
+    }
+
+    private void applyFocus() {
+        if (pendingFocus == null || map == null || getView() == null) return;
+        GeoPoint point = pendingFocus;
+        pendingFocus = null;
+        if (!layers.isCentersVisible()) {
+            layers.setCentersVisible(true);
+            saveAndApplyLayers();
+        }
+        focusedPoint = point;
+        focusedName = pendingFocusName;
+        select(point);
+        focusPicked(point);
+    }
+
+    /**
+     * A picked point (map tap, long-press, a closure row or "Show on map"): the card slides up, then the
+     * map zooms in to street level and puts the point on the line of the card's "–" handle, two-fifths
+     * down the part of the map the card does not cover - the same place the resident's "you" dot sits.
+     * It waits for the slide, so the card can never end up on top of the point.
+     */
+    private void focusPicked(GeoPoint point) {
+        sheetSlider.expand(() -> {
+            if (map != null && getView() != null) {
+                map.centerOn(point, PICK_ZOOM, requireView().findViewById(R.id.lgu_map_top), sheet);
+            }
+        });
     }
 
     // ------------------------------------------------------------------ map layers (Phase 1 sheet)
@@ -173,24 +203,12 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
         scenario = settings.getAssessmentScenario();
         saveAndApplyLayers();
         updateLayerLabel();
-        if (getView() != null) syncPills(getView());
         if (selected != null) select(selected);
     }
 
     private void saveAndApplyLayers() {
         container().mapLayers.save(MapLayerPreferences.LGU_MAP, layers);
         if (map != null && map.isReady()) map.applyLayers(layers, container().hazards, container().executors);
-    }
-
-    /** Shows the sheet's choices on the Figma pills without running their listeners. */
-    private void syncPills(View view) {
-        syncingPills = true;
-        ((Chip) view.findViewById(R.id.lgu_layer_structures)).setChecked(layers.isStructuresVisible());
-        ((Chip) view.findViewById(R.id.lgu_layer_centers)).setChecked(layers.isCentersVisible());
-        int pill = scenario == FloodScenario.TWENTY_FIVE_YEAR ? R.id.lgu_scenario_25
-                : scenario == FloodScenario.HUNDRED_YEAR ? R.id.lgu_scenario_100 : R.id.lgu_scenario_5;
-        ((ChipGroup) view.findViewById(R.id.lgu_scenario_chips)).check(pill);
-        syncingPills = false;
     }
 
     /** Centers the map on the officer's location, or on the jurisdiction's first center. */
@@ -237,15 +255,15 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
         list.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(requireContext());
         for (RoadClosure closure : active) {
-            if (closure.getCity() != lgu.getJurisdiction()) continue;
+            if (closure.getCity() != staff.getJurisdiction()) continue;
             View row = inflater.inflate(R.layout.item_simple_row, list, false);
             ((ImageView) row.findViewById(R.id.row_icon)).setImageResource(R.drawable.ic_warning);
             ((TextView) row.findViewById(R.id.row_title)).setText(closure.getName());
             ((TextView) row.findViewById(R.id.row_subtitle)).setText(closure.getReason() + " • "
                     + closure.getRadiusMeters() + " m • " + Formats.relative(closure.getReportedAt(), System.currentTimeMillis()));
             row.setOnClickListener(v -> {
-                map.moveTo(closure.getLocation(), 16);
                 select(closure.getLocation());
+                focusPicked(closure.getLocation());
             });
             list.addView(row);
         }
@@ -265,7 +283,8 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
         view.findViewById(R.id.lgu_map_hint).setVisibility(View.GONE);
         view.findViewById(R.id.lgu_selection).setVisibility(View.VISIBLE);
         map.showMarkers(null, null, point);
-        ((TextView) view.findViewById(R.id.lgu_sel_title)).setText("Selected point • " + point);
+        ((TextView) view.findViewById(R.id.lgu_sel_title)).setText(point == focusedPoint && focusedName != null
+                ? "Evacuation center • " + focusedName : "Selected point • " + point);
 
         // Background lookup; fast repeated taps or scenario switches only ever show the newest answer.
         hazardQueries.inspect(point, scenario, UiCallback.of(this, this::showPointHazard, error -> {
@@ -295,9 +314,9 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
         View lift = view.findViewById(R.id.lgu_sel_lift_closure);
         ((TextView) view.findViewById(R.id.lgu_sel_closure)).setText(closure == null ? "No active closure here"
                 : "Closure: " + closure.getName() + " — " + closure.getReason());
-        lift.setVisibility(closure != null && closure.getCity() == lgu.getJurisdiction() ? View.VISIBLE : View.GONE);
+        lift.setVisibility(closure != null && closure.getCity() == staff.getJurisdiction() ? View.VISIBLE : View.GONE);
         lift.setOnClickListener(v -> Dialogs.input(requireContext(), "Lift closure", "Reason (kept in the audit trail)", "",
-                reason -> container().datasets().liftClosure(lgu, closure, reason, ui(ignored -> showMessage("Closure lifted")))));
+                reason -> container().datasets().liftClosure(staff, closure, reason, ui(ignored -> showMessage("Closure lifted")))));
         sheet.post(() -> sheet.smoothScrollTo(0, 0));
     }
 
@@ -341,7 +360,7 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
                     String note = Dialogs.text(evidence);
                     int[] saved = {0};
                     for (RoadStructureRecord part : parts) {
-                        container().datasets().setStructureStatus(lgu, part.getId(), part.getName().isEmpty()
+                        container().datasets().setStructureStatus(staff, part.getId(), part.getName().isEmpty()
                                 ? structure.getName() : part.getName(), status, note, ui(ignored -> {
                             if (++saved[0] == parts.size()) {
                                 showMessage("Status saved for " + parts.size() + " part(s); residents' routes now use it");
@@ -371,7 +390,7 @@ public class LguHazardMapFragment extends BaseFragment implements MapLayersSheet
                         showMessage("Radius: " + e.getMessage());
                         return;
                     }
-                    container().datasets().reportClosure(lgu, Dialogs.text(name), location, meters, Dialogs.text(reason),
+                    container().datasets().reportClosure(staff, Dialogs.text(name), location, meters, Dialogs.text(reason),
                             ui(ignored -> showMessage("Closure reported — routes through it are now ranked last")));
                 })
                 .show();
